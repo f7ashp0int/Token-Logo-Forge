@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, Download, Layers, Type, Image as ImageIcon, Palette, RotateCw, Scissors, Move, ZoomIn, ZoomOut, Circle, Square, Copy, Lock, Unlock, Sparkles } from 'lucide-react';
+import { Upload, Download, Layers, Type, Image as ImageIcon, Palette, ZoomIn, ZoomOut, Circle, Square, Copy, Lock, Unlock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -72,6 +71,8 @@ const LogoTokenEditor = () => {
   const [showTemplates, setShowTemplates] = useState(false);
   const [rotationDegree, setRotationDegree] = useState(0);
   const [solanaAddress] = useState('2v32BcWsY9TdeTYmNuXRBt782vtgvXdCX3Hg1MjAgczr');
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
@@ -86,7 +87,7 @@ const LogoTokenEditor = () => {
     }
   }, []);
 
-  const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleCanvasMouseDown = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -108,25 +109,99 @@ const LogoTokenEditor = () => {
       }
     }
 
-    setSelectedLayer(clickedLayer);
+    if (clickedLayer) {
+      setSelectedLayer(clickedLayer);
+      setIsDragging(true);
+      setDragStart({ x, y });
+    } else {
+      setSelectedLayer(null);
+    }
   }, [layers, zoom]);
 
+  const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDragging || !selectedLayer) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / zoom;
+    const y = (event.clientY - rect.top) / zoom;
+
+    const deltaX = x - dragStart.x;
+    const deltaY = y - dragStart.y;
+
+    setLayers(prev => prev.map(layer => 
+      layer.id === selectedLayer 
+        ? { ...layer, x: layer.x + deltaX, y: layer.y + deltaY }
+        : layer
+    ));
+
+    setDragStart({ x, y });
+  }, [isDragging, selectedLayer, dragStart, zoom]);
+
+  const handleCanvasMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
   const handleTemplateSelect = useCallback((template: Template) => {
-    // Create a canvas with the template background
+    // Create template background layer
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
     if (ctx) {
       canvas.width = canvas.height = canvasSize;
       
-      // Apply the template gradient as background
-      const gradient = ctx.createRadialGradient(
-        canvasSize * 0.3, canvasSize * 0.3, 0,
-        canvasSize / 2, canvasSize / 2, canvasSize / 2
-      );
-      
-      // Parse the CSS gradient to create the template background
-      ctx.fillStyle = template.preview;
+      // Create the gradient based on template style
+      if (template.style === '3d') {
+        // Create 3D-like gradient
+        const gradient = ctx.createRadialGradient(
+          canvasSize * 0.3, canvasSize * 0.3, 0,
+          canvasSize / 2, canvasSize / 2, canvasSize / 2
+        );
+        
+        // Apply different colors based on category
+        switch (template.category) {
+          case 'gold':
+            gradient.addColorStop(0, '#ffd700');
+            gradient.addColorStop(0.5, '#ffed4e');
+            gradient.addColorStop(1, '#b8860b');
+            break;
+          case 'silver':
+            gradient.addColorStop(0, '#c0c0c0');
+            gradient.addColorStop(0.5, '#e5e5e5');
+            gradient.addColorStop(1, '#a8a8a8');
+            break;
+          case 'crypto':
+            gradient.addColorStop(0, '#f7931a');
+            gradient.addColorStop(0.5, '#ffb347');
+            gradient.addColorStop(1, '#cc7a00');
+            break;
+          case 'colored':
+            gradient.addColorStop(0, '#AD03DE');
+            gradient.addColorStop(0.5, '#FF69B4');
+            gradient.addColorStop(1, '#E40078');
+            break;
+        }
+        
+        ctx.fillStyle = gradient;
+      } else {
+        // Create 2D flat color
+        switch (template.category) {
+          case 'gold':
+            ctx.fillStyle = '#daa520';
+            break;
+          case 'silver':
+            ctx.fillStyle = '#c0c0c0';
+            break;
+          case 'crypto':
+            ctx.fillStyle = '#f7931a';
+            break;
+          case 'colored':
+            ctx.fillStyle = '#AD03DE';
+            break;
+        }
+      }
       
       if (canvasShape === 'circle') {
         ctx.beginPath();
@@ -134,6 +209,35 @@ const LogoTokenEditor = () => {
         ctx.fill();
       } else {
         ctx.fillRect(0, 0, canvasSize, canvasSize);
+      }
+      
+      // Add 3D effects for 3D templates
+      if (template.style === '3d') {
+        // Add highlight
+        const highlightGradient = ctx.createRadialGradient(
+          canvasSize * 0.2, canvasSize * 0.2, 0,
+          canvasSize / 2, canvasSize / 2, canvasSize / 2
+        );
+        highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+        highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = highlightGradient;
+        
+        if (canvasShape === 'circle') {
+          ctx.beginPath();
+          ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, 2 * Math.PI);
+          ctx.fill();
+        } else {
+          ctx.fillRect(0, 0, canvasSize, canvasSize);
+        }
+        
+        // Add inner ring
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 2;
+        if (canvasShape === 'circle') {
+          ctx.beginPath();
+          ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - 20, 0, 2 * Math.PI);
+          ctx.stroke();
+        }
       }
       
       const templateDataUrl = canvas.toDataURL();
@@ -267,6 +371,55 @@ const LogoTokenEditor = () => {
       updateLayerProperty(selectedLayer, 'rotation', degree);
     }
   }, [selectedLayer, updateLayerProperty]);
+
+  const moveLayerUp = useCallback((layerId: string) => {
+    setLayers(prev => {
+      const newLayers = [...prev];
+      const currentIndex = newLayers.findIndex(l => l.id === layerId);
+      if (currentIndex > 0) {
+        [newLayers[currentIndex], newLayers[currentIndex - 1]] = [newLayers[currentIndex - 1], newLayers[currentIndex]];
+      }
+      return newLayers;
+    });
+  }, []);
+
+  const moveLayerDown = useCallback((layerId: string) => {
+    setLayers(prev => {
+      const newLayers = [...prev];
+      const currentIndex = newLayers.findIndex(l => l.id === layerId);
+      if (currentIndex < newLayers.length - 1) {
+        [newLayers[currentIndex], newLayers[currentIndex + 1]] = [newLayers[currentIndex + 1], newLayers[currentIndex]];
+      }
+      return newLayers;
+    });
+  }, []);
+
+  // Update selected layer properties when UI controls change
+  useEffect(() => {
+    if (selectedLayer) {
+      const layer = layers.find(l => l.id === selectedLayer);
+      if (layer && layer.type === 'text') {
+        setFontSize(layer.fontSize || 24);
+        setTextColor(layer.fontColor || '#ffffff');
+        setIsCircularText(layer.isCircularText || false);
+        setTextRadius(layer.textRadius || 150);
+        setRotationDegree(layer.rotation);
+      }
+    }
+  }, [selectedLayer, layers]);
+
+  // Update layer when text controls change
+  useEffect(() => {
+    if (selectedLayer) {
+      const layer = layers.find(l => l.id === selectedLayer);
+      if (layer && layer.type === 'text') {
+        updateLayerProperty(selectedLayer, 'fontSize', fontSize);
+        updateLayerProperty(selectedLayer, 'fontColor', textColor);
+        updateLayerProperty(selectedLayer, 'isCircularText', isCircularText);
+        updateLayerProperty(selectedLayer, 'textRadius', textRadius);
+      }
+    }
+  }, [fontSize, textColor, isCircularText, textRadius, selectedLayer, updateLayerProperty]);
 
   const generateMarketingImage = useCallback(() => {
     const marketingCanvas = marketingCanvasRef.current;
@@ -675,16 +828,6 @@ const LogoTokenEditor = () => {
     }
   }, [layers, selectedLayer, backgroundColor, canvasShape, adjustments, fontSize, textColor, canvasSize]);
 
-  // Update rotation when selectedLayer changes
-  useEffect(() => {
-    if (selectedLayer) {
-      const layer = layers.find(l => l.id === selectedLayer);
-      if (layer) {
-        setRotationDegree(layer.rotation);
-      }
-    }
-  }, [selectedLayer, layers]);
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto p-4">
@@ -859,6 +1002,18 @@ const LogoTokenEditor = () => {
                       className="mt-2 h-10 border-border bg-input"
                     />
                   </div>
+
+                  {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'text' && (
+                    <div className="border-t border-border pt-4">
+                      <Label className="text-sm font-medium">Edit Selected Text</Label>
+                      <Input
+                        value={layers.find(l => l.id === selectedLayer)?.content || ''}
+                        onChange={(e) => updateLayerProperty(selectedLayer, 'content', e.target.value)}
+                        placeholder="Edit text..."
+                        className="mt-2 border-border bg-input text-foreground"
+                      />
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="adjust" className="space-y-4 mt-4">
@@ -901,7 +1056,7 @@ const LogoTokenEditor = () => {
 
                 <TabsContent value="layers" className="space-y-4 mt-4">
                   <div className="space-y-2">
-                    {layers.map((layer) => (
+                    {layers.map((layer, index) => (
                       <div 
                         key={layer.id}
                         className={`p-2 rounded border cursor-pointer transition-colors ${
@@ -918,6 +1073,30 @@ const LogoTokenEditor = () => {
                             {layer.locked && <Lock className="w-3 h-3 text-vibrant-orange" />}
                           </span>
                           <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveLayerUp(layer.id);
+                              }}
+                              className="h-6 w-6 p-0"
+                              disabled={index === 0}
+                            >
+                              ↑
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveLayerDown(layer.id);
+                              }}
+                              className="h-6 w-6 p-0"
+                              disabled={index === layers.length - 1}
+                            >
+                              ↓
+                            </Button>
                             <Button
                               size="sm"
                               variant="outline"
@@ -1039,7 +1218,9 @@ const LogoTokenEditor = () => {
                       cursor: tool === 'select' ? 'pointer' : 'crosshair'
                     }}
                     className="block"
-                    onClick={handleCanvasClick}
+                    onMouseDown={handleCanvasMouseDown}
+                    onMouseMove={handleCanvasMouseMove}
+                    onMouseUp={handleCanvasMouseUp}
                   />
                 </div>
               </div>
@@ -1102,11 +1283,19 @@ const LogoTokenEditor = () => {
                 {/* Donation Section */}
                 <div className="mt-6 p-3 bg-secondary/30 rounded-lg border border-vibrant-purple/20">
                   <p className="text-xs text-center text-muted-foreground mb-2">
-                    Do donate some % of token to me if you find this app helpful
+                    Donations of Tokens accepted
                   </p>
                   <div className="flex items-center gap-2 p-2 bg-card rounded border">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#9945FF] to-[#14F195] flex items-center justify-center text-xs font-bold text-white">
-                      S
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#9945FF] to-[#14F195] flex items-center justify-center">
+                      <svg width="12" height="12" viewBox="0 0 397.7 311.7" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <linearGradient id="logosGradient" x1="360.8793" y1="351.4553" x2="141.213" y2="-69.2936" gradientUnits="userSpaceOnUse">
+                          <stop offset="0" stopColor="#00FFA3"/>
+                          <stop offset="1" stopColor="#DC1FFF"/>
+                        </linearGradient>
+                        <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 237.9z" fill="url(#logosGradient)"/>
+                        <path d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#logosGradient)"/>
+                        <path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#logosGradient)"/>
+                      </svg>
                     </div>
                     <span className="text-xs font-mono flex-1 text-muted-foreground">
                       {formatAddress(solanaAddress)}
