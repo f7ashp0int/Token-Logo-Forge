@@ -99,21 +99,21 @@ const BackgroundRemover: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-2">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-vibrant-teal via-vibrant-purple to-vibrant-pink bg-clip-text text-transparent mb-2">
           AI Background Remover
         </h2>
-        <p className="text-slate-300">Remove backgrounds with smart AI processing</p>
+        <p className="text-muted-foreground">Remove backgrounds with smart AI processing</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Upload Section */}
-        <Card className="bg-slate-800/50 border-slate-700 p-6">
+        <Card className="bg-card border-border p-6">
           <h3 className="text-lg font-semibold mb-4">Original Image</h3>
           
           {!originalImage ? (
-            <div className="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center">
-              <Upload className="w-12 h-12 mx-auto mb-4 text-slate-400" />
-              <p className="text-slate-400 mb-4">Upload an image to get started</p>
+            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+              <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground mb-4">Upload an image to get started</p>
               <input
                 type="file"
                 accept="image/*"
@@ -121,7 +121,7 @@ const BackgroundRemover: React.FC = () => {
                 className="hidden"
                 id="bg-remove-upload"
               />
-              <Button asChild className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600">
+              <Button asChild className="bg-gradient-to-r from-vibrant-teal to-vibrant-purple hover:from-vibrant-teal/80 hover:to-vibrant-purple/80">
                 <label htmlFor="bg-remove-upload" className="cursor-pointer">
                   Choose Image
                 </label>
@@ -132,12 +132,12 @@ const BackgroundRemover: React.FC = () => {
               <img 
                 src={originalImage} 
                 alt="Original" 
-                className="w-full h-64 object-contain bg-slate-700 rounded-lg"
+                className="w-full h-64 object-contain bg-muted rounded-lg"
               />
               <Button 
                 onClick={removeBackground}
                 disabled={isProcessing}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                className="w-full bg-gradient-to-r from-vibrant-purple to-vibrant-pink hover:from-vibrant-purple/80 hover:to-vibrant-pink/80"
               >
                 <Wand2 className="w-4 h-4 mr-2" />
                 {isProcessing ? 'Processing...' : 'Remove Background'}
@@ -147,19 +147,19 @@ const BackgroundRemover: React.FC = () => {
         </Card>
 
         {/* Result Section */}
-        <Card className="bg-slate-800/50 border-slate-700 p-6">
+        <Card className="bg-card border-border p-6">
           <h3 className="text-lg font-semibold mb-4">Processed Image</h3>
           
           {!processedImage ? (
-            <div className="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center h-64 flex items-center justify-center">
-              <p className="text-slate-400">Processed image will appear here</p>
+            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center h-64 flex items-center justify-center">
+              <p className="text-muted-foreground">Processed image will appear here</p>
             </div>
           ) : (
             <div className="space-y-4">
               <div 
                 className="w-full h-64 rounded-lg flex items-center justify-center"
                 style={{
-                  backgroundImage: 'linear-gradient(45deg, #374151 25%, transparent 25%), linear-gradient(-45deg, #374151 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #374151 75%), linear-gradient(-45deg, transparent 75%, #374151 75%)',
+                  backgroundImage: 'linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%), linear-gradient(-45deg, hsl(var(--muted)) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, hsl(var(--muted)) 75%), linear-gradient(-45deg, transparent 75%, hsl(var(--muted)) 75%)',
                   backgroundSize: '20px 20px',
                   backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
                 }}
@@ -172,7 +172,7 @@ const BackgroundRemover: React.FC = () => {
               </div>
               <Button 
                 onClick={downloadImage}
-                className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+                className="w-full bg-gradient-to-r from-vibrant-teal to-vibrant-blue hover:from-vibrant-teal/80 hover:to-vibrant-blue/80"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download Result
@@ -182,9 +182,9 @@ const BackgroundRemover: React.FC = () => {
         </Card>
       </div>
 
-      <div className="bg-slate-800/30 rounded-lg p-4">
-        <h4 className="font-semibold mb-2 text-cyan-400">Pro Tips:</h4>
-        <ul className="text-sm text-slate-300 space-y-1">
+      <div className="bg-card/30 rounded-lg p-4">
+        <h4 className="font-semibold mb-2 text-vibrant-teal">Pro Tips:</h4>
+        <ul className="text-sm text-muted-foreground space-y-1">
           <li>• Works best with images that have clear subject-background contrast</li>
           <li>• Ensure your main subject is well-lit and in focus</li>
           <li>• Avoid busy or complex backgrounds for better results</li>
