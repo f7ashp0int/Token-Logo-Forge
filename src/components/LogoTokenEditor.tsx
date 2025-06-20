@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, Download, Layers, Type, Image as ImageIcon, Palette, RotateCw, Scissors, Move, ZoomIn, ZoomOut, Circle, Square, Copy } from 'lucide-react';
+import { Upload, Download, Layers, Type, Image as ImageIcon, Palette, RotateCw, Scissors, Move, ZoomIn, ZoomOut, Circle, Square, Copy, Lock, Unlock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import TemplateGallery from './TemplateGallery';
+
+interface Template {
+  id: string;
+  name: string;
+  preview: string;
+  category: 'gold' | 'silver' | 'crypto' | 'colored';
+  style: '2d' | '3d';
+}
 
 interface Layer {
   id: string;
@@ -21,6 +29,7 @@ interface Layer {
   rotation: number;
   opacity: number;
   visible: boolean;
+  locked: boolean;
   zIndex: number;
   isCircularText?: boolean;
   textRadius?: number;
@@ -39,10 +48,12 @@ interface ImageAdjustments {
 const LogoTokenEditor = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const marketingCanvasRef = useRef<HTMLCanvasElement>(null);
   const [layers, setLayers] = useState<Layer[]>([]);
   const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
   const [canvasSize] = useState(500);
   const [zoom, setZoom] = useState(1);
+  const [imageZoom, setImageZoom] = useState(1);
   const [tool, setTool] = useState<'select' | 'crop' | 'text'>('select');
   const [backgroundColor, setBackgroundColor] = useState('transparent');
   const [canvasShape, setCanvasShape] = useState<'square' | 'circle'>('circle');
@@ -59,6 +70,95 @@ const LogoTokenEditor = () => {
   const [isCircularText, setIsCircularText] = useState(false);
   const [textRadius, setTextRadius] = useState(150);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [rotationDegree, setRotationDegree] = useState(0);
+  const [solanaAddress] = useState('2v32BcWsY9TdeTYmNuXRBt782vtgvXdCX3Hg1MjAgczr');
+
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 4)}...${address.slice(-4)}`;
+  };
+
+  const copyToClipboard = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Address copied to clipboard!');
+    } catch (error) {
+      toast.error('Failed to copy address');
+    }
+  }, []);
+
+  const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / zoom;
+    const y = (event.clientY - rect.top) / zoom;
+
+    // Check if click is on any layer
+    let clickedLayer = null;
+    const sortedLayers = [...layers].sort((a, b) => b.zIndex - a.zIndex);
+
+    for (const layer of sortedLayers) {
+      if (!layer.visible || layer.locked) continue;
+      
+      if (x >= layer.x && x <= layer.x + layer.width &&
+          y >= layer.y && y <= layer.y + layer.height) {
+        clickedLayer = layer.id;
+        break;
+      }
+    }
+
+    setSelectedLayer(clickedLayer);
+  }, [layers, zoom]);
+
+  const handleTemplateSelect = useCallback((template: Template) => {
+    // Create a canvas with the template background
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (ctx) {
+      canvas.width = canvas.height = canvasSize;
+      
+      // Apply the template gradient as background
+      const gradient = ctx.createRadialGradient(
+        canvasSize * 0.3, canvasSize * 0.3, 0,
+        canvasSize / 2, canvasSize / 2, canvasSize / 2
+      );
+      
+      // Parse the CSS gradient to create the template background
+      ctx.fillStyle = template.preview;
+      
+      if (canvasShape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, 2 * Math.PI);
+        ctx.fill();
+      } else {
+        ctx.fillRect(0, 0, canvasSize, canvasSize);
+      }
+      
+      const templateDataUrl = canvas.toDataURL();
+      
+      const newLayer: Layer = {
+        id: Date.now().toString(),
+        type: 'image',
+        content: templateDataUrl,
+        x: 0,
+        y: 0,
+        width: canvasSize,
+        height: canvasSize,
+        rotation: 0,
+        opacity: 1,
+        visible: true,
+        locked: false,
+        zIndex: 0
+      };
+      
+      setLayers([newLayer]);
+      setSelectedLayer(newLayer.id);
+      setShowTemplates(false);
+      toast.success(`${template.name} template applied!`);
+    }
+  }, [canvasSize, canvasShape]);
 
   const handleImageUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -90,11 +190,12 @@ const LogoTokenEditor = () => {
             content: canvas.toDataURL(),
             x: 50,
             y: 50,
-            width: canvasSize - 100,
-            height: canvasSize - 100,
+            width: (canvasSize - 100) * imageZoom,
+            height: (canvasSize - 100) * imageZoom,
             rotation: 0,
             opacity: 1,
             visible: true,
+            locked: false,
             zIndex: layers.length
           };
           
@@ -106,7 +207,7 @@ const LogoTokenEditor = () => {
       img.src = e.target?.result as string;
     };
     reader.readAsDataURL(file);
-  }, [layers.length, canvasSize]);
+  }, [layers.length, canvasSize, imageZoom]);
 
   const addTextLayer = useCallback(() => {
     if (!textInput.trim()) {
@@ -125,6 +226,7 @@ const LogoTokenEditor = () => {
       rotation: 0,
       opacity: 1,
       visible: true,
+      locked: false,
       zIndex: layers.length,
       isCircularText,
       textRadius: isCircularText ? textRadius : undefined,
@@ -151,6 +253,187 @@ const LogoTokenEditor = () => {
     }
     toast.success('Layer deleted');
   }, [selectedLayer]);
+
+  const toggleLayerLock = useCallback((layerId: string) => {
+    setLayers(prev => prev.map(layer => 
+      layer.id === layerId ? { ...layer, locked: !layer.locked } : layer
+    ));
+    toast.success('Layer lock toggled');
+  }, []);
+
+  const handleRotationChange = useCallback((degree: number) => {
+    setRotationDegree(degree);
+    if (selectedLayer) {
+      updateLayerProperty(selectedLayer, 'rotation', degree);
+    }
+  }, [selectedLayer, updateLayerProperty]);
+
+  const generateMarketingImage = useCallback(() => {
+    const marketingCanvas = marketingCanvasRef.current;
+    if (!marketingCanvas) return;
+
+    const ctx = marketingCanvas.getContext('2d');
+    if (!ctx) return;
+
+    const marketingSize = 800;
+    marketingCanvas.width = marketingSize;
+    marketingCanvas.height = marketingSize;
+
+    // Create 3D-like background
+    const gradient = ctx.createLinearGradient(0, 0, marketingSize, marketingSize);
+    gradient.addColorStop(0, '#1A1A1A');
+    gradient.addColorStop(1, '#333333');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, marketingSize, marketingSize);
+
+    // Create 3D token base
+    const tokenSize = 300;
+    const centerX = marketingSize / 2;
+    const centerY = marketingSize / 2 - 50;
+
+    // Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY + 20, tokenSize / 2, tokenSize / 8, 0, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Token base
+    ctx.fillStyle = '#2A2A2A';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, tokenSize / 2, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Create a smaller version of the token design
+    const tokenCanvas = document.createElement('canvas');
+    const tokenCtx = tokenCanvas.getContext('2d');
+    if (tokenCtx) {
+      tokenCanvas.width = tokenCanvas.height = tokenSize;
+
+      // Render the actual token design
+      if (backgroundColor !== 'transparent') {
+        tokenCtx.fillStyle = backgroundColor;
+        if (canvasShape === 'circle') {
+          tokenCtx.beginPath();
+          tokenCtx.arc(tokenSize / 2, tokenSize / 2, tokenSize / 2, 0, 2 * Math.PI);
+          tokenCtx.fill();
+        } else {
+          tokenCtx.fillRect(0, 0, tokenSize, tokenSize);
+        }
+      }
+
+      // Render layers
+      const sortedLayers = [...layers].sort((a, b) => a.zIndex - b.zIndex);
+      const scale = tokenSize / canvasSize;
+
+      sortedLayers.forEach(layer => {
+        if (!layer.visible) return;
+
+        tokenCtx.save();
+        tokenCtx.globalAlpha = layer.opacity;
+
+        if (layer.type === 'image') {
+          const img = new Image();
+          img.onload = () => {
+            const scaledX = layer.x * scale;
+            const scaledY = layer.y * scale;
+            const scaledWidth = layer.width * scale;
+            const scaledHeight = layer.height * scale;
+            const centerX = scaledX + scaledWidth / 2;
+            const centerY = scaledY + scaledHeight / 2;
+            
+            tokenCtx.translate(centerX, centerY);
+            tokenCtx.rotate((layer.rotation * Math.PI) / 180);
+            tokenCtx.translate(-centerX, -centerY);
+            tokenCtx.drawImage(img, scaledX, scaledY, scaledWidth, scaledHeight);
+          };
+          img.src = layer.content;
+        } else if (layer.type === 'text') {
+          tokenCtx.fillStyle = layer.fontColor || textColor;
+          tokenCtx.font = `${(layer.fontSize || fontSize) * scale}px Arial`;
+          
+          if (layer.isCircularText && layer.textRadius) {
+            const text = layer.content;
+            const radius = layer.textRadius * scale;
+            const centerX = tokenSize / 2;
+            const centerY = tokenSize / 2;
+            const angleStep = (2 * Math.PI) / text.length;
+            
+            for (let i = 0; i < text.length; i++) {
+              const angle = i * angleStep + layer.rotation * Math.PI / 180;
+              const x = centerX + radius * Math.cos(angle - Math.PI / 2);
+              const y = centerY + radius * Math.sin(angle - Math.PI / 2);
+              
+              tokenCtx.save();
+              tokenCtx.translate(x, y);
+              tokenCtx.rotate(angle);
+              tokenCtx.fillText(text[i], -tokenCtx.measureText(text[i]).width / 2, 0);
+              tokenCtx.restore();
+            }
+          } else {
+            const scaledX = layer.x * scale;
+            const scaledY = layer.y * scale;
+            const scaledWidth = layer.width * scale;
+            const scaledHeight = layer.height * scale;
+            const centerX = scaledX + scaledWidth / 2;
+            const centerY = scaledY + scaledHeight / 2;
+            
+            tokenCtx.translate(centerX, centerY);
+            tokenCtx.rotate((layer.rotation * Math.PI) / 180);
+            tokenCtx.textAlign = 'center';
+            tokenCtx.textBaseline = 'middle';
+            tokenCtx.fillText(layer.content, 0, 0);
+          }
+        }
+
+        tokenCtx.restore();
+      });
+
+      // Apply the token design to the marketing canvas
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, tokenSize / 2 - 10, 0, 2 * Math.PI);
+      ctx.clip();
+      ctx.drawImage(tokenCanvas, centerX - tokenSize / 2, centerY - tokenSize / 2);
+      ctx.restore();
+
+      // Add 3D highlight
+      const highlightGradient = ctx.createRadialGradient(
+        centerX - 50, centerY - 50, 0,
+        centerX, centerY, tokenSize / 2
+      );
+      highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+      highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = highlightGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, tokenSize / 2 - 10, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+  }, [layers, backgroundColor, canvasShape, canvasSize, fontSize, textColor]);
+
+  const exportMarketingImage = useCallback(() => {
+    generateMarketingImage();
+    
+    setTimeout(() => {
+      const marketingCanvas = marketingCanvasRef.current;
+      if (!marketingCanvas) return;
+
+      marketingCanvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'token-marketing-image.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          const sizeInMB = (blob.size / (1024 * 1024)).toFixed(2);
+          toast.success(`Marketing image exported! Size: ${sizeInMB}MB`);
+        }
+      }, 'image/png', 0.9);
+    }, 100);
+  }, [generateMarketingImage]);
 
   const exportImage = useCallback(async () => {
     const canvas = canvasRef.current;
@@ -368,7 +651,7 @@ const LogoTokenEditor = () => {
 
       // Selection border
       if (selectedLayer === layer.id && !layer.isCircularText) {
-        ctx.strokeStyle = '#3b82f6';
+        ctx.strokeStyle = '#AD03DE';
         ctx.lineWidth = 2;
         ctx.strokeRect(layer.x - 2, layer.y - 2, layer.width + 4, layer.height + 4);
       }
@@ -391,6 +674,16 @@ const LogoTokenEditor = () => {
       ctx.strokeRect(1, 1, canvasSize - 2, canvasSize - 2);
     }
   }, [layers, selectedLayer, backgroundColor, canvasShape, adjustments, fontSize, textColor, canvasSize]);
+
+  // Update rotation when selectedLayer changes
+  useEffect(() => {
+    if (selectedLayer) {
+      const layer = layers.find(l => l.id === selectedLayer);
+      if (layer) {
+        setRotationDegree(layer.rotation);
+      }
+    }
+  }, [selectedLayer, layers]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -432,6 +725,18 @@ const LogoTokenEditor = () => {
                       <Upload className="w-4 h-4 mr-2" />
                       Choose Image
                     </Button>
+                  </div>
+
+                  <div>
+                    <Label>Image Zoom: {Math.round(imageZoom * 100)}%</Label>
+                    <Slider
+                      value={[imageZoom]}
+                      onValueChange={(value) => setImageZoom(value[0])}
+                      max={2}
+                      min={0.1}
+                      step={0.1}
+                      className="mt-2"
+                    />
                   </div>
 
                   <div>
@@ -607,21 +912,35 @@ const LogoTokenEditor = () => {
                         onClick={() => setSelectedLayer(layer.id)}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">
+                          <span className="text-sm flex items-center gap-2">
                             {layer.type === 'image' ? '🖼️' : layer.isCircularText ? '🔄' : '🔤'} 
                             {layer.type === 'text' ? layer.content.substring(0, 10) : `Image ${layer.id.substring(0, 4)}`}
+                            {layer.locked && <Lock className="w-3 h-3 text-vibrant-orange" />}
                           </span>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteLayer(layer.id);
-                            }}
-                            className="h-6 w-6 p-0"
-                          >
-                            ×
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleLayerLock(layer.id);
+                              }}
+                              className="h-6 w-6 p-0"
+                            >
+                              {layer.locked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteLayer(layer.id);
+                              }}
+                              className="h-6 w-6 p-0"
+                            >
+                              ×
+                            </Button>
+                          </div>
                         </div>
                         
                         {selectedLayer === layer.id && (
@@ -639,15 +958,25 @@ const LogoTokenEditor = () => {
                             </div>
                             
                             <div>
-                              <Label className="text-xs">Rotation: {layer.rotation}°</Label>
-                              <Slider
-                                value={[layer.rotation]}
-                                onValueChange={(value) => updateLayerProperty(layer.id, 'rotation', value[0])}
-                                max={360}
-                                min={-360}
-                                step={1}
-                                className="mt-1"
-                              />
+                              <Label className="text-xs">Rotation: {rotationDegree}°</Label>
+                              <div className="flex gap-2 mt-1">
+                                <Slider
+                                  value={[rotationDegree]}
+                                  onValueChange={(value) => handleRotationChange(value[0])}
+                                  max={360}
+                                  min={-360}
+                                  step={1}
+                                  className="flex-1"
+                                />
+                                <Input
+                                  type="number"
+                                  value={rotationDegree}
+                                  onChange={(e) => handleRotationChange(Number(e.target.value))}
+                                  className="w-16 h-8 text-xs"
+                                  min={-360}
+                                  max={360}
+                                />
+                              </div>
                             </div>
 
                             {layer.isCircularText && (
@@ -710,16 +1039,20 @@ const LogoTokenEditor = () => {
                       cursor: tool === 'select' ? 'pointer' : 'crosshair'
                     }}
                     className="block"
+                    onClick={handleCanvasClick}
                   />
                 </div>
               </div>
 
               {showTemplates && (
                 <div className="mt-6">
-                  <TemplateGallery onSelectTemplate={() => setShowTemplates(false)} />
+                  <TemplateGallery onSelectTemplate={handleTemplateSelect} />
                 </div>
               )}
             </Card>
+
+            {/* Hidden marketing canvas */}
+            <canvas ref={marketingCanvasRef} className="hidden" />
           </div>
 
           {/* Export Panel */}
@@ -731,10 +1064,13 @@ const LogoTokenEditor = () => {
                 <div className="flex gap-2">
                   <Button 
                     onClick={exportImage}
-                    className="flex-1 bg-gradient-to-r from-vibrant-purple to-vibrant-pink hover:from-vibrant-purple/80 hover:to-vibrant-pink/80"
+                    className="flex-1 bg-gradient-to-r from-vibrant-purple to-vibrant-pink hover:from-vibrant-purple/80 hover:to-vibrant-pink/80 border border-vibrant-purple/50 shadow-lg shadow-vibrant-purple/25"
+                    style={{
+                      filter: 'drop-shadow(0 0 8px rgba(173, 3, 222, 0.3))'
+                    }}
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Export
+                    Export Token
                   </Button>
                   <Button 
                     onClick={copyCanvasImage}
@@ -744,12 +1080,46 @@ const LogoTokenEditor = () => {
                     <Copy className="w-4 h-4" />
                   </Button>
                 </div>
+
+                <Button 
+                  onClick={exportMarketingImage}
+                  className="w-full bg-gradient-to-r from-vibrant-teal to-vibrant-blue hover:from-vibrant-teal/80 hover:to-vibrant-blue/80 border border-vibrant-teal/50 shadow-lg shadow-vibrant-teal/25"
+                  style={{
+                    filter: 'drop-shadow(0 0 8px rgba(0, 131, 141, 0.3))'
+                  }}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Export 3D Preview
+                </Button>
                 
                 <div className="text-xs text-muted-foreground space-y-1">
                   <p>• Automatically optimized</p>
                   <p>• Guaranteed under 1.5MB</p>
                   <p>• Perfect 1:1 aspect ratio</p>
-                  <p>• Web3 platform ready</p>
+                  <p>• Your design, your rights</p>
+                </div>
+
+                {/* Donation Section */}
+                <div className="mt-6 p-3 bg-secondary/30 rounded-lg border border-vibrant-purple/20">
+                  <p className="text-xs text-center text-muted-foreground mb-2">
+                    Do donate some % of token to me if you find this app helpful
+                  </p>
+                  <div className="flex items-center gap-2 p-2 bg-card rounded border">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#9945FF] to-[#14F195] flex items-center justify-center text-xs font-bold text-white">
+                      S
+                    </div>
+                    <span className="text-xs font-mono flex-1 text-muted-foreground">
+                      {formatAddress(solanaAddress)}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => copyToClipboard(solanaAddress)}
+                      className="h-6 w-6 p-0 bg-gradient-to-r from-[#9945FF] to-[#14F195] border-none hover:opacity-80"
+                    >
+                      <Copy className="w-3 h-3 text-white" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </Card>
