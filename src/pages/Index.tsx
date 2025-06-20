@@ -58,7 +58,7 @@ const Index = () => {
               {/* Hero Section */}
               <div className="text-center mb-16">
                 <h1 className="text-6xl font-bold bg-gradient-to-r from-vibrant-teal via-vibrant-purple to-vibrant-pink bg-clip-text text-transparent mb-6">
-                  Web3 Logo Token Creator
+                  Token Image Creator
                 </h1>
                 <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
                   Create stunning 1:1 ratio logo tokens for your Web3 presence. 
@@ -97,7 +97,7 @@ const Index = () => {
                     Smart Upload & Crop
                   </h3>
                   <p className="text-muted-foreground">
-                    Upload any image and let our AI automatically crop it to perfect 1:1 ratio. 
+                    Upload any image and let our smart tools automatically crop it to perfect 1:1 ratio. 
                     Face detection ensures optimal framing.
                   </p>
                 </Card>
@@ -110,10 +110,10 @@ const Index = () => {
                     <Wand2 className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="text-xl font-semibold mb-3 group-hover:text-vibrant-pink transition-colors">
-                    AI Background Removal
+                    Background Removal
                   </h3>
                   <p className="text-muted-foreground">
-                    Remove backgrounds instantly with our advanced AI. 
+                    Remove backgrounds instantly with our advanced tools. 
                     Perfect for profile pictures and logo isolation.
                   </p>
                 </Card>
@@ -162,7 +162,7 @@ const Index = () => {
 
               {/* Call to Action */}
               <div className="text-center">
-                <h2 className="text-3xl font-bold mb-4">Ready to Create Your Token Logo?</h2>
+                <h2 className="text-3xl font-bold mb-4">Ready to Create Your Token Image?</h2>
                 <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
                   Join thousands of Web3 creators who trust our platform for their digital identity. 
                   Start building your tokenized presence today.
@@ -175,6 +175,11 @@ const Index = () => {
                   Launch Editor
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
+              </div>
+
+              {/* Footer */}
+              <div className="text-center mt-16 text-muted-foreground">
+                <p>Made with ❤️ by <a href="https://xeenon.xyz/f7ash" target="_blank" rel="noopener noreferrer" className="text-vibrant-purple hover:text-vibrant-pink transition-colors">f7ash</a></p>
               </div>
             </div>
           </div>
