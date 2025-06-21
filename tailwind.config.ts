@@ -13,12 +13,11 @@ export default {
 		container: {
 			center: true,
 			padding: '2rem',
-			screens: {
-				'2xl': '1400px'
-			}
 		},
 		extend: {
 			colors: {
+				'vibrant-purple': '#8A2BE2',
+				'brand-purple': '#3b0764',
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
