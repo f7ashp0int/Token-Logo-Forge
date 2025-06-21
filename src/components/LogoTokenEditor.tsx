@@ -354,7 +354,7 @@ const LogoTokenEditor = () => {
         if (adjustments.fill > 0) {
           ctx.globalCompositeOperation = 'color';
         }
-      } else {
+        } else {
         ctx.filter = 'none';
       }
       
@@ -378,52 +378,254 @@ const LogoTokenEditor = () => {
         ctx.globalAlpha = 1;
       } else if (layer.type === 'text') {
         // --- Photoshop-style Fill/Opacity for text ---
-        // 1. Draw shadow, stroke, glow at full opacity
         ctx.save();
         ctx.fillStyle = layer.fontColor || '#ffffff';
         ctx.font = `${layer.fontSize || 24}px "${layer.fontFamily || 'Arial'}"`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const textContent = layer.content || '';
-        // Center
-        const centerX = canvasSize / 2;
-        const centerY = canvasSize / 2;
-        // Shadow
-        if (layer.shadowBlur && layer.shadowBlur > 0) {
-          ctx.shadowColor = layer.shadowColor || '#000000';
-          ctx.shadowBlur = layer.shadowBlur;
-          ctx.shadowOffsetX = layer.shadowOffsetX || 0;
-          ctx.shadowOffsetY = layer.shadowOffsetY || 0;
-        }
-        // Stroke
-        if (layer.strokeWidth && layer.strokeWidth > 0) {
-          ctx.strokeStyle = layer.strokeColor || '#000000';
-          ctx.lineWidth = layer.strokeWidth;
-          ctx.strokeText(textContent, centerX, centerY);
-        }
-        // Glow
-        if (layer.glowBlur && layer.glowBlur > 0) {
-          ctx.shadowColor = layer.glowColor || '#ffffff';
-          ctx.shadowBlur = layer.glowBlur;
+        
+        // Use layer's actual position
+        const centerX = layer.x + layer.width / 2;
+        const centerY = layer.y + layer.height / 2;
+        
+        // Apply layer rotation
+        ctx.translate(centerX, centerY);
+        ctx.rotate(layer.rotation * Math.PI / 180);
+        ctx.translate(-centerX, -centerY);
+        
+        if (layer.isCircularText) {
+          // Circular text rendering
+          const radius = layer.textRadius || 150;
+          const kerning = layer.textKerning || 0;
+          const startAngle = (layer.textStartAngle || 0) * Math.PI / 180;
+          const canvasCenterX = canvasSize / 2;
+          const canvasCenterY = canvasSize / 2;
+          
+          ctx.save();
+          ctx.translate(canvasCenterX, canvasCenterY);
+          
+          // Calculate total angle needed for the text
+          let totalAngle = 0;
+          for (let i = 0; i < textContent.length; i++) {
+            totalAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+          }
+          
+          // Shadow for circular text
+          if (layer.shadowBlur && layer.shadowBlur > 0) {
+            ctx.shadowColor = layer.shadowColor || '#000000';
+            ctx.shadowBlur = layer.shadowBlur;
+            ctx.shadowOffsetX = layer.shadowOffsetX || 0;
+            ctx.shadowOffsetY = layer.shadowOffsetY || 0;
+          }
+          
+          // Stroke for circular text
+          if (layer.strokeWidth && layer.strokeWidth > 0) {
+            ctx.strokeStyle = layer.strokeColor || '#000000';
+            ctx.lineWidth = layer.strokeWidth;
+            let currentAngle = startAngle;
+            for (let i = 0; i < textContent.length; i++) {
+              ctx.save();
+              ctx.rotate(currentAngle);
+              ctx.strokeText(textContent[i], 0, -radius);
+              ctx.restore();
+              currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+            }
+          }
+          
+          // Glow for circular text
+          if (layer.glowBlur && layer.glowBlur > 0) {
+            ctx.shadowColor = layer.glowColor || '#ffffff';
+            ctx.shadowBlur = layer.glowBlur;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            let currentAngle = startAngle;
+            for (let i = 0; i < textContent.length; i++) {
+              ctx.save();
+              ctx.rotate(currentAngle);
+              ctx.fillText(textContent[i], 0, -radius);
+              ctx.restore();
+              currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+            }
+            // Draw glow multiple times for stronger effect
+            for (let i = 0; i < textContent.length; i++) {
+              ctx.save();
+              ctx.rotate(currentAngle);
+              ctx.fillText(textContent[i], 0, -radius);
+              ctx.restore();
+              currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+            }
+          }
+          
+          // Text fill for circular text
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
           ctx.shadowOffsetX = 0;
           ctx.shadowOffsetY = 0;
-          ctx.fillText(textContent, centerX, centerY);
-          ctx.fillText(textContent, centerX, centerY);
+          ctx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
+          let currentAngle = startAngle;
+          for (let i = 0; i < textContent.length; i++) {
+            ctx.save();
+            ctx.rotate(currentAngle);
+            ctx.fillText(textContent[i], 0, -radius);
+            ctx.restore();
+            currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+          }
+          
+          ctx.restore();
+        } else {
+          // Regular text rendering
+          // Shadow
+          if (layer.shadowBlur && layer.shadowBlur > 0) {
+            ctx.shadowColor = layer.shadowColor || '#000000';
+            ctx.shadowBlur = layer.shadowBlur;
+            ctx.shadowOffsetX = layer.shadowOffsetX || 0;
+            ctx.shadowOffsetY = layer.shadowOffsetY || 0;
+          }
+          // Stroke
+          if (layer.strokeWidth && layer.strokeWidth > 0) {
+            ctx.strokeStyle = layer.strokeColor || '#000000';
+            ctx.lineWidth = layer.strokeWidth;
+            ctx.strokeText(textContent, centerX, centerY);
+          }
+          // Glow
+          if (layer.glowBlur && layer.glowBlur > 0) {
+            ctx.shadowColor = layer.glowColor || '#ffffff';
+            ctx.shadowBlur = layer.glowBlur;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.fillText(textContent, centerX, centerY);
+            ctx.fillText(textContent, centerX, centerY);
+            ctx.fillText(textContent, centerX, centerY);
+          }
+          // 2. Draw text content with fill alpha
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+          ctx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
           ctx.fillText(textContent, centerX, centerY);
         }
-        // 2. Draw text content with fill alpha
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
-        ctx.fillText(textContent, centerX, centerY);
+        
         ctx.globalAlpha = 1;
         ctx.restore();
-        // 3. Apply layer opacity to the whole group (simulate by drawing to offscreen canvas if needed)
-        // (For simplicity, we apply opacity to fill only, since true group compositing is complex in 2D canvas)
+        
+        // 3. Apply layer opacity to the whole group
+        // For text, we need to apply opacity to the entire text group including effects
+        if (layer.opacity < 1) {
+          ctx.save();
+          ctx.globalAlpha = layer.opacity;
+          // Redraw the entire text with effects at reduced opacity
+          ctx.fillStyle = layer.fontColor || '#ffffff';
+          ctx.font = `${layer.fontSize || 24}px "${layer.fontFamily || 'Arial'}"`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          ctx.translate(centerX, centerY);
+          ctx.rotate(layer.rotation * Math.PI / 180);
+          ctx.translate(-centerX, -centerY);
+          
+          if (layer.isCircularText) {
+            // Circular text with opacity
+            const radius = layer.textRadius || 150;
+            const kerning = layer.textKerning || 0;
+            const startAngle = (layer.textStartAngle || 0) * Math.PI / 180;
+            const canvasCenterX = canvasSize / 2;
+            const canvasCenterY = canvasSize / 2;
+            
+            ctx.save();
+            ctx.translate(canvasCenterX, canvasCenterY);
+            
+            // Shadow for circular text
+            if (layer.shadowBlur && layer.shadowBlur > 0) {
+              ctx.shadowColor = layer.shadowColor || '#000000';
+              ctx.shadowBlur = layer.shadowBlur;
+              ctx.shadowOffsetX = layer.shadowOffsetX || 0;
+              ctx.shadowOffsetY = layer.shadowOffsetY || 0;
+            }
+            
+            // Stroke for circular text
+            if (layer.strokeWidth && layer.strokeWidth > 0) {
+              ctx.strokeStyle = layer.strokeColor || '#000000';
+              ctx.lineWidth = layer.strokeWidth;
+              let currentAngle = startAngle;
+              for (let i = 0; i < textContent.length; i++) {
+                ctx.save();
+                ctx.rotate(currentAngle);
+                ctx.strokeText(textContent[i], 0, -radius);
+                ctx.restore();
+                currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+              }
+            }
+            
+            // Glow for circular text
+            if (layer.glowBlur && layer.glowBlur > 0) {
+              ctx.shadowColor = layer.glowColor || '#ffffff';
+              ctx.shadowBlur = layer.glowBlur;
+              ctx.shadowOffsetX = 0;
+              ctx.shadowOffsetY = 0;
+              let currentAngle = startAngle;
+              for (let i = 0; i < textContent.length; i++) {
+                ctx.save();
+                ctx.rotate(currentAngle);
+                ctx.fillText(textContent[i], 0, -radius);
+                ctx.restore();
+                currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+              }
+            }
+            
+            // Text fill for circular text
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
+            let currentAngle = startAngle;
+            for (let i = 0; i < textContent.length; i++) {
+              ctx.save();
+              ctx.rotate(currentAngle);
+              ctx.fillText(textContent[i], 0, -radius);
+              ctx.restore();
+              currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+            }
+            
+            ctx.restore();
+          } else {
+            // Regular text with opacity
+            // Shadow
+            if (layer.shadowBlur && layer.shadowBlur > 0) {
+              ctx.shadowColor = layer.shadowColor || '#000000';
+              ctx.shadowBlur = layer.shadowBlur;
+              ctx.shadowOffsetX = layer.shadowOffsetX || 0;
+              ctx.shadowOffsetY = layer.shadowOffsetY || 0;
+            }
+            // Stroke
+            if (layer.strokeWidth && layer.strokeWidth > 0) {
+              ctx.strokeStyle = layer.strokeColor || '#000000';
+              ctx.lineWidth = layer.strokeWidth;
+              ctx.strokeText(textContent, centerX, centerY);
+            }
+            // Glow
+            if (layer.glowBlur && layer.glowBlur > 0) {
+              ctx.shadowColor = layer.glowColor || '#ffffff';
+              ctx.shadowBlur = layer.glowBlur;
+              ctx.shadowOffsetX = 0;
+              ctx.shadowOffsetY = 0;
+              ctx.fillText(textContent, centerX, centerY);
+              ctx.fillText(textContent, centerX, centerY);
+              ctx.fillText(textContent, centerX, centerY);
+            }
+            // Text fill
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
+            ctx.fillText(textContent, centerX, centerY);
+          }
+          ctx.restore();
+        }
       }
-      ctx.restore();
     }
     
     if (canvasShape === 'circle') {
@@ -818,7 +1020,20 @@ const LogoTokenEditor = () => {
       shadowOffsetX,
       shadowOffsetY,
       glowColor,
-      glowBlur
+      glowBlur,
+      imageAdjustments: {
+        brightness: 100,
+        contrast: 100,
+        saturation: 100,
+        blur: 0,
+        hue: 0,
+        blendMode: 'normal',
+        opacity: 100,
+        fill: 100,
+        sepia: 0,
+        invert: false,
+        grayscale: false
+      }
     };
     
     setLayers(prev => [...prev, newLayer]);
@@ -1424,6 +1639,76 @@ const LogoTokenEditor = () => {
                     </div>
                   </div>
                   
+                      {/* Fill and Opacity */}
+                      <div className="p-1 border-t border-vibrant-purple/20 pt-4 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-gray-300">Fill: {selectedLayer && layers.find(l => l.id === selectedLayer)?.imageAdjustments?.fill || 100}%</Label>
+                            <Slider
+                              value={[selectedLayer && layers.find(l => l.id === selectedLayer)?.imageAdjustments?.fill || 100]}
+                              onValueChange={(value) => {
+                                const fill = value[0];
+                                if (selectedLayer) {
+                                  const layer = layers.find(l => l.id === selectedLayer);
+                                  if (layer) {
+                                    const currentAdjustments = layer.imageAdjustments || {
+                                      brightness: 100,
+                                      contrast: 100,
+                                      saturation: 100,
+                                      blur: 0,
+                                      hue: 0,
+                                      blendMode: 'normal',
+                                      opacity: 100,
+                                      fill: 100,
+                                      sepia: 0,
+                                      invert: false,
+                                      grayscale: false
+                                    };
+                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...currentAdjustments, fill });
+                                  }
+                                }
+                              }}
+                              max={100}
+                              min={0}
+                              step={1}
+                              className="mt-2"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-gray-300">Opacity: {selectedLayer && layers.find(l => l.id === selectedLayer)?.imageAdjustments?.opacity || 100}%</Label>
+                            <Slider
+                              value={[selectedLayer && layers.find(l => l.id === selectedLayer)?.imageAdjustments?.opacity || 100]}
+                              onValueChange={(value) => {
+                                const opacity = value[0];
+                                if (selectedLayer) {
+                                  const layer = layers.find(l => l.id === selectedLayer);
+                                  if (layer) {
+                                    const currentAdjustments = layer.imageAdjustments || {
+                                      brightness: 100,
+                                      contrast: 100,
+                                      saturation: 100,
+                                      blur: 0,
+                                      hue: 0,
+                                      blendMode: 'normal',
+                                      opacity: 100,
+                                      fill: 100,
+                                      sepia: 0,
+                                      invert: false,
+                                      grayscale: false
+                                    };
+                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...currentAdjustments, opacity });
+                                  }
+                                }
+                              }}
+                              max={100}
+                              min={0}
+                              step={1}
+                              className="mt-2"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
                       {/* Edit Selected Text */}
                   {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'text' && (
                         <div className="border-t border-vibrant-purple/20 pt-4">
@@ -1516,7 +1801,7 @@ const LogoTokenEditor = () => {
                         
                         return (
                           <>
-                            <div>
+                  <div>
                               <Label className="text-gray-300">Blend Mode</Label>
                               <select
                                 value={layerAdjustments.blendMode}
@@ -1545,7 +1830,7 @@ const LogoTokenEditor = () => {
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <Label className="text-gray-300">Opacity: {layerAdjustments.opacity}%</Label>
-                                <Slider
+                    <Slider
                                   value={[layerAdjustments.opacity]}
                                   onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, opacity: value[0] })}
                                   max={100}
@@ -1597,36 +1882,36 @@ const LogoTokenEditor = () => {
                               <Slider
                                 value={[layerAdjustments.brightness]}
                                 onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, brightness: value[0] })}
-                                max={200}
-                                min={0}
-                                step={1}
-                                className="mt-2"
-                              />
-                            </div>
-                            
-                            <div>
+                      max={200}
+                      min={0}
+                      step={1}
+                      className="mt-2"
+                    />
+                  </div>
+                  
+                  <div>
                               <Label className="text-gray-300">Contrast: {layerAdjustments.contrast}%</Label>
-                              <Slider
+                    <Slider
                                 value={[layerAdjustments.contrast]}
                                 onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, contrast: value[0] })}
-                                max={200}
-                                min={0}
-                                step={1}
-                                className="mt-2"
-                              />
-                            </div>
-                            
-                            <div>
+                      max={200}
+                      min={0}
+                      step={1}
+                      className="mt-2"
+                    />
+                  </div>
+                  
+                  <div>
                               <Label className="text-gray-300">Saturation: {layerAdjustments.saturation}%</Label>
-                              <Slider
+                    <Slider
                                 value={[layerAdjustments.saturation]}
                                 onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, saturation: value[0] })}
-                                max={200}
-                                min={0}
-                                step={1}
-                                className="mt-2"
-                              />
-                            </div>
+                      max={200}
+                      min={0}
+                      step={1}
+                      className="mt-2"
+                    />
+                  </div>
 
                             <div className="grid grid-cols-2 gap-4">
                               <div>
@@ -1691,16 +1976,16 @@ const LogoTokenEditor = () => {
                   ) : (
                     <div className="space-y-2 max-h-96 overflow-y-auto">
                       {[...layers].sort((a, b) => b.zIndex - a.zIndex).map((layer) => (
-                        <div
-                          key={layer.id}
+                      <div 
+                        key={layer.id}
                           className={`p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
-                            selectedLayer === layer.id
+                          selectedLayer === layer.id 
                               ? 'border-vibrant-purple/60 bg-vibrant-purple/10'
                               : 'border-vibrant-purple/20 bg-black/20 hover:border-vibrant-purple/40'
-                          }`}
-                          onClick={() => setSelectedLayer(layer.id)}
-                        >
-                          <div className="flex items-center justify-between">
+                        }`}
+                        onClick={() => setSelectedLayer(layer.id)}
+                      >
+                        <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                               <div className="w-6 h-6 rounded bg-vibrant-purple/20 flex items-center justify-center flex-shrink-0">
                                 {layer.type === 'image' ? (
@@ -1723,11 +2008,11 @@ const LogoTokenEditor = () => {
                             
                             <div className="flex items-center gap-1">
                               {/* Visibility toggle */}
-                              <Button
+                            <Button
                                 size="icon"
                                 variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                              onClick={(e) => {
+                                e.stopPropagation();
                                   updateLayerProperty(layer.id, 'visible', !layer.visible);
                                 }}
                                 className="w-6 h-6 hover:bg-vibrant-purple/20"
@@ -1737,14 +2022,14 @@ const LogoTokenEditor = () => {
                                 ) : (
                                   <EyeOff className="w-3 h-3 text-gray-500" />
                                 )}
-                              </Button>
+                            </Button>
                               
                               {/* Lock toggle */}
-                              <Button
+                            <Button
                                 size="icon"
                                 variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                              onClick={(e) => {
+                                e.stopPropagation();
                                   toggleLayerLock(layer.id);
                                 }}
                                 className="w-6 h-6 hover:bg-vibrant-purple/20"
@@ -1754,24 +2039,24 @@ const LogoTokenEditor = () => {
                                 ) : (
                                   <Unlock className="w-3 h-3 text-gray-300" />
                                 )}
-                              </Button>
+                            </Button>
                               
                               {/* Move up */}
-                              <Button
+                            <Button
                                 size="icon"
                                 variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                              onClick={(e) => {
+                                e.stopPropagation();
                                   moveLayerUp(layer.id);
-                                }}
+                              }}
                                 className="w-6 h-6 hover:bg-vibrant-purple/20"
                                 disabled={layer.zIndex === Math.max(...layers.map(l => l.zIndex))}
-                              >
+                            >
                                 <ChevronUp className="w-3 h-3 text-gray-300" />
-                              </Button>
+                            </Button>
                               
                               {/* Move down */}
-                              <Button
+                            <Button
                                 size="icon"
                                 variant="ghost"
                                 onClick={(e) => {
@@ -1788,35 +2073,35 @@ const LogoTokenEditor = () => {
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteLayer(layer.id);
-                                }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteLayer(layer.id);
+                              }}
                                 className="w-6 h-6 hover:bg-red-500/20 hover:text-red-400"
-                              >
+                            >
                                 <Trash2 className="w-3 h-3" />
-                              </Button>
-                            </div>
+                            </Button>
                           </div>
-                          
+                        </div>
+                        
                           {/* Layer opacity slider */}
                           <div className="mt-2">
                             <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
                               <span>Opacity</span>
                               <span>{Math.round(layer.opacity * 100)}%</span>
                             </div>
-                            <Slider
-                              value={[layer.opacity]}
-                              onValueChange={(value) => updateLayerProperty(layer.id, 'opacity', value[0])}
-                              max={1}
-                              min={0}
-                              step={0.01}
+                              <Slider
+                                value={[layer.opacity]}
+                                onValueChange={(value) => updateLayerProperty(layer.id, 'opacity', value[0])}
+                                max={1}
+                                min={0}
+                                step={0.01}
                               className="w-full"
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                              />
+                            </div>
+                      </div>
+                    ))}
+                  </div>
                   )}
                 </TabsContent>
               </Tabs>
