@@ -60,8 +60,6 @@ interface ImageAdjustments {
   hue: number;
   blendMode: string;
   opacity: number;
-  fill: number;
-  gamma: number;
   sepia: number;
   invert: boolean;
   grayscale: boolean;
@@ -310,19 +308,46 @@ const LogoTokenEditor = () => {
 
       // Only apply image adjustments to image layers
       if (layer.type === 'image' && layer.imageAdjustments) {
-        const filter = [
-          `brightness(${(layer.imageAdjustments.brightness || 100) / 100})`,
-          `contrast(${(layer.imageAdjustments.contrast || 100) / 100})`,
-          `saturate(${(layer.imageAdjustments.saturation || 100) / 100})`,
-          `blur(${(layer.imageAdjustments.blur || 0) / 10}px)`,
-          `hue-rotate(${layer.imageAdjustments.hue || 0}deg)`,
-          `opacity(${(layer.imageAdjustments.opacity || 100) / 100})`,
-          `sepia(${(layer.imageAdjustments.sepia || 0) / 100})`,
-          `gamma(${(layer.imageAdjustments.gamma || 100) / 100})`,
-          layer.imageAdjustments.invert ? 'invert(1)' : 'none',
-          layer.imageAdjustments.grayscale ? 'grayscale(1)' : 'none'
-        ].filter(f => f !== 'none').join(' ');
-        ctx.filter = filter;
+        const adjustments = layer.imageAdjustments;
+        const filterParts = [];
+        
+        // Only add filters that have meaningful values
+        if (adjustments.brightness !== 100) {
+          filterParts.push(`brightness(${adjustments.brightness / 100})`);
+        }
+        if (adjustments.contrast !== 100) {
+          filterParts.push(`contrast(${adjustments.contrast / 100})`);
+        }
+        if (adjustments.saturation !== 100) {
+          filterParts.push(`saturate(${adjustments.saturation / 100})`);
+        }
+        if (adjustments.blur > 0) {
+          filterParts.push(`blur(${adjustments.blur / 10}px)`);
+        }
+        if (adjustments.hue !== 0) {
+          filterParts.push(`hue-rotate(${adjustments.hue}deg)`);
+        }
+        if (adjustments.sepia > 0) {
+          filterParts.push(`sepia(${adjustments.sepia / 100})`);
+        }
+        if (adjustments.invert) {
+          filterParts.push('invert(1)');
+        }
+        if (adjustments.grayscale) {
+          filterParts.push('grayscale(1)');
+        }
+        
+        // Apply the filter if there are any parts
+        if (filterParts.length > 0) {
+          ctx.filter = filterParts.join(' ');
+        } else {
+          ctx.filter = 'none';
+        }
+        
+        // Apply opacity separately since it's not a filter
+        if (adjustments.opacity !== 100) {
+          ctx.globalAlpha = layer.opacity * (adjustments.opacity / 100);
+        }
       } else {
         ctx.filter = 'none';
       }
@@ -670,8 +695,6 @@ const LogoTokenEditor = () => {
           hue: 0,
           blendMode: 'normal',
           opacity: 100,
-          fill: 100,
-          gamma: 100,
           sepia: 0,
           invert: false,
           grayscale: false
@@ -718,8 +741,6 @@ const LogoTokenEditor = () => {
           hue: 0,
           blendMode: 'normal',
           opacity: 100,
-          fill: 100,
-          gamma: 100,
           sepia: 0,
           invert: false,
           grayscale: false
@@ -781,8 +802,6 @@ const LogoTokenEditor = () => {
               hue: 0,
               blendMode: 'normal',
               opacity: 100,
-              fill: 100,
-              gamma: 100,
               sepia: 0,
               invert: false,
               grayscale: false
@@ -1490,8 +1509,6 @@ const LogoTokenEditor = () => {
                                 hue: 0,
                                 blendMode: 'normal',
                                 opacity: 100,
-                                fill: 100,
-                                gamma: 100,
                                 sepia: 0,
                                 invert: false,
                                 grayscale: false
@@ -1518,8 +1535,6 @@ const LogoTokenEditor = () => {
                             hue: 0,
                             blendMode: 'normal',
                             opacity: 100,
-                            fill: 100,
-                            gamma: 100,
                             sepia: 0,
                             invert: false,
                             grayscale: false
@@ -1571,11 +1586,11 @@ const LogoTokenEditor = () => {
                                 />
                               </div>
                               <div>
-                                <Label className="text-gray-300">Fill: {layerAdjustments.fill}%</Label>
+                                <Label className="text-gray-300">Blur: {layerAdjustments.blur}px</Label>
                                 <Slider
-                                  value={[layerAdjustments.fill]}
-                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, fill: value[0] })}
-                                  max={100}
+                                  value={[layerAdjustments.blur]}
+                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, blur: value[0] })}
+                                  max={50}
                                   min={0}
                                   step={1}
                                   className="mt-2"
@@ -1621,36 +1636,11 @@ const LogoTokenEditor = () => {
 
                             <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <Label className="text-gray-300">Blur: {layerAdjustments.blur}px</Label>
-                                <Slider
-                                  value={[layerAdjustments.blur]}
-                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, blur: value[0] })}
-                                  max={50}
-                                  min={0}
-                                  step={1}
-                                  className="mt-2"
-                                />
-                              </div>
-                              <div>
                                 <Label className="text-gray-300">Hue: {layerAdjustments.hue}°</Label>
                                 <Slider
                                   value={[layerAdjustments.hue]}
                                   onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, hue: value[0] })}
                                   max={360}
-                                  min={0}
-                                  step={1}
-                                  className="mt-2"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <Label className="text-gray-300">Gamma: {layerAdjustments.gamma}%</Label>
-                                <Slider
-                                  value={[layerAdjustments.gamma]}
-                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, gamma: value[0] })}
-                                  max={200}
                                   min={0}
                                   step={1}
                                   className="mt-2"
