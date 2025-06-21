@@ -308,19 +308,24 @@ const LogoTokenEditor = () => {
         ctx.globalCompositeOperation = layer.imageAdjustments.blendMode as GlobalCompositeOperation;
       }
 
-      const filter = [
-        `brightness(${layer.type === 'image' ? (layer.imageAdjustments?.brightness || 100) / 100 : 1})`,
-        `contrast(${layer.type === 'image' ? (layer.imageAdjustments?.contrast || 100) / 100 : 1})`,
-        `saturate(${layer.type === 'image' ? (layer.imageAdjustments?.saturation || 100) / 100 : 1})`,
-        `blur(${layer.type === 'image' ? (layer.imageAdjustments?.blur || 0) / 10 : 0}px)`,
-        `hue-rotate(${layer.type === 'image' ? (layer.imageAdjustments?.hue || 0) : 0}deg)`,
-        `opacity(${layer.type === 'image' ? (layer.imageAdjustments?.opacity || 100) / 100 : 1})`,
-        `sepia(${layer.type === 'image' ? (layer.imageAdjustments?.sepia || 0) / 100 : 0})`,
-        `gamma(${layer.type === 'image' ? (layer.imageAdjustments?.gamma || 100) / 100 : 1})`,
-        layer.imageAdjustments?.invert ? 'invert(1)' : 'none',
-        layer.imageAdjustments?.grayscale ? 'grayscale(1)' : 'none'
-      ].filter(f => f !== 'none').join(' ');
-      ctx.filter = filter;
+      // Only apply image adjustments to image layers
+      if (layer.type === 'image' && layer.imageAdjustments) {
+        const filter = [
+          `brightness(${(layer.imageAdjustments.brightness || 100) / 100})`,
+          `contrast(${(layer.imageAdjustments.contrast || 100) / 100})`,
+          `saturate(${(layer.imageAdjustments.saturation || 100) / 100})`,
+          `blur(${(layer.imageAdjustments.blur || 0) / 10}px)`,
+          `hue-rotate(${layer.imageAdjustments.hue || 0}deg)`,
+          `opacity(${(layer.imageAdjustments.opacity || 100) / 100})`,
+          `sepia(${(layer.imageAdjustments.sepia || 0) / 100})`,
+          `gamma(${(layer.imageAdjustments.gamma || 100) / 100})`,
+          layer.imageAdjustments.invert ? 'invert(1)' : 'none',
+          layer.imageAdjustments.grayscale ? 'grayscale(1)' : 'none'
+        ].filter(f => f !== 'none').join(' ');
+        ctx.filter = filter;
+      } else {
+        ctx.filter = 'none';
+      }
       
       if (layer.type === 'image') {
         const img = new Image();
@@ -358,7 +363,18 @@ const LogoTokenEditor = () => {
             const angleForChar = (charWidth / 2) / radius;
               ctx.rotate(angleForChar);
             
-            // Apply shadow first
+            // Apply glow effect first (multiple passes for stronger glow)
+            if (layer.glowBlur && layer.glowBlur > 0) {
+              ctx.shadowColor = layer.glowColor || '#ffffff';
+              ctx.shadowBlur = layer.glowBlur;
+              ctx.shadowOffsetX = 0;
+              ctx.shadowOffsetY = 0;
+              ctx.fillText(char, 0, -radius);
+              ctx.fillText(char, 0, -radius);
+              ctx.fillText(char, 0, -radius);
+            }
+            
+            // Apply shadow
             if (layer.shadowBlur && layer.shadowBlur > 0) {
               ctx.shadowColor = layer.shadowColor || '#000000';
               ctx.shadowBlur = layer.shadowBlur;
@@ -384,7 +400,18 @@ const LogoTokenEditor = () => {
       }
       ctx.restore();
         } else {
-          // Apply shadow first
+          // Apply glow effect first (multiple passes for stronger glow)
+          if (layer.glowBlur && layer.glowBlur > 0) {
+            ctx.shadowColor = layer.glowColor || '#ffffff';
+            ctx.shadowBlur = layer.glowBlur;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.fillText(textContent, centerX, centerY);
+            ctx.fillText(textContent, centerX, centerY);
+            ctx.fillText(textContent, centerX, centerY);
+          }
+          
+          // Apply shadow
           if (layer.shadowBlur && layer.shadowBlur > 0) {
             ctx.shadowColor = layer.shadowColor || '#000000';
             ctx.shadowBlur = layer.shadowBlur;
@@ -847,7 +874,13 @@ const LogoTokenEditor = () => {
       const newLayers = [...prev];
       const currentIndex = newLayers.findIndex(l => l.id === layerId);
       if (currentIndex > 0) {
+        // Swap the layers
         [newLayers[currentIndex], newLayers[currentIndex - 1]] = [newLayers[currentIndex - 1], newLayers[currentIndex]];
+        
+        // Update zIndex values to match the new order
+        newLayers.forEach((layer, index) => {
+          layer.zIndex = index;
+        });
       }
       return newLayers;
     });
@@ -858,7 +891,13 @@ const LogoTokenEditor = () => {
       const newLayers = [...prev];
       const currentIndex = newLayers.findIndex(l => l.id === layerId);
       if (currentIndex < newLayers.length - 1) {
+        // Swap the layers
         [newLayers[currentIndex], newLayers[currentIndex + 1]] = [newLayers[currentIndex + 1], newLayers[currentIndex]];
+        
+        // Update zIndex values to match the new order
+        newLayers.forEach((layer, index) => {
+          layer.zIndex = index;
+        });
       }
       return newLayers;
     });
@@ -1442,7 +1481,7 @@ const LogoTokenEditor = () => {
                           size="sm" 
                           onClick={() => {
                             const layer = layers.find(l => l.id === selectedLayer);
-                            if (layer && layer.imageAdjustments) {
+                            if (layer) {
                               updateLayerProperty(selectedLayer, 'imageAdjustments', {
                                 brightness: 100,
                                 contrast: 100,
@@ -1467,7 +1506,28 @@ const LogoTokenEditor = () => {
                       
                       {(() => {
                         const layer = layers.find(l => l.id === selectedLayer);
-                        const layerAdjustments = layer?.imageAdjustments;
+                        let layerAdjustments = layer?.imageAdjustments;
+                        
+                        // Initialize imageAdjustments if it doesn't exist
+                        if (!layerAdjustments && layer?.type === 'image') {
+                          layerAdjustments = {
+                            brightness: 100,
+                            contrast: 100,
+                            saturation: 100,
+                            blur: 0,
+                            hue: 0,
+                            blendMode: 'normal',
+                            opacity: 100,
+                            fill: 100,
+                            gamma: 100,
+                            sepia: 0,
+                            invert: false,
+                            grayscale: false
+                          };
+                          // Update the layer with the initialized adjustments
+                          updateLayerProperty(selectedLayer, 'imageAdjustments', layerAdjustments);
+                        }
+                        
                         if (!layerAdjustments) return null;
                         
                         return (
@@ -1561,6 +1621,31 @@ const LogoTokenEditor = () => {
 
                             <div className="grid grid-cols-2 gap-4">
                               <div>
+                                <Label className="text-gray-300">Blur: {layerAdjustments.blur}px</Label>
+                                <Slider
+                                  value={[layerAdjustments.blur]}
+                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, blur: value[0] })}
+                                  max={50}
+                                  min={0}
+                                  step={1}
+                                  className="mt-2"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-gray-300">Hue: {layerAdjustments.hue}°</Label>
+                                <Slider
+                                  value={[layerAdjustments.hue]}
+                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, hue: value[0] })}
+                                  max={360}
+                                  min={0}
+                                  step={1}
+                                  className="mt-2"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
                                 <Label className="text-gray-300">Gamma: {layerAdjustments.gamma}%</Label>
                                 <Slider
                                   value={[layerAdjustments.gamma]}
@@ -1611,10 +1696,9 @@ const LogoTokenEditor = () => {
                       })()}
                     </>
                   ) : (
-                    <div className="text-center py-8 text-gray-400">
-                      <Palette className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No image selected</p>
-                      <p className="text-xs">Select an image layer to adjust its properties</p>
+                    <div className="text-center text-gray-400 py-8">
+                      <Palette className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>Select an image layer to adjust its properties</p>
                     </div>
                   )}
                 </TabsContent>
