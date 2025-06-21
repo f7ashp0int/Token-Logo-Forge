@@ -659,7 +659,7 @@ const LogoTokenEditor = () => {
           hue: 0,
           blendMode: 'normal',
           opacity: 100,
-          fill: 0,
+          fill: 100,
           sepia: 0,
           invert: false,
           grayscale: false
@@ -706,7 +706,7 @@ const LogoTokenEditor = () => {
           hue: 0,
           blendMode: 'normal',
           opacity: 100,
-          fill: 0,
+          fill: 100,
           sepia: 0,
           invert: false,
           grayscale: false
@@ -768,7 +768,7 @@ const LogoTokenEditor = () => {
               hue: 0,
               blendMode: 'normal',
               opacity: 100,
-              fill: 0,
+              fill: 100,
               sepia: 0,
               invert: false,
               grayscale: false
@@ -1476,7 +1476,7 @@ const LogoTokenEditor = () => {
                                 hue: 0,
                                 blendMode: 'normal',
                                 opacity: 100,
-                                fill: 0,
+                                fill: 100,
                                 sepia: 0,
                                 invert: false,
                                 grayscale: false
@@ -1503,7 +1503,7 @@ const LogoTokenEditor = () => {
                             hue: 0,
                             blendMode: 'normal',
                             opacity: 100,
-                            fill: 0,
+                            fill: 100,
                             sepia: 0,
                             invert: false,
                             grayscale: false
