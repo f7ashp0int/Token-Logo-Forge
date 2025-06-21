@@ -899,7 +899,7 @@ const LogoTokenEditor = () => {
         opacity: 1,
         visible: true,
         locked: true,
-        zIndex: 1000, // Ensure it's on top
+        zIndex: layers.length, // Ensure it's on top
         imageAdjustments: {
           brightness: 100,
           contrast: 100,
@@ -920,7 +920,7 @@ const LogoTokenEditor = () => {
       setMainView('canvas');
       toast.success(`${template.name} template applied!`);
     }
-  }, [canvasSize, canvasShape, canvasBorderWidth, canvasBorderColor]);
+  }, [canvasSize, canvasShape, canvasBorderWidth, canvasBorderColor, rimShadow, layers]);
 
   const handleImageUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -961,7 +961,7 @@ const LogoTokenEditor = () => {
             opacity: 1,
             visible: true,
             locked: false,
-            zIndex: (Math.max(...layers.map(l => l.zIndex), -1) + 1),
+            zIndex: layers.length,
             imageAdjustments: {
               brightness: 100,
               contrast: 100,
@@ -1005,7 +1005,7 @@ const LogoTokenEditor = () => {
       opacity: 1,
       visible: true,
       locked: false,
-      zIndex: (Math.max(...layers.map(l => l.zIndex), -1) + 1),
+      zIndex: layers.length,
       isCircularText,
       textRadius: isCircularText ? textRadius : undefined,
       fontSize,
@@ -1078,7 +1078,7 @@ const LogoTokenEditor = () => {
         // Swap the layers
         [newLayers[currentIndex], newLayers[currentIndex - 1]] = [newLayers[currentIndex - 1], newLayers[currentIndex]];
         
-        // Update zIndex values to match the new order
+        // Update zIndex values to match the new order (0 = bottom, length-1 = top)
         newLayers.forEach((layer, index) => {
           layer.zIndex = index;
         });
@@ -1095,7 +1095,7 @@ const LogoTokenEditor = () => {
         // Swap the layers
         [newLayers[currentIndex], newLayers[currentIndex + 1]] = [newLayers[currentIndex + 1], newLayers[currentIndex]];
         
-        // Update zIndex values to match the new order
+        // Update zIndex values to match the new order (0 = bottom, length-1 = top)
         newLayers.forEach((layer, index) => {
           layer.zIndex = index;
         });
@@ -2050,7 +2050,7 @@ const LogoTokenEditor = () => {
                                   moveLayerUp(layer.id);
                               }}
                                 className="w-6 h-6 hover:bg-vibrant-purple/20"
-                                disabled={layer.zIndex === Math.max(...layers.map(l => l.zIndex))}
+                                disabled={layer.zIndex === 0}
                             >
                                 <ChevronUp className="w-3 h-3 text-gray-300" />
                             </Button>
@@ -2064,7 +2064,7 @@ const LogoTokenEditor = () => {
                                   moveLayerDown(layer.id);
                                 }}
                                 className="w-6 h-6 hover:bg-vibrant-purple/20"
-                                disabled={layer.zIndex === Math.min(...layers.map(l => l.zIndex))}
+                                disabled={layer.zIndex === layers.length - 1}
                               >
                                 <ChevronDown className="w-3 h-3 text-gray-300" />
                               </Button>
