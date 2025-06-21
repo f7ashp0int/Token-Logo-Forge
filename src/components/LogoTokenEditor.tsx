@@ -812,7 +812,7 @@ const LogoTokenEditor = () => {
     setSelectedLayer(newLayer.id);
     setTextInput('');
     toast.success(`${isCircularText ? 'Circular' : 'Regular'} text layer added`);
-  }, [textInput, fontSize, textColor, isCircularText, textRadius, textKerning, textStartAngle, layers, canvasSize, fontFamily]);
+  }, [textInput, fontSize, textColor, isCircularText, textRadius, textKerning, textStartAngle, layers, canvasSize, fontFamily, strokeColor, strokeWidth, shadowColor, shadowBlur, shadowOffsetX, shadowOffsetY, glowColor, glowBlur]);
 
   const updateLayerProperty = useCallback(<K extends keyof Layer>(layerId: string, property: K, value: Layer[K]) => {
     setLayers(prev => prev.map(layer => 
@@ -896,7 +896,7 @@ const LogoTokenEditor = () => {
         }
       }
     }
-  }, [selectedLayer, layers]);
+  }, [selectedLayer, layers, canvasSize]);
 
   const handleExport = () => {
     const canvas = canvasRef.current;
