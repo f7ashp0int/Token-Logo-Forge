@@ -1175,17 +1175,17 @@ const LogoTokenEditor = () => {
           {/* Tools Panel */}
           <div className="lg:col-span-3">
             <div className="sticky top-6">
-              <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 h-[calc(100vh-12rem)] rounded-2xl shadow-lg">
-                <ScrollArea className="h-full w-full pr-4">
-              <Tabs defaultValue="upload" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4 bg-black/20">
+              <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 h-[calc(100vh-12rem)] rounded-2xl shadow-lg flex flex-col">
+                <Tabs defaultValue="upload" className="w-full flex flex-col h-full">
+                    <TabsList className="grid w-full grid-cols-4 bg-black/20 flex-shrink-0">
                       <TabsTrigger value="upload" className="data-[state=active]:bg-vibrant-purple/20 text-gray-200 hover:text-white hover:bg-vibrant-purple/10"><Upload className="w-4 h-4" /></TabsTrigger>
                       <TabsTrigger value="text" className="data-[state=active]:bg-vibrant-purple/20 text-gray-200 hover:text-white hover:bg-vibrant-purple/10"><Type className="w-4 h-4" /></TabsTrigger>
                       <TabsTrigger value="adjust" className="data-[state=active]:bg-vibrant-purple/20 text-gray-200 hover:text-white hover:bg-vibrant-purple/10"><Palette className="w-4 h-4" /></TabsTrigger>
                       <TabsTrigger value="layers" className="data-[state=active]:bg-vibrant-purple/20 text-gray-200 hover:text-white hover:bg-vibrant-purple/10"><Layers className="w-4 h-4" /></TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="upload" className="space-y-4 mt-4">
+                <div className="flex-grow mt-4 overflow-hidden">
+                    <ScrollArea className="h-full w-full pr-4">
+                <TabsContent value="upload" className="space-y-4">
                       <div className="space-y-2">
                         <Label className="text-sm font-medium text-gray-300">Upload Image</Label>
                         <Input
@@ -1346,7 +1346,7 @@ const LogoTokenEditor = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="text" className="space-y-4 mt-4">
+                <TabsContent value="text" className="space-y-4">
                       {/* Add Text */}
                       <div className="p-1">
                         <Label className="text-gray-300 font-semibold">Add Text</Label>
@@ -1365,365 +1365,17 @@ const LogoTokenEditor = () => {
                     </Button>
                         </div>
                   </div>
-                  
-                      {/* Font Properties */}
-                      <div className="p-1 border-t border-vibrant-purple/20 pt-4">
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                          <div className="col-span-1">
-                            <Label className="text-gray-300">Font Family</Label>
-                          </div>
-                          <div className="col-span-1">
-                            <Label className="text-gray-300">Font Size: {fontSize}px</Label>
-                          </div>
-                          <div className="col-span-1">
-                    <select
-                      value={fontFamily}
-                      onChange={async (e) => {
-                        const newFont = e.target.value;
-                        setFontLoadingStatus(`Loading ${newFont}...`);
-                        if (GOOGLE_FONTS.includes(newFont)) {
-                          const fontUrl = `https://fonts.googleapis.com/css2?family=${newFont.replace(/\s+/g, '+')}:wght@400&display=swap`;
-                                  if (![...document.querySelectorAll('link[rel="stylesheet"]')].some(l => (l as HTMLLinkElement).href === fontUrl)) {
-                            const link = document.createElement('link');
-                            link.href = fontUrl;
-                            link.rel = 'stylesheet';
-                            document.head.appendChild(link);
-                          }
-                          try {
-                            await document.fonts.load(`1em "${newFont}"`);
-                            setFontFamily(newFont);
-                            if (selectedLayer) updateLayerProperty(selectedLayer, 'fontFamily', newFont);
-                            setFontChangeTrigger(prev => prev + 1);
-                            setFontLoadingStatus(`Font ${newFont} loaded!`);
-                            setTimeout(() => setFontLoadingStatus(''), 1500);
-                          } catch (err) {
-                            setFontLoadingStatus(`Failed to load ${newFont}`);
-                            toast.error(`Could not load font "${newFont}"`);
-                            setTimeout(() => setFontLoadingStatus(''), 3000);
-                          }
-                        } else {
-                          setFontFamily(newFont);
-                          if (selectedLayer) updateLayerProperty(selectedLayer, 'fontFamily', newFont);
-                          setFontChangeTrigger(prev => prev + 1);
-                          setFontLoadingStatus(`Font ${newFont} loaded!`);
-                          setTimeout(() => setFontLoadingStatus(''), 1000);
-                        }
-                      }}
-                              className="w-full mt-1 border rounded p-2 bg-black/20 border-vibrant-purple/30 text-gray-200 hover:border-vibrant-purple/50"
-                      style={{ fontFamily }}
-                    >
-                      <optgroup label="Google Fonts">
-                        {GOOGLE_FONTS.map(font => (
-                          <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Fontsource">
-                        {FONTSOURCE_FONTS.map(font => (
-                          <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Open Foundry">
-                        {OPEN_FOUNDRY_FONTS.map(font => (
-                          <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
-                        ))}
-                      </optgroup>
-                    </select>
-                    {fontLoadingStatus && (
-                              <p className="text-xs text-vibrant-purple/70 mt-1">{fontLoadingStatus}</p>
-                    )}
-                  </div>
-                          <div className="col-span-1 space-y-1">
-                    <Slider
-                      value={[fontSize]}
-                      onValueChange={(value) => {
-                        const size = value[0];
-                        setFontSize(size);
-                        if (selectedLayer) {
-                          updateLayerProperty(selectedLayer, 'fontSize', size);
-                        }
-                      }}
-                      max={500}
-                      min={10}
-                      step={1}
-                            />
-                            <div className="flex justify-end items-center pt-2">
-                               <Label className="text-gray-300 mr-2">Text Color</Label>
-                               <ColorPicker
-                                color={textColor}
-                                onChange={(color) => {
-                                  setTextColor(color);
-                                  if (selectedLayer) {
-                                    updateLayerProperty(selectedLayer, 'fontColor', color);
-                                  }
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                  </div>
-                  
-                      {/* Circular Text */}
-                      <div className="p-1 border-t border-vibrant-purple/20 pt-4">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id="circular-text"
-                            checked={isCircularText}
-                          onChange={(e) => {
-                              const checked = e.target.checked;
-                              setIsCircularText(checked);
-                              if (selectedLayer) {
-                                updateLayerProperty(selectedLayer, 'isCircularText', checked);
-                              }
-                            }}
-                            className="rounded"
-                          />
-                          <Label htmlFor="circular-text" className="text-sm text-gray-300">Circular Text</Label>
-                        </div>
-                        
-                        {isCircularText && (
-                          <div className="mt-2 space-y-2 border-l-2 border-vibrant-purple/30 pl-4 ml-2">
-                            <div>
-                              <Label className="text-sm text-gray-300">Radius: {textRadius}px</Label>
-                              <Slider
-                                value={[textRadius]}
-                                onValueChange={(value) => {
-                                  const r = value[0];
-                                  setTextRadius(r);
-                                  if (selectedLayer) {
-                                    updateLayerProperty(selectedLayer, 'textRadius', r);
-                                  }
-                                }}
-                                max={200}
-                                min={50}
-                                step={5}
-                                className="mt-1"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-sm text-gray-300">Character Spacing: {textKerning}px</Label>
-                              <Slider
-                                value={[textKerning]}
-                                onValueChange={(value) => {
-                                  const k = value[0];
-                                  setTextKerning(k);
-                                  if (selectedLayer) {
-                                    updateLayerProperty(selectedLayer, 'textKerning', k);
-                                  }
-                                }}
-                                max={50}
-                                min={-10}
-                                step={1}
-                                className="mt-1"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-sm text-gray-300">Start Angle: {textStartAngle}°</Label>
-                              <Slider
-                                value={[textStartAngle]}
-                                onValueChange={(value) => {
-                                  const a = value[0];
-                                  setTextStartAngle(a);
-                                  if (selectedLayer) {
-                                    updateLayerProperty(selectedLayer, 'textStartAngle', a);
-                                  }
-                                }}
-                                max={360}
-                                min={0}
-                                step={1}
-                                className="mt-1"
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Effects */}
-                      <div className="p-1 border-t border-vibrant-purple/20 pt-4 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label className="text-gray-300">Stroke</Label>
-                            <div className="flex gap-2 mt-2 items-center">
-                        <Slider
-                          value={[strokeWidth]}
-                          onValueChange={(value) => {
-                            const width = value[0];
-                            setStrokeWidth(width);
-                            if (selectedLayer) updateLayerProperty(selectedLayer, 'strokeWidth', width);
-                          }}
-                          max={10}
-                          min={0}
-                          step={0.5}
-                              />
-                              <ColorPicker
-                                color={strokeColor}
-                                onChange={(color) => {
-                            setStrokeColor(color);
-                            if (selectedLayer) updateLayerProperty(selectedLayer, 'strokeColor', color);
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                            <Label className="text-gray-300">Glow</Label>
-                            <div className="flex gap-2 mt-2 items-center">
-                              <Slider
-                                value={[glowBlur]}
-                                onValueChange={(value) => {
-                                  const blur = value[0];
-                                  setGlowBlur(blur);
-                                  if (selectedLayer) updateLayerProperty(selectedLayer, 'glowBlur', blur);
-                                }}
-                                max={20}
-                                min={0}
-                                step={1}
-                              />
-                              <ColorPicker
-                                color={glowColor}
-                                onChange={(color) => {
-                                  setGlowColor(color);
-                                  if (selectedLayer) updateLayerProperty(selectedLayer, 'glowColor', color);
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-gray-300">Shadow</Label>
-                          <div className="flex gap-2 mt-2 items-center">
-                        <Slider
-                          value={[shadowBlur]}
-                          onValueChange={(value) => {
-                            const blur = value[0];
-                            setShadowBlur(blur);
-                            if (selectedLayer) updateLayerProperty(selectedLayer, 'shadowBlur', blur);
-                          }}
-                          max={20}
-                          min={0}
-                          step={1}
-                            />
-                            <ColorPicker
-                              color={shadowColor}
-                              onChange={(color) => {
-                            setShadowColor(color);
-                            if (selectedLayer) updateLayerProperty(selectedLayer, 'shadowColor', color);
-                          }}
-                        />
-                      </div>
-                          <div className="grid grid-cols-2 gap-4 mt-2">
-                            <div>
-                              <Label className="text-xs font-medium text-gray-300">X Offset: {shadowOffsetX}px</Label>
-                        <Slider
-                          value={[shadowOffsetX]}
-                          onValueChange={(value) => {
-                            const x = value[0];
-                            setShadowOffsetX(x);
-                            if (selectedLayer) updateLayerProperty(selectedLayer, 'shadowOffsetX', x);
-                          }}
-                          max={20}
-                          min={-20}
-                          step={1}
-                        />
-                            </div>
-                            <div>
-                              <Label className="text-xs font-medium text-gray-300">Y Offset: {shadowOffsetY}px</Label>
-                        <Slider
-                          value={[shadowOffsetY]}
-                          onValueChange={(value) => {
-                            const y = value[0];
-                            setShadowOffsetY(y);
-                            if (selectedLayer) updateLayerProperty(selectedLayer, 'shadowOffsetY', y);
-                          }}
-                          max={20}
-                          min={-20}
-                          step={1}
-                        />
-                      </div>
-                    </div>
-                    </div>
-                  </div>
-                  
-                      {/* Fill and Opacity */}
-                      <div className="p-1 border-t border-vibrant-purple/20 pt-4 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                    <div>
-                            <Label className="text-gray-300">Fill: {selectedLayer && layers.find(l => l.id === selectedLayer)?.imageAdjustments?.fill || 100}%</Label>
-                        <Slider
-                              value={[selectedLayer && layers.find(l => l.id === selectedLayer)?.imageAdjustments?.fill || 100]}
-                          onValueChange={(value) => {
-                                const fill = value[0];
-                                if (selectedLayer) {
-                                  const layer = layers.find(l => l.id === selectedLayer);
-                                  if (layer) {
-                                    const currentAdjustments = layer.imageAdjustments || {
-                                      brightness: 100,
-                                      contrast: 100,
-                                      saturation: 100,
-                                      blur: 0,
-                                      hue: 0,
-                                      blendMode: 'normal',
-                                      opacity: 100,
-                                      fill: 100,
-                                      sepia: 0,
-                                      invert: false,
-                                      grayscale: false
-                                    };
-                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...currentAdjustments, fill });
-                                  }
-                                }
-                              }}
-                              max={100}
-                          min={0}
-                          step={1}
-                              className="mt-2"
-                        />
-                      </div>
-                  <div>
-                            <Label className="text-gray-300">Opacity: {selectedLayer && layers.find(l => l.id === selectedLayer)?.imageAdjustments?.opacity || 100}%</Label>
-                            <Slider
-                              value={[selectedLayer && layers.find(l => l.id === selectedLayer)?.imageAdjustments?.opacity || 100]}
-                              onValueChange={(value) => {
-                                const opacity = value[0];
-                        if (selectedLayer) {
-                                  const layer = layers.find(l => l.id === selectedLayer);
-                                  if (layer) {
-                                    const currentAdjustments = layer.imageAdjustments || {
-                                      brightness: 100,
-                                      contrast: 100,
-                                      saturation: 100,
-                                      blur: 0,
-                                      hue: 0,
-                                      blendMode: 'normal',
-                                      opacity: 100,
-                                      fill: 100,
-                                      sepia: 0,
-                                      invert: false,
-                                      grayscale: false
-                                    };
-                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...currentAdjustments, opacity });
-                                  }
-                                }
-                              }}
-                              max={100}
-                              min={0}
-                              step={1}
-                              className="mt-2"
-                            />
-                          </div>
-                        </div>
-                  </div>
 
-                      {/* Edit Selected Text */}
+                  {/* Edit Selected Text */}
                   {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'text' && (
-                        <div className="border-t border-vibrant-purple/20 pt-4">
-                          <Label className="text-sm font-medium text-gray-300">Edit Selected Text</Label>
+                    <div className="border-t border-vibrant-purple/20 pt-4">
+                      <Label className="text-sm font-medium text-gray-300">Edit Selected Text</Label>
                       <Input
                         value={layers.find(l => l.id === selectedLayer)?.content || ''}
                         onChange={(e) => updateLayerProperty(selectedLayer, 'content', e.target.value)}
                         placeholder="Edit text..."
-                            className="mt-2 bg-black/20 border-vibrant-purple/30 rounded-md text-gray-200"
+                        className="mt-2 bg-black/20 border-vibrant-purple/30 rounded-md text-gray-200"
                       />
-                      
                       <div className="flex items-center space-x-2 mt-2">
                         <input
                           type="checkbox"
@@ -1740,13 +1392,131 @@ const LogoTokenEditor = () => {
                           }}
                           className="rounded"
                         />
-                            <Label htmlFor="convert-circular" className="text-sm text-gray-300">Convert to Circular Text</Label>
+                        <Label htmlFor="convert-circular" className="text-sm text-gray-300">Convert to Circular Text</Label>
                       </div>
                     </div>
                   )}
+
+                  {/* Font Properties */}
+                  <div className="p-1 border-t border-vibrant-purple/20 pt-4">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      <div className="col-span-1">
+                        <Label className="text-sm font-medium text-gray-300">Font Size</Label>
+                        <Slider
+                          value={[fontSize]}
+                          onValueChange={(value) => setFontSize(value[0])}
+                          max={72}
+                          min={12}
+                          step={1}
+                          className="mt-2"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Label className="text-sm font-medium text-gray-300">Font Color</Label>
+                        <ColorPicker
+                          color={textColor}
+                          onChange={setTextColor}
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Label className="text-sm font-medium text-gray-300">Font Family</Label>
+                        <select
+                          value={fontFamily}
+                          onChange={(e) => setFontFamily(e.target.value)}
+                          className="w-full mt-2 p-2 bg-black/20 border border-vibrant-purple/30 rounded-md text-gray-200"
+                        >
+                          {GOOGLE_FONTS.map((font) => (
+                            <option key={font} value={font}>{font}</option>
+                          ))}
+                          {FONTSOURCE_FONTS.map((font) => (
+                            <option key={font} value={font}>{font}</option>
+                          ))}
+                          {OPEN_FOUNDRY_FONTS.map((font) => (
+                            <option key={font} value={font}>{font}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="col-span-1">
+                        <Label className="text-sm font-medium text-gray-300">Stroke Color</Label>
+                        <ColorPicker
+                          color={strokeColor}
+                          onChange={setStrokeColor}
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Label className="text-sm font-medium text-gray-300">Stroke Width</Label>
+                        <Slider
+                          value={[strokeWidth]}
+                          onValueChange={(value) => setStrokeWidth(value[0])}
+                          max={10}
+                          min={0}
+                          step={1}
+                          className="mt-2"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Label className="text-sm font-medium text-gray-300">Shadow Color</Label>
+                        <ColorPicker
+                          color={shadowColor}
+                          onChange={setShadowColor}
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Label className="text-sm font-medium text-gray-300">Shadow Blur</Label>
+                        <Slider
+                          value={[shadowBlur]}
+                          onValueChange={(value) => setShadowBlur(value[0])}
+                          max={50}
+                          min={0}
+                          step={1}
+                          className="mt-2"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Label className="text-sm font-medium text-gray-300">Shadow Offset X</Label>
+                        <Slider
+                          value={[shadowOffsetX]}
+                          onValueChange={(value) => setShadowOffsetX(value[0])}
+                          max={50}
+                          min={-50}
+                          step={1}
+                          className="mt-2"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Label className="text-sm font-medium text-gray-300">Shadow Offset Y</Label>
+                        <Slider
+                          value={[shadowOffsetY]}
+                          onValueChange={(value) => setShadowOffsetY(value[0])}
+                          max={50}
+                          min={-50}
+                          step={1}
+                          className="mt-2"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Label className="text-sm font-medium text-gray-300">Glow Color</Label>
+                        <ColorPicker
+                          color={glowColor}
+                          onChange={setGlowColor}
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Label className="text-sm font-medium text-gray-300">Glow Blur</Label>
+                        <Slider
+                          value={[glowBlur]}
+                          onValueChange={(value) => setGlowBlur(value[0])}
+                          max={50}
+                          min={0}
+                          step={1}
+                          className="mt-2"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </TabsContent>
 
-                <TabsContent value="adjust" className="space-y-4 mt-4">
+                <TabsContent value="adjust" className="space-y-4">
                   {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'image' ? (
                     <>
                       <div className="flex justify-between items-center mb-4">
@@ -1965,7 +1735,7 @@ const LogoTokenEditor = () => {
                   )}
                 </TabsContent>
 
-                <TabsContent value="layers" className="space-y-4 mt-4">
+                <TabsContent value="layers" className="space-y-4">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-sm font-medium text-gray-300">Layers</h3>
                     <span className="text-xs text-gray-400">{layers.length} layers</span>
@@ -1978,7 +1748,7 @@ const LogoTokenEditor = () => {
                       <p className="text-xs">Upload an image or add text to get started</p>
                     </div>
                   ) : (
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                    <div className="space-y-2">
                       {[...layers].sort((a, b) => b.zIndex - a.zIndex).map((layer, index) => (
                       <div 
                         key={layer.id}
@@ -2108,8 +1878,9 @@ const LogoTokenEditor = () => {
                   </div>
                   )}
                 </TabsContent>
-              </Tabs>
-                </ScrollArea>
+                    </ScrollArea>
+                </div>
+                </Tabs>
             </Card>
             </div>
           </div>
