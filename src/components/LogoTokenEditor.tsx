@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, Download, Layers, Type, Image as ImageIcon, Palette, ZoomIn, ZoomOut, Circle, Square, Copy, Lock, Unlock, Sparkles, X, User, ExternalLink } from 'lucide-react';
+import { Upload, Download, Layers, Type, Image as ImageIcon, Palette, ZoomIn, ZoomOut, Circle, Square, Copy, Lock, Unlock, Sparkles, X, User, ExternalLink, Eye, EyeOff, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -49,6 +49,7 @@ interface Layer {
   shadowOffsetY?: number;
   glowColor?: string;
   glowBlur?: number;
+  imageAdjustments?: ImageAdjustments;
 }
 
 interface ImageAdjustments {
@@ -103,20 +104,6 @@ const LogoTokenEditor = () => {
   const [tool, setTool] = useState<'select' | 'crop' | 'text'>('select');
   const [backgroundColor, setBackgroundColor] = useState('transparent');
   const [canvasShape, setCanvasShape] = useState<'square' | 'circle'>('circle');
-  const [adjustments, setAdjustments] = useState<ImageAdjustments>({
-    brightness: 100,
-    contrast: 100,
-    saturation: 100,
-    blur: 0,
-    hue: 0,
-    blendMode: 'normal',
-    opacity: 100,
-    fill: 100,
-    gamma: 100,
-    sepia: 0,
-    invert: false,
-    grayscale: false
-  });
   const [textInput, setTextInput] = useState('');
   const [fontSize, setFontSize] = useState(24);
   const [textColor, setTextColor] = useState('#ffffff');
@@ -171,23 +158,6 @@ const LogoTokenEditor = () => {
     } catch (error) {
       toast.error('Failed to copy address');
     }
-  }, []);
-
-  const resetAdjustments = useCallback(() => {
-    setAdjustments(prev => ({
-      ...prev,
-      brightness: 100,
-      contrast: 100,
-      saturation: 100,
-      blendMode: 'normal',
-      opacity: 100,
-      fill: 100,
-      gamma: 100,
-      sepia: 0,
-      invert: false,
-      grayscale: false
-    }));
-    toast.success('Image adjustments have been reset');
   }, []);
 
   const handleCanvasMouseDown = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -331,24 +301,24 @@ const LogoTokenEditor = () => {
       ctx.rotate(layer.rotation * Math.PI / 180);
       ctx.translate(-centerX, -centerY);
       
-      ctx.globalAlpha = layer.opacity * (layer.type === 'image' ? (adjustments.opacity / 100) : 1);
+      ctx.globalAlpha = layer.opacity * (layer.type === 'image' ? (layer.imageAdjustments?.opacity || 100) / 100 : 1);
 
       // Apply blend mode for images
-      if (layer.type === 'image') {
-        ctx.globalCompositeOperation = adjustments.blendMode as GlobalCompositeOperation;
+      if (layer.type === 'image' && layer.imageAdjustments) {
+        ctx.globalCompositeOperation = layer.imageAdjustments.blendMode as GlobalCompositeOperation;
       }
 
       const filter = [
-        `brightness(${layer.type === 'image' ? (adjustments.brightness / 100) : 1})`,
-        `contrast(${layer.type === 'image' ? (adjustments.contrast / 100) : 1})`,
-        `saturate(${layer.type === 'image' ? (adjustments.saturation / 100) : 1})`,
-        `blur(${layer.type === 'image' ? (adjustments.blur / 10) : 0}px)`,
-        `hue-rotate(${layer.type === 'image' ? adjustments.hue : 0}deg)`,
-        `opacity(${layer.type === 'image' ? (adjustments.opacity / 100) : 1})`,
-        `sepia(${layer.type === 'image' ? (adjustments.sepia / 100) : 0})`,
-        `gamma(${layer.type === 'image' ? (adjustments.gamma / 100) : 1})`,
-        adjustments.invert ? 'invert(1)' : 'none',
-        adjustments.grayscale ? 'grayscale(1)' : 'none'
+        `brightness(${layer.type === 'image' ? (layer.imageAdjustments?.brightness || 100) / 100 : 1})`,
+        `contrast(${layer.type === 'image' ? (layer.imageAdjustments?.contrast || 100) / 100 : 1})`,
+        `saturate(${layer.type === 'image' ? (layer.imageAdjustments?.saturation || 100) / 100 : 1})`,
+        `blur(${layer.type === 'image' ? (layer.imageAdjustments?.blur || 0) / 10 : 0}px)`,
+        `hue-rotate(${layer.type === 'image' ? (layer.imageAdjustments?.hue || 0) : 0}deg)`,
+        `opacity(${layer.type === 'image' ? (layer.imageAdjustments?.opacity || 100) / 100 : 1})`,
+        `sepia(${layer.type === 'image' ? (layer.imageAdjustments?.sepia || 0) / 100 : 0})`,
+        `gamma(${layer.type === 'image' ? (layer.imageAdjustments?.gamma || 100) / 100 : 1})`,
+        layer.imageAdjustments?.invert ? 'invert(1)' : 'none',
+        layer.imageAdjustments?.grayscale ? 'grayscale(1)' : 'none'
       ].filter(f => f !== 'none').join(' ');
       ctx.filter = filter;
       
@@ -443,7 +413,7 @@ const LogoTokenEditor = () => {
     if (canvasShape === 'circle') {
       ctx.restore(); // Restore from the clip
     }
-  }, [layers, backgroundColor, canvasShape, canvasSize, adjustments, canvasBorderWidth, canvasBorderColor, rimShadow]);
+  }, [layers, backgroundColor, canvasShape, canvasSize, canvasBorderWidth, canvasBorderColor, rimShadow]);
 
   useEffect(() => {
     renderCanvas();
@@ -664,7 +634,21 @@ const LogoTokenEditor = () => {
         opacity: 1,
         visible: true,
         locked: true, // Lock the base template layer
-        zIndex: -1 // Ensure it's at the bottom
+        zIndex: -1, // Ensure it's at the bottom
+        imageAdjustments: {
+          brightness: 100,
+          contrast: 100,
+          saturation: 100,
+          blur: 0,
+          hue: 0,
+          blendMode: 'normal',
+          opacity: 100,
+          fill: 100,
+          gamma: 100,
+          sepia: 0,
+          invert: false,
+          grayscale: false
+        }
       };
 
       // Add a second layer for the coin edge/rim
@@ -698,7 +682,21 @@ const LogoTokenEditor = () => {
         opacity: 1,
         visible: true,
         locked: true,
-        zIndex: 1000 // Ensure it's on top
+        zIndex: 1000, // Ensure it's on top
+        imageAdjustments: {
+          brightness: 100,
+          contrast: 100,
+          saturation: 100,
+          blur: 0,
+          hue: 0,
+          blendMode: 'normal',
+          opacity: 100,
+          fill: 100,
+          gamma: 100,
+          sepia: 0,
+          invert: false,
+          grayscale: false
+        }
       };
       
       setLayers([baseLayer, rimLayer]);
@@ -747,7 +745,21 @@ const LogoTokenEditor = () => {
             opacity: 1,
             visible: true,
             locked: false,
-            zIndex: (Math.max(...layers.map(l => l.zIndex), -1) + 1)
+            zIndex: (Math.max(...layers.map(l => l.zIndex), -1) + 1),
+            imageAdjustments: {
+              brightness: 100,
+              contrast: 100,
+              saturation: 100,
+              blur: 0,
+              hue: 0,
+              blendMode: 'normal',
+              opacity: 100,
+              fill: 100,
+              gamma: 100,
+              sepia: 0,
+              invert: false,
+              grayscale: false
+            }
           };
           
           setLayers(prev => [...prev, newLayer]);
@@ -1421,147 +1433,334 @@ const LogoTokenEditor = () => {
                 </TabsContent>
 
                 <TabsContent value="adjust" className="space-y-4 mt-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-medium text-gray-300">Image Adjustments</h3>
-                    <Button variant="outline" size="sm" onClick={resetAdjustments} className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white">
-                      Reset
-                    </Button>
-                  </div>
-                  
-                  <div>
-                    <Label className="text-gray-300">Blend Mode</Label>
-                    <select
-                      value={adjustments.blendMode}
-                      onChange={(e) => setAdjustments(prev => ({ ...prev, blendMode: e.target.value }))}
-                      className="w-full mt-2 p-2 bg-black/20 border border-vibrant-purple/30 rounded-md text-gray-200"
-                    >
-                      <option value="normal">Normal</option>
-                      <option value="multiply">Multiply</option>
-                      <option value="screen">Screen</option>
-                      <option value="overlay">Overlay</option>
-                      <option value="soft-light">Soft Light</option>
-                      <option value="hard-light">Hard Light</option>
-                      <option value="color-dodge">Color Dodge</option>
-                      <option value="color-burn">Color Burn</option>
-                      <option value="darken">Darken</option>
-                      <option value="lighten">Lighten</option>
-                      <option value="difference">Difference</option>
-                      <option value="exclusion">Exclusion</option>
-                      <option value="hue">Hue</option>
-                      <option value="saturation">Saturation</option>
-                      <option value="color">Color</option>
-                      <option value="luminosity">Luminosity</option>
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-gray-300">Opacity: {adjustments.opacity}%</Label>
-                      <Slider
-                        value={[adjustments.opacity]}
-                        onValueChange={(value) => setAdjustments(prev => ({ ...prev, opacity: value[0] }))}
-                        max={100}
-                        min={0}
-                        step={1}
-                        className="mt-2"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-gray-300">Fill: {adjustments.fill}%</Label>
-                      <Slider
-                        value={[adjustments.fill]}
-                        onValueChange={(value) => setAdjustments(prev => ({ ...prev, fill: value[0] }))}
-                        max={100}
-                        min={0}
-                        step={1}
-                        className="mt-2"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                        <Label className="text-gray-300">Brightness: {adjustments.brightness}%</Label>
-                    <Slider
-                      value={[adjustments.brightness]}
-                      onValueChange={(value) => setAdjustments(prev => ({ ...prev, brightness: value[0] }))}
-                      max={200}
-                      min={0}
-                      step={1}
-                      className="mt-2"
-                    />
-                  </div>
-                  
-                  <div>
-                        <Label className="text-gray-300">Contrast: {adjustments.contrast}%</Label>
-                    <Slider
-                      value={[adjustments.contrast]}
-                      onValueChange={(value) => setAdjustments(prev => ({ ...prev, contrast: value[0] }))}
-                      max={200}
-                      min={0}
-                      step={1}
-                      className="mt-2"
-                    />
-                  </div>
-                  
-                  <div>
-                        <Label className="text-gray-300">Saturation: {adjustments.saturation}%</Label>
-                    <Slider
-                      value={[adjustments.saturation]}
-                      onValueChange={(value) => setAdjustments(prev => ({ ...prev, saturation: value[0] }))}
-                      max={200}
-                      min={0}
-                      step={1}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
+                  {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'image' ? (
+                    <>
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-sm font-medium text-gray-300">Image Adjustments</h3>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => {
+                            const layer = layers.find(l => l.id === selectedLayer);
+                            if (layer && layer.imageAdjustments) {
+                              updateLayerProperty(selectedLayer, 'imageAdjustments', {
+                                brightness: 100,
+                                contrast: 100,
+                                saturation: 100,
+                                blur: 0,
+                                hue: 0,
+                                blendMode: 'normal',
+                                opacity: 100,
+                                fill: 100,
+                                gamma: 100,
+                                sepia: 0,
+                                invert: false,
+                                grayscale: false
+                              });
+                            }
+                          }} 
+                          className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white"
+                        >
+                          Reset
+                        </Button>
+                      </div>
+                      
+                      {(() => {
+                        const layer = layers.find(l => l.id === selectedLayer);
+                        const layerAdjustments = layer?.imageAdjustments;
+                        if (!layerAdjustments) return null;
+                        
+                        return (
+                          <>
                             <div>
-                      <Label className="text-gray-300">Gamma: {adjustments.gamma}%</Label>
+                              <Label className="text-gray-300">Blend Mode</Label>
+                              <select
+                                value={layerAdjustments.blendMode}
+                                onChange={(e) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, blendMode: e.target.value })}
+                                className="w-full mt-2 p-2 bg-black/20 border border-vibrant-purple/30 rounded-md text-gray-200"
+                              >
+                                <option value="normal">Normal</option>
+                                <option value="multiply">Multiply</option>
+                                <option value="screen">Screen</option>
+                                <option value="overlay">Overlay</option>
+                                <option value="soft-light">Soft Light</option>
+                                <option value="hard-light">Hard Light</option>
+                                <option value="color-dodge">Color Dodge</option>
+                                <option value="color-burn">Color Burn</option>
+                                <option value="darken">Darken</option>
+                                <option value="lighten">Lighten</option>
+                                <option value="difference">Difference</option>
+                                <option value="exclusion">Exclusion</option>
+                                <option value="hue">Hue</option>
+                                <option value="saturation">Saturation</option>
+                                <option value="color">Color</option>
+                                <option value="luminosity">Luminosity</option>
+                              </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label className="text-gray-300">Opacity: {layerAdjustments.opacity}%</Label>
+                                <Slider
+                                  value={[layerAdjustments.opacity]}
+                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, opacity: value[0] })}
+                                  max={100}
+                                  min={0}
+                                  step={1}
+                                  className="mt-2"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-gray-300">Fill: {layerAdjustments.fill}%</Label>
+                                <Slider
+                                  value={[layerAdjustments.fill]}
+                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, fill: value[0] })}
+                                  max={100}
+                                  min={0}
+                                  step={1}
+                                  className="mt-2"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <Label className="text-gray-300">Brightness: {layerAdjustments.brightness}%</Label>
                               <Slider
-                        value={[adjustments.gamma]}
-                        onValueChange={(value) => setAdjustments(prev => ({ ...prev, gamma: value[0] }))}
-                        max={200}
+                                value={[layerAdjustments.brightness]}
+                                onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, brightness: value[0] })}
+                                max={200}
                                 min={0}
-                        step={1}
-                        className="mt-2"
+                                step={1}
+                                className="mt-2"
                               />
                             </div>
+                            
                             <div>
-                      <Label className="text-gray-300">Sepia: {adjustments.sepia}%</Label>
+                              <Label className="text-gray-300">Contrast: {layerAdjustments.contrast}%</Label>
+                              <Slider
+                                value={[layerAdjustments.contrast]}
+                                onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, contrast: value[0] })}
+                                max={200}
+                                min={0}
+                                step={1}
+                                className="mt-2"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-gray-300">Saturation: {layerAdjustments.saturation}%</Label>
+                              <Slider
+                                value={[layerAdjustments.saturation]}
+                                onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, saturation: value[0] })}
+                                max={200}
+                                min={0}
+                                step={1}
+                                className="mt-2"
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label className="text-gray-300">Gamma: {layerAdjustments.gamma}%</Label>
                                 <Slider
-                        value={[adjustments.sepia]}
-                        onValueChange={(value) => setAdjustments(prev => ({ ...prev, sepia: value[0] }))}
-                        max={100}
-                        min={0}
+                                  value={[layerAdjustments.gamma]}
+                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, gamma: value[0] })}
+                                  max={200}
+                                  min={0}
                                   step={1}
-                        className="mt-2"
+                                  className="mt-2"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-gray-300">Sepia: {layerAdjustments.sepia}%</Label>
+                                <Slider
+                                  value={[layerAdjustments.sepia]}
+                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, sepia: value[0] })}
+                                  max={100}
+                                  min={0}
+                                  step={1}
+                                  className="mt-2"
                                 />
                               </div>
                             </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="invert"
-                        checked={adjustments.invert}
-                        onChange={(e) => setAdjustments(prev => ({ ...prev, invert: e.target.checked }))}
-                        className="rounded"
-                      />
-                      <Label htmlFor="invert" className="text-sm text-gray-300">Invert Colors</Label>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  id="invert"
+                                  checked={layerAdjustments.invert}
+                                  onChange={(e) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, invert: e.target.checked })}
+                                  className="rounded"
+                                />
+                                <Label htmlFor="invert" className="text-sm text-gray-300">Invert Colors</Label>
                               </div>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="grayscale"
-                        checked={adjustments.grayscale}
-                        onChange={(e) => setAdjustments(prev => ({ ...prev, grayscale: e.target.checked }))}
-                        className="rounded"
-                      />
-                      <Label htmlFor="grayscale" className="text-sm text-gray-300">Grayscale</Label>
-                          </div>
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  id="grayscale"
+                                  checked={layerAdjustments.grayscale}
+                                  onChange={(e) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, grayscale: e.target.checked })}
+                                  className="rounded"
+                                />
+                                <Label htmlFor="grayscale" className="text-sm text-gray-300">Grayscale</Label>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-gray-400">
+                      <Palette className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No image selected</p>
+                      <p className="text-xs">Select an image layer to adjust its properties</p>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="layers" className="space-y-4 mt-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm font-medium text-gray-300">Layers</h3>
+                    <span className="text-xs text-gray-400">{layers.length} layers</span>
                   </div>
+                  
+                  {layers.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                      <Layers className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No layers yet</p>
+                      <p className="text-xs">Upload an image or add text to get started</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      {[...layers].sort((a, b) => b.zIndex - a.zIndex).map((layer) => (
+                        <div
+                          key={layer.id}
+                          className={`p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
+                            selectedLayer === layer.id
+                              ? 'border-vibrant-purple/60 bg-vibrant-purple/10'
+                              : 'border-vibrant-purple/20 bg-black/20 hover:border-vibrant-purple/40'
+                          }`}
+                          onClick={() => setSelectedLayer(layer.id)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <div className="w-6 h-6 rounded bg-vibrant-purple/20 flex items-center justify-center flex-shrink-0">
+                                {layer.type === 'image' ? (
+                                  <ImageIcon className="w-3 h-3 text-vibrant-purple" />
+                                ) : layer.type === 'text' ? (
+                                  <Type className="w-3 h-3 text-vibrant-purple" />
+                                ) : (
+                                  <Square className="w-3 h-3 text-vibrant-purple" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-200 truncate">
+                                  {layer.type === 'text' ? layer.content || 'Text' : `${layer.type.charAt(0).toUpperCase() + layer.type.slice(1)} ${layer.id.slice(-4)}`}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  {layer.type === 'text' ? `${layer.fontSize || 24}px ${layer.fontFamily || 'Arial'}` : `${Math.round(layer.width)}×${Math.round(layer.height)}`}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-1">
+                              {/* Visibility toggle */}
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateLayerProperty(layer.id, 'visible', !layer.visible);
+                                }}
+                                className="w-6 h-6 hover:bg-vibrant-purple/20"
+                              >
+                                {layer.visible ? (
+                                  <Eye className="w-3 h-3 text-gray-300" />
+                                ) : (
+                                  <EyeOff className="w-3 h-3 text-gray-500" />
+                                )}
+                              </Button>
+                              
+                              {/* Lock toggle */}
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleLayerLock(layer.id);
+                                }}
+                                className="w-6 h-6 hover:bg-vibrant-purple/20"
+                              >
+                                {layer.locked ? (
+                                  <Lock className="w-3 h-3 text-vibrant-purple" />
+                                ) : (
+                                  <Unlock className="w-3 h-3 text-gray-300" />
+                                )}
+                              </Button>
+                              
+                              {/* Move up */}
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  moveLayerUp(layer.id);
+                                }}
+                                className="w-6 h-6 hover:bg-vibrant-purple/20"
+                                disabled={layer.zIndex === Math.max(...layers.map(l => l.zIndex))}
+                              >
+                                <ChevronUp className="w-3 h-3 text-gray-300" />
+                              </Button>
+                              
+                              {/* Move down */}
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  moveLayerDown(layer.id);
+                                }}
+                                className="w-6 h-6 hover:bg-vibrant-purple/20"
+                                disabled={layer.zIndex === Math.min(...layers.map(l => l.zIndex))}
+                              >
+                                <ChevronDown className="w-3 h-3 text-gray-300" />
+                              </Button>
+                              
+                              {/* Delete */}
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteLayer(layer.id);
+                                }}
+                                className="w-6 h-6 hover:bg-red-500/20 hover:text-red-400"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          {/* Layer opacity slider */}
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+                              <span>Opacity</span>
+                              <span>{Math.round(layer.opacity * 100)}%</span>
+                            </div>
+                            <Slider
+                              value={[layer.opacity]}
+                              onValueChange={(value) => updateLayerProperty(layer.id, 'opacity', value[0])}
+                              max={1}
+                              min={0}
+                              step={0.01}
+                              className="w-full"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
                 </ScrollArea>
@@ -1687,15 +1886,15 @@ const LogoTokenEditor = () => {
                       <a href={`https://solana.fm/address/${solanaAddress}/transactions?cluster=mainnet-alpha`} target="_blank" rel="noopener noreferrer" aria-label="View address on Solana Explorer">
                         <div className="w-8 h-8 rounded-full bg-vibrant-purple/20 flex items-center justify-center group-hover:bg-vibrant-purple/30 transition-colors duration-300">
                           <svg width="16" height="16" viewBox="0 0 397.7 311.7" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <linearGradient id="logosGradient" x1="360.8793" y1="351.4553" x2="141.213" y2="-69.2936" gradientUnits="userSpaceOnUse">
-                              <stop offset="0" stopColor="#00FFA3"/>
-                              <stop offset="1" stopColor="#DC1FFF"/>
-                            </linearGradient>
-                            <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 237.9z" fill="url(#logosGradient)"/>
-                            <path d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#logosGradient)"/>
-                            <path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#logosGradient)"/>
-                          </svg>
-                        </div>
+                      <linearGradient id="logosGradient" x1="360.8793" y1="351.4553" x2="141.213" y2="-69.2936" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stopColor="#00FFA3"/>
+                        <stop offset="1" stopColor="#DC1FFF"/>
+                      </linearGradient>
+                      <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 237.9z" fill="url(#logosGradient)"/>
+                      <path d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#logosGradient)"/>
+                      <path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#logosGradient)"/>
+                    </svg>
+                  </div>
                       </a>
                       <span className="text-sm font-mono flex-1 text-center text-gray-300 group-hover:text-gray-200 transition-colors duration-300">
                     {formatAddress(solanaAddress)}
