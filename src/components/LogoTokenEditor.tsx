@@ -378,7 +378,7 @@ const LogoTokenEditor = () => {
         ctx.globalAlpha = 1;
       } else if (layer.type === 'text') {
         // --- Photoshop-style Fill/Opacity for text ---
-        ctx.save();
+      ctx.save();
         ctx.fillStyle = layer.fontColor || '#ffffff';
         ctx.font = `${layer.fontSize || 24}px "${layer.fontFamily || 'Arial'}"`;
         ctx.textAlign = 'center';
@@ -386,14 +386,14 @@ const LogoTokenEditor = () => {
         const textContent = layer.content || '';
         
         // Use layer's actual position
-        const centerX = layer.x + layer.width / 2;
-        const centerY = layer.y + layer.height / 2;
-        
+      const centerX = layer.x + layer.width / 2;
+      const centerY = layer.y + layer.height / 2;
+      
         // Apply layer rotation
-        ctx.translate(centerX, centerY);
+      ctx.translate(centerX, centerY);
         ctx.rotate(layer.rotation * Math.PI / 180);
-        ctx.translate(-centerX, -centerY);
-        
+      ctx.translate(-centerX, -centerY);
+      
         if (layer.isCircularText) {
           // Circular text rendering
           const radius = layer.textRadius || 150;
@@ -435,10 +435,10 @@ const LogoTokenEditor = () => {
           
           // Glow for circular text
           if (layer.glowBlur && layer.glowBlur > 0) {
-            ctx.shadowColor = layer.glowColor || '#ffffff';
+          ctx.shadowColor = layer.glowColor || '#ffffff';
             ctx.shadowBlur = layer.glowBlur;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
             let currentAngle = startAngle;
             for (let i = 0; i < textContent.length; i++) {
               ctx.save();
@@ -477,14 +477,14 @@ const LogoTokenEditor = () => {
           // Regular text rendering
           // Shadow
           if (layer.shadowBlur && layer.shadowBlur > 0) {
-            ctx.shadowColor = layer.shadowColor || '#000000';
+          ctx.shadowColor = layer.shadowColor || '#000000';
             ctx.shadowBlur = layer.shadowBlur;
-            ctx.shadowOffsetX = layer.shadowOffsetX || 0;
-            ctx.shadowOffsetY = layer.shadowOffsetY || 0;
-          }
+          ctx.shadowOffsetX = layer.shadowOffsetX || 0;
+          ctx.shadowOffsetY = layer.shadowOffsetY || 0;
+        }
           // Stroke
           if (layer.strokeWidth && layer.strokeWidth > 0) {
-            ctx.strokeStyle = layer.strokeColor || '#000000';
+          ctx.strokeStyle = layer.strokeColor || '#000000';
             ctx.lineWidth = layer.strokeWidth;
             ctx.strokeText(textContent, centerX, centerY);
           }
@@ -550,10 +550,10 @@ const LogoTokenEditor = () => {
               ctx.lineWidth = layer.strokeWidth;
               let currentAngle = startAngle;
               for (let i = 0; i < textContent.length; i++) {
-                ctx.save();
+              ctx.save();
                 ctx.rotate(currentAngle);
                 ctx.strokeText(textContent[i], 0, -radius);
-                ctx.restore();
+              ctx.restore();
                 currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
               }
             }
@@ -590,7 +590,7 @@ const LogoTokenEditor = () => {
             }
             
             ctx.restore();
-          } else {
+        } else {
             // Regular text with opacity
             // Shadow
             if (layer.shadowBlur && layer.shadowBlur > 0) {
@@ -622,8 +622,8 @@ const LogoTokenEditor = () => {
             ctx.shadowOffsetY = 0;
             ctx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
             ctx.fillText(textContent, centerX, centerY);
-          }
-          ctx.restore();
+      }
+      ctx.restore();
         }
       }
     }
@@ -1072,35 +1072,39 @@ const LogoTokenEditor = () => {
 
   const moveLayerUp = useCallback((layerId: string) => {
     setLayers(prev => {
-      const newLayers = [...prev];
-      const currentIndex = newLayers.findIndex(l => l.id === layerId);
-      if (currentIndex > 0) {
-        // Swap the layers
-        [newLayers[currentIndex], newLayers[currentIndex - 1]] = [newLayers[currentIndex - 1], newLayers[currentIndex]];
+      const layersSorted = [...prev].sort((a, b) => a.zIndex - b.zIndex);
+      const currentIndex = layersSorted.findIndex(l => l.id === layerId);
+      
+      if (currentIndex < layersSorted.length - 1) { // If it's not the topmost layer
+        const newLayers = [...prev];
+        const currentLayer = newLayers.find(l => l.id === layerId)!;
+        const otherLayer = newLayers.find(l => l.zIndex === layersSorted[currentIndex + 1].zIndex)!;
         
-        // Update zIndex values to match the new order (0 = bottom, length-1 = top)
-        newLayers.forEach((layer, index) => {
-          layer.zIndex = index;
-        });
+        // Swap zIndex
+        [currentLayer.zIndex, otherLayer.zIndex] = [otherLayer.zIndex, currentLayer.zIndex];
+        
+        return newLayers;
       }
-      return newLayers;
+      return prev;
     });
   }, []);
 
   const moveLayerDown = useCallback((layerId: string) => {
     setLayers(prev => {
-      const newLayers = [...prev];
-      const currentIndex = newLayers.findIndex(l => l.id === layerId);
-      if (currentIndex < newLayers.length - 1) {
-        // Swap the layers
-        [newLayers[currentIndex], newLayers[currentIndex + 1]] = [newLayers[currentIndex + 1], newLayers[currentIndex]];
+      const layersSorted = [...prev].sort((a, b) => a.zIndex - b.zIndex);
+      const currentIndex = layersSorted.findIndex(l => l.id === layerId);
+
+      if (currentIndex > 0) { // If it's not the bottommost layer
+        const newLayers = [...prev];
+        const currentLayer = newLayers.find(l => l.id === layerId)!;
+        const otherLayer = newLayers.find(l => l.zIndex === layersSorted[currentIndex - 1].zIndex)!;
         
-        // Update zIndex values to match the new order (0 = bottom, length-1 = top)
-        newLayers.forEach((layer, index) => {
-          layer.zIndex = index;
-        });
+        // Swap zIndex
+        [currentLayer.zIndex, otherLayer.zIndex] = [otherLayer.zIndex, currentLayer.zIndex];
+
+        return newLayers;
       }
-      return newLayers;
+      return prev;
     });
   }, []);
 
@@ -1635,18 +1639,18 @@ const LogoTokenEditor = () => {
                           step={1}
                         />
                       </div>
-                      </div>
+                    </div>
                     </div>
                   </div>
                   
                       {/* Fill and Opacity */}
                       <div className="p-1 border-t border-vibrant-purple/20 pt-4 space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                          <div>
+                    <div>
                             <Label className="text-gray-300">Fill: {selectedLayer && layers.find(l => l.id === selectedLayer)?.imageAdjustments?.fill || 100}%</Label>
-                            <Slider
+                        <Slider
                               value={[selectedLayer && layers.find(l => l.id === selectedLayer)?.imageAdjustments?.fill || 100]}
-                              onValueChange={(value) => {
+                          onValueChange={(value) => {
                                 const fill = value[0];
                                 if (selectedLayer) {
                                   const layer = layers.find(l => l.id === selectedLayer);
@@ -1669,18 +1673,18 @@ const LogoTokenEditor = () => {
                                 }
                               }}
                               max={100}
-                              min={0}
-                              step={1}
+                          min={0}
+                          step={1}
                               className="mt-2"
-                            />
-                          </div>
-                          <div>
+                        />
+                      </div>
+                  <div>
                             <Label className="text-gray-300">Opacity: {selectedLayer && layers.find(l => l.id === selectedLayer)?.imageAdjustments?.opacity || 100}%</Label>
                             <Slider
                               value={[selectedLayer && layers.find(l => l.id === selectedLayer)?.imageAdjustments?.opacity || 100]}
                               onValueChange={(value) => {
                                 const opacity = value[0];
-                                if (selectedLayer) {
+                        if (selectedLayer) {
                                   const layer = layers.find(l => l.id === selectedLayer);
                                   if (layer) {
                                     const currentAdjustments = layer.imageAdjustments || {
@@ -1707,8 +1711,8 @@ const LogoTokenEditor = () => {
                             />
                           </div>
                         </div>
-                      </div>
-                      
+                  </div>
+
                       {/* Edit Selected Text */}
                   {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'text' && (
                         <div className="border-t border-vibrant-purple/20 pt-4">
@@ -1975,7 +1979,7 @@ const LogoTokenEditor = () => {
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-96 overflow-y-auto">
-                      {[...layers].sort((a, b) => b.zIndex - a.zIndex).map((layer) => (
+                      {[...layers].sort((a, b) => b.zIndex - a.zIndex).map((layer, index) => (
                       <div 
                         key={layer.id}
                           className={`p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
@@ -2050,7 +2054,7 @@ const LogoTokenEditor = () => {
                                   moveLayerUp(layer.id);
                               }}
                                 className="w-6 h-6 hover:bg-vibrant-purple/20"
-                                disabled={layer.zIndex === layers.length - 1}
+                                disabled={index === 0}
                             >
                                 <ChevronUp className="w-3 h-3 text-gray-300" />
                             </Button>
@@ -2064,7 +2068,7 @@ const LogoTokenEditor = () => {
                                   moveLayerDown(layer.id);
                                 }}
                                 className="w-6 h-6 hover:bg-vibrant-purple/20"
-                                disabled={layer.zIndex === 0}
+                                disabled={index === layers.length - 1}
                               >
                                 <ChevronDown className="w-3 h-3 text-gray-300" />
                               </Button>
