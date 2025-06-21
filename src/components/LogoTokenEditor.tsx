@@ -2050,7 +2050,7 @@ const LogoTokenEditor = () => {
                                   moveLayerUp(layer.id);
                               }}
                                 className="w-6 h-6 hover:bg-vibrant-purple/20"
-                                disabled={layer.zIndex === 0}
+                                disabled={layer.zIndex === layers.length - 1}
                             >
                                 <ChevronUp className="w-3 h-3 text-gray-300" />
                             </Button>
@@ -2064,7 +2064,7 @@ const LogoTokenEditor = () => {
                                   moveLayerDown(layer.id);
                                 }}
                                 className="w-6 h-6 hover:bg-vibrant-purple/20"
-                                disabled={layer.zIndex === layers.length - 1}
+                                disabled={layer.zIndex === 0}
                               >
                                 <ChevronDown className="w-3 h-3 text-gray-300" />
                               </Button>
