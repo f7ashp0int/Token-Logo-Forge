@@ -15,16 +15,16 @@
     --popover: 0 0% 3.9%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 0 0% 98%;
+    --primary: 276 100% 80%; /* Lighter vibrant purple for highlights */
     --primary-foreground: 0 0% 9%;
 
-    --secondary: 276 15% 15%;
+    --secondary: 270 12% 25%; /* Dark purple for secondary elements */
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 14.9%;
+    --muted: 270 12% 20%; /* Muted purple */
     --muted-foreground: 0 0% 63.9%;
 
-    --accent: 0 0% 14.9%;
+    --accent: 270 12% 30%; /* Accent purple */
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84.2% 60.2%;
@@ -54,9 +54,9 @@
     --vibrant-red-purple: 328 100% 44%;
     
     /* Enhanced color scheme for better contrast */
-    --enhanced-gray: 276 15% 20%; /* Dark purple-gray */
-    --enhanced-gray-light: 276 15% 25%; /* Lighter purple-gray */
-    --enhanced-gray-dark: 276 20% 12%; /* Very dark purple-gray */
+    --enhanced-gray: 270 10% 18%; /* Dark purple-gray */
+    --enhanced-gray-light: 270 10% 25%; /* Lighter purple-gray */
+    --enhanced-gray-dark: 270 12% 12%; /* Very dark purple-gray */
     --enhanced-text: 270 10% 85%;
     --enhanced-text-muted: 270 10% 65%;
   }
@@ -71,24 +71,24 @@
     --popover: 0 0% 3.9%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 0 0% 98%;
+    --primary: 276 100% 80%;
     --primary-foreground: 0 0% 9%;
 
-    --secondary: 276 15% 15%;
+    --secondary: 270 12% 25%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 14.9%;
+    --muted: 270 12% 20%;
     --muted-foreground: 0 0% 63.9%;
 
-    --accent: 0 0% 14.9%;
+    --accent: 270 12% 30%;
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --border: 270 12% 20%;
+    --input: 270 12% 20%;
+    --ring: 276 100% 70%;
     
     --sidebar-background: 210 11% 10%;
     --sidebar-foreground: 0 0% 83%;
