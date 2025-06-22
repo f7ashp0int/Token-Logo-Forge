@@ -1076,14 +1076,14 @@ const LogoTokenEditor = () => {
       const currentIndex = layersSorted.findIndex(l => l.id === layerId);
       
       if (currentIndex < layersSorted.length - 1) { // If it's not the topmost layer
-        const newLayers = [...prev];
+      const newLayers = [...prev];
         const currentLayer = newLayers.find(l => l.id === layerId)!;
         const otherLayer = newLayers.find(l => l.zIndex === layersSorted[currentIndex + 1].zIndex)!;
         
         // Swap zIndex
         [currentLayer.zIndex, otherLayer.zIndex] = [otherLayer.zIndex, currentLayer.zIndex];
         
-        return newLayers;
+      return newLayers;
       }
       return prev;
     });
@@ -1095,14 +1095,14 @@ const LogoTokenEditor = () => {
       const currentIndex = layersSorted.findIndex(l => l.id === layerId);
 
       if (currentIndex > 0) { // If it's not the bottommost layer
-        const newLayers = [...prev];
+      const newLayers = [...prev];
         const currentLayer = newLayers.find(l => l.id === layerId)!;
         const otherLayer = newLayers.find(l => l.zIndex === layersSorted[currentIndex - 1].zIndex)!;
         
         // Swap zIndex
         [currentLayer.zIndex, otherLayer.zIndex] = [otherLayer.zIndex, currentLayer.zIndex];
 
-        return newLayers;
+      return newLayers;
       }
       return prev;
     });
@@ -1376,24 +1376,24 @@ const LogoTokenEditor = () => {
                         placeholder="Edit text..."
                         className="mt-2 bg-black/20 border-vibrant-purple/30 rounded-md text-gray-200"
                       />
-                      <div className="flex items-center space-x-2 mt-2">
-                        <input
-                          type="checkbox"
+                    <div className="flex items-center space-x-2 mt-2">
+                      <input
+                        type="checkbox"
                           id="convert-circular"
                           checked={layers.find(l => l.id === selectedLayer)?.isCircularText || false}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
+                        onChange={(e) => {
+                          const checked = e.target.checked;
                             updateLayerProperty(selectedLayer, 'isCircularText', checked);
                             if (checked) {
                               updateLayerProperty(selectedLayer, 'textRadius', textRadius);
                               updateLayerProperty(selectedLayer, 'textKerning', textKerning);
                               updateLayerProperty(selectedLayer, 'textStartAngle', textStartAngle);
-                            }
-                          }}
-                          className="rounded"
-                        />
+                          }
+                        }}
+                        className="rounded"
+                      />
                         <Label htmlFor="convert-circular" className="text-sm text-gray-300">Convert to Circular Text</Label>
-                      </div>
+                    </div>
                     </div>
                   )}
 
@@ -1402,26 +1402,26 @@ const LogoTokenEditor = () => {
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                       <div className="col-span-1">
                         <Label className="text-sm font-medium text-gray-300">Font Size</Label>
-                        <Slider
+                          <Slider
                           value={[fontSize]}
                           onValueChange={(value) => setFontSize(value[0])}
                           max={72}
                           min={12}
-                          step={1}
+                            step={1}
                           className="mt-2"
-                        />
-                      </div>
+                          />
+                        </div>
                       <div className="col-span-1">
                         <Label className="text-sm font-medium text-gray-300">Font Color</Label>
                         <ColorPicker
                           color={textColor}
                           onChange={setTextColor}
-                        />
-                      </div>
+                          />
+                        </div>
                       <div className="col-span-1">
                         <Label className="text-sm font-medium text-gray-300">Font Family</Label>
-                        <select
-                          value={fontFamily}
+                    <select
+                      value={fontFamily}
                           onChange={(e) => setFontFamily(e.target.value)}
                           className="w-full mt-2 p-2 bg-black/20 border border-vibrant-purple/30 rounded-md text-gray-200"
                         >
@@ -1434,15 +1434,15 @@ const LogoTokenEditor = () => {
                           {OPEN_FOUNDRY_FONTS.map((font) => (
                             <option key={font} value={font}>{font}</option>
                           ))}
-                        </select>
-                      </div>
+                    </select>
+                  </div>
                       <div className="col-span-1">
                         <Label className="text-sm font-medium text-gray-300">Stroke Color</Label>
                         <ColorPicker
                           color={strokeColor}
                           onChange={setStrokeColor}
-                        />
-                      </div>
+                    />
+                  </div>
                       <div className="col-span-1">
                         <Label className="text-sm font-medium text-gray-300">Stroke Width</Label>
                         <Slider
@@ -1546,8 +1546,8 @@ const LogoTokenEditor = () => {
                         >
                           Reset
                         </Button>
-                      </div>
-                      
+                  </div>
+
                       {(() => {
                         const layer = layers.find(l => l.id === selectedLayer);
                         let layerAdjustments = layer?.imageAdjustments;
@@ -1612,7 +1612,7 @@ const LogoTokenEditor = () => {
                                   step={1}
                                   className="mt-2"
                                 />
-                              </div>
+                      </div>
                               <div>
                                 <Label className="text-gray-300">Fill: {layerAdjustments.fill}%</Label>
                                 <Slider
@@ -1623,13 +1623,13 @@ const LogoTokenEditor = () => {
                                   step={1}
                                   className="mt-2"
                                 />
-                              </div>
+                    </div>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
-                              <div>
+                  <div>
                                 <Label className="text-gray-300">Blur: {layerAdjustments.blur}px</Label>
-                                <Slider
+                    <Slider
                                   value={[layerAdjustments.blur]}
                                   onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, blur: value[0] })}
                                   max={50}
@@ -1748,7 +1748,7 @@ const LogoTokenEditor = () => {
                       <p className="text-xs">Upload an image or add text to get started</p>
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                  <div className="space-y-2">
                       {[...layers].sort((a, b) => b.zIndex - a.zIndex).map((layer, index) => (
                       <div 
                         key={layer.id}
@@ -1880,7 +1880,7 @@ const LogoTokenEditor = () => {
                 </TabsContent>
                     </ScrollArea>
                 </div>
-                </Tabs>
+              </Tabs>
             </Card>
             </div>
           </div>
