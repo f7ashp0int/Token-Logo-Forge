@@ -136,6 +136,7 @@ const LogoTokenEditor = () => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [fontChangeTrigger, setFontChangeTrigger] = useState(0);
   const [fontLoadingStatus, setFontLoadingStatus] = useState<string>('');
+  const [activeTab, setActiveTab] = useState('upload');
 
   const loadFontIfNeeded = async (fontFamily: string | undefined) => {
     if (!fontFamily || fontFamily === 'Arial') return;
@@ -1152,6 +1153,14 @@ const LogoTokenEditor = () => {
     }
   };
 
+  // Function to switch tabs
+  const switchToTab = (tabName: string) => {
+    setActiveTab(tabName);
+  };
+
+  // Check if there are any image layers
+  const hasImageLayers = layers.some(layer => layer.type === 'image');
+
   return (
     <div className="min-h-screen text-foreground">
       <div className="p-6">
@@ -1176,7 +1185,7 @@ const LogoTokenEditor = () => {
           <div className="lg:col-span-3">
             <div className="sticky top-6">
               <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 h-[calc(100vh-12rem)] rounded-2xl shadow-lg flex flex-col">
-                <Tabs defaultValue="upload" className="w-full flex flex-col h-full">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full">
                     <TabsList className="grid w-full grid-cols-4 bg-black/20 flex-shrink-0 sticky top-0 z-10">
                       <TabsTrigger value="upload" className="data-[state=active]:bg-vibrant-purple/20 text-gray-200 hover:text-white hover:bg-vibrant-purple/10"><Upload className="w-4 h-4" /></TabsTrigger>
                       <TabsTrigger value="text" className="data-[state=active]:bg-vibrant-purple/20 text-gray-200 hover:text-white hover:bg-vibrant-purple/10"><Type className="w-4 h-4" /></TabsTrigger>
@@ -1188,22 +1197,47 @@ const LogoTokenEditor = () => {
                 <TabsContent value="upload" className="space-y-4">
                       <div className="space-y-2">
                         <Label className="text-sm font-medium text-gray-300">Upload Image</Label>
-                        <Input
-                          id="image-upload"
-                      type="file"
-                          ref={fileInputRef}
-                      onChange={handleImageUpload}
-                      className="hidden"
-                          accept="image/png, image/jpeg, image/svg+xml"
-                    />
-                    <Button 
-                      onClick={() => fileInputRef.current?.click()}
-                          className="w-full h-12 flex items-center justify-center gap-2 rounded-lg border-2 border-green-400/50 bg-green-500/10 backdrop-blur-sm text-green-300 font-semibold transition-all duration-300 hover:bg-green-500/20 hover:border-green-400 hover:text-green-200"
-                    >
-                          <Upload className="w-5 h-5" />
-                          <span>Click to upload</span>
-                    </Button>
-                  </div>
+                        <div className="flex gap-2">
+                          <Input
+                            id="image-upload"
+                        type="file"
+                            ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        className="hidden"
+                            accept="image/png, image/jpeg, image/svg+xml"
+                      />
+                      <Button 
+                        onClick={() => fileInputRef.current?.click()}
+                            className="flex-1 h-12 flex items-center justify-center gap-2 rounded-lg border-2 border-green-400/50 bg-green-500/10 backdrop-blur-sm text-green-300 font-semibold transition-all duration-300 hover:bg-green-500/20 hover:border-green-400 hover:text-green-200"
+                      >
+                            <Upload className="w-5 h-5" />
+                            <span>Click to upload</span>
+                      </Button>
+                      
+                      {/* Quick adjustments icon - only show when image is uploaded */}
+                      {hasImageLayers && (
+                        <Button 
+                          onClick={() => switchToTab('adjust')}
+                          size="icon"
+                          className="h-12 w-12 flex items-center justify-center rounded-lg border-2 border-vibrant-purple/50 bg-vibrant-purple/10 backdrop-blur-sm text-vibrant-purple-300 transition-all duration-300 hover:bg-vibrant-purple/20 hover:border-vibrant-purple hover:text-vibrant-purple-200"
+                          title="Go to Image Adjustments"
+                        >
+                          <Palette className="w-5 h-5" />
+                        </Button>
+                      )}
+                        </div>
+                        
+                        {/* Image Adjustments CTA - only show when image is uploaded */}
+                        {hasImageLayers && (
+                          <Button 
+                            onClick={() => switchToTab('adjust')}
+                            className="w-full h-10 flex items-center justify-center gap-2 rounded-lg border-2 border-vibrant-purple/50 bg-vibrant-purple/10 backdrop-blur-sm text-vibrant-purple-300 font-semibold transition-all duration-300 hover:bg-vibrant-purple/20 hover:border-vibrant-purple hover:text-vibrant-purple-200"
+                          >
+                            <Palette className="w-4 h-4" />
+                            <span>Go to Image Adjustments</span>
+                          </Button>
+                        )}
+                      </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="image-zoom" className="text-sm font-medium text-gray-300">Image Zoom: {Math.round(imageZoom * 100)}%</Label>
