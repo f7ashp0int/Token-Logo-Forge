@@ -1177,7 +1177,7 @@ const LogoTokenEditor = () => {
             <div className="sticky top-6">
               <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 h-[calc(100vh-12rem)] rounded-2xl shadow-lg flex flex-col">
                 <Tabs defaultValue="upload" className="w-full flex flex-col h-full">
-                    <TabsList className="grid w-full grid-cols-4 bg-black/20 flex-shrink-0">
+                    <TabsList className="grid w-full grid-cols-4 bg-black/20 flex-shrink-0 sticky top-0 z-10">
                       <TabsTrigger value="upload" className="data-[state=active]:bg-vibrant-purple/20 text-gray-200 hover:text-white hover:bg-vibrant-purple/10"><Upload className="w-4 h-4" /></TabsTrigger>
                       <TabsTrigger value="text" className="data-[state=active]:bg-vibrant-purple/20 text-gray-200 hover:text-white hover:bg-vibrant-purple/10"><Type className="w-4 h-4" /></TabsTrigger>
                       <TabsTrigger value="adjust" className="data-[state=active]:bg-vibrant-purple/20 text-gray-200 hover:text-white hover:bg-vibrant-purple/10"><Palette className="w-4 h-4" /></TabsTrigger>
