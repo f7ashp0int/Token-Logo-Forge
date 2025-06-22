@@ -18,21 +18,21 @@
     --primary: 0 0% 98%;
     --primary-foreground: 0 0% 9%;
 
-    --secondary: 270 10% 15%;
+    --secondary: 276 15% 15%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 270 10% 15%;
+    --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
 
-    --accent: 270 10% 20%;
+    --accent: 0 0% 14.9%;
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 270 10% 20%;
-    --input: 270 10% 15%;
-    --ring: 276 100% 64%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
 
     --radius: 0.5rem;
 
@@ -54,9 +54,9 @@
     --vibrant-red-purple: 328 100% 44%;
     
     /* Enhanced color scheme for better contrast */
-    --enhanced-gray: 270 10% 18%; /* Dark purple-gray */
-    --enhanced-gray-light: 270 10% 25%; /* Lighter purple-gray */
-    --enhanced-gray-dark: 270 12% 12%; /* Very dark purple-gray */
+    --enhanced-gray: 276 15% 20%; /* Dark purple-gray */
+    --enhanced-gray-light: 276 15% 25%; /* Lighter purple-gray */
+    --enhanced-gray-dark: 276 20% 12%; /* Very dark purple-gray */
     --enhanced-text: 270 10% 85%;
     --enhanced-text-muted: 270 10% 65%;
   }
@@ -74,7 +74,7 @@
     --primary: 0 0% 98%;
     --primary-foreground: 0 0% 9%;
 
-    --secondary: 0 0% 14.9%;
+    --secondary: 276 15% 15%;
     --secondary-foreground: 0 0% 98%;
 
     --muted: 0 0% 14.9%;
