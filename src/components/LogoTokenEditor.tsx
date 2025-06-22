@@ -123,12 +123,19 @@ const LogoTokenEditor = () => {
   const [canvasBorderWidth, setCanvasBorderWidth] = useState(10);
   const [canvasBorderColor, setCanvasBorderColor] = useState('#c0c0c0');
   const [rimShadow, setRimShadow] = useState({
-    enabled: true,
+    enabled: false,
     type: 'outer' as 'outer' | 'inner',
-    color: 'rgba(0,0,0,0.5)',
-    blur: 15,
-    offsetX: 5,
-    offsetY: 5,
+    blur: 10,
+    color: '#000000',
+    offsetX: 0,
+    offsetY: 0
+  });
+  const [rimDesign, setRimDesign] = useState({
+    enabled: false,
+    pattern: 'stripes' as 'stripes' | 'stars' | 'dots' | 'diamonds',
+    density: 20,
+    size: 3,
+    color: '#c0c0c0'
   });
   const [rotationDegree, setRotationDegree] = useState(0);
   const [solanaAddress] = useState('2v32BcWsY9TdeTYmNuXRBt782vtgvXdCX3Hg1MjAgczr');
@@ -273,7 +280,73 @@ const LogoTokenEditor = () => {
       ctx.fill();
       ctx.globalCompositeOperation = 'source-over';
 
-      // 3. Clip the content area for subsequent drawing
+      // 3. Draw rim design patterns if enabled
+      if (rimDesign.enabled && canvasBorderWidth > 0) {
+        ctx.save();
+        ctx.fillStyle = rimDesign.color;
+        
+        const centerX = canvasSize / 2;
+        const centerY = canvasSize / 2;
+        const outerRadius = canvasSize / 2;
+        const innerRadius = outerRadius - canvasBorderWidth;
+        const patternRadius = (outerRadius + innerRadius) / 2;
+        
+        const numElements = rimDesign.density;
+        const angleStep = (Math.PI * 2) / numElements;
+        
+        for (let i = 0; i < numElements; i++) {
+          const angle = i * angleStep;
+          const x = centerX + Math.cos(angle) * patternRadius;
+          const y = centerY + Math.sin(angle) * patternRadius;
+          
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(angle + Math.PI / 2); // Rotate to align with rim
+          
+          switch (rimDesign.pattern) {
+            case 'stripes':
+              // Draw vertical stripes
+              ctx.fillRect(-rimDesign.size / 2, -canvasBorderWidth / 2, rimDesign.size, canvasBorderWidth);
+              break;
+            case 'stars':
+              // Draw star shapes
+              ctx.beginPath();
+              for (let j = 0; j < 5; j++) {
+                const starAngle = (j * Math.PI * 2) / 5;
+                const starRadius = j % 2 === 0 ? rimDesign.size : rimDesign.size / 2;
+                const starX = Math.cos(starAngle) * starRadius;
+                const starY = Math.sin(starAngle) * starRadius;
+                if (j === 0) ctx.moveTo(starX, starY);
+                else ctx.lineTo(starX, starY);
+              }
+              ctx.closePath();
+              ctx.fill();
+              break;
+            case 'dots':
+              // Draw circular dots
+              ctx.beginPath();
+              ctx.arc(0, 0, rimDesign.size / 2, 0, Math.PI * 2);
+              ctx.fill();
+              break;
+            case 'diamonds':
+              // Draw diamond shapes
+              ctx.beginPath();
+              ctx.moveTo(0, -rimDesign.size / 2);
+              ctx.lineTo(rimDesign.size / 2, 0);
+              ctx.lineTo(0, rimDesign.size / 2);
+              ctx.lineTo(-rimDesign.size / 2, 0);
+              ctx.closePath();
+              ctx.fill();
+              break;
+          }
+          
+          ctx.restore();
+        }
+        
+        ctx.restore();
+      }
+
+      // 4. Clip the content area for subsequent drawing
       ctx.save();
       ctx.beginPath();
       ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - canvasBorderWidth, 0, Math.PI * 2);
@@ -632,7 +705,7 @@ const LogoTokenEditor = () => {
     if (canvasShape === 'circle') {
       ctx.restore(); // Restore from the clip
     }
-  }, [layers, backgroundColor, canvasShape, canvasSize, canvasBorderWidth, canvasBorderColor, rimShadow]);
+  }, [layers, backgroundColor, canvasShape, canvasSize, canvasBorderWidth, canvasBorderColor, rimShadow, rimDesign]);
 
   useEffect(() => {
     renderCanvas();
@@ -881,6 +954,69 @@ const LogoTokenEditor = () => {
       rimCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - rimWidth / 2, 0, 2 * Math.PI);
       rimCtx.stroke();
       
+      // Add rim design patterns if enabled
+      if (rimDesign.enabled && rimWidth > 0) {
+        rimCtx.fillStyle = rimDesign.color;
+        
+        const centerX = canvasSize / 2;
+        const centerY = canvasSize / 2;
+        const outerRadius = canvasSize / 2;
+        const innerRadius = outerRadius - rimWidth;
+        const patternRadius = (outerRadius + innerRadius) / 2;
+        
+        const numElements = rimDesign.density;
+        const angleStep = (Math.PI * 2) / numElements;
+        
+        for (let i = 0; i < numElements; i++) {
+          const angle = i * angleStep;
+          const x = centerX + Math.cos(angle) * patternRadius;
+          const y = centerY + Math.sin(angle) * patternRadius;
+          
+          rimCtx.save();
+          rimCtx.translate(x, y);
+          rimCtx.rotate(angle + Math.PI / 2); // Rotate to align with rim
+          
+          switch (rimDesign.pattern) {
+            case 'stripes':
+              // Draw vertical stripes
+              rimCtx.fillRect(-rimDesign.size / 2, -rimWidth / 2, rimDesign.size, rimWidth);
+              break;
+            case 'stars':
+              // Draw star shapes
+              rimCtx.beginPath();
+              for (let j = 0; j < 5; j++) {
+                const starAngle = (j * Math.PI * 2) / 5;
+                const starRadius = j % 2 === 0 ? rimDesign.size : rimDesign.size / 2;
+                const starX = Math.cos(starAngle) * starRadius;
+                const starY = Math.sin(starAngle) * starRadius;
+                if (j === 0) rimCtx.moveTo(starX, starY);
+                else rimCtx.lineTo(starX, starY);
+              }
+              rimCtx.closePath();
+              rimCtx.fill();
+              break;
+            case 'dots':
+              // Draw circular dots
+              rimCtx.beginPath();
+              rimCtx.arc(0, 0, rimDesign.size / 2, 0, Math.PI * 2);
+              rimCtx.fill();
+              break;
+            case 'diamonds':
+              // Draw diamond shapes
+              rimCtx.beginPath();
+              rimCtx.moveTo(0, -rimDesign.size / 2);
+              rimCtx.lineTo(rimDesign.size / 2, 0);
+              rimCtx.lineTo(0, rimDesign.size / 2);
+              rimCtx.lineTo(-rimDesign.size / 2, 0);
+              rimCtx.closePath();
+              rimCtx.fill();
+              break;
+          }
+          
+          rimCtx.restore();
+        }
+      }
+      
       // Add a subtle inner shadow to the rim for depth
       rimCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
       rimCtx.lineWidth = 2;
@@ -921,7 +1057,7 @@ const LogoTokenEditor = () => {
       setMainView('canvas');
       toast.success(`${template.name} template applied!`);
     }
-  }, [canvasSize, canvasShape, canvasBorderWidth, canvasBorderColor, rimShadow, layers]);
+  }, [canvasSize, canvasShape, canvasBorderWidth, canvasBorderColor, rimShadow, rimDesign, layers]);
 
   const handleImageUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -1377,6 +1513,92 @@ const LogoTokenEditor = () => {
                             onChange={setBackgroundColor}
                       />
                     </div>
+                  </div>
+
+                  <div>
+                        <Label className="text-enhanced-text">Rim Design</Label>
+                        <div className="p-2 border border-vibrant-purple/20 rounded-md mt-2 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="rim-design-enable" className="text-sm text-enhanced-text">Enable Design</Label>
+                            <input
+                              type="checkbox"
+                              id="rim-design-enable"
+                              checked={rimDesign.enabled}
+                              onChange={(e) => setRimDesign(s => ({...s, enabled: e.target.checked}))}
+                              className="rounded"
+                            />
+                          </div>
+                          {rimDesign.enabled && (
+                            <>
+                              <div>
+                                <Label className="text-sm text-enhanced-text">Pattern</Label>
+                                <div className="flex gap-1 mt-2">
+                                  <Button 
+                                    onClick={() => setRimDesign(s => ({ ...s, pattern: 'stripes' }))} 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimDesign.pattern === 'stripes' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                                  >
+                                    Stripes
+                                  </Button>
+                                  <Button 
+                                    onClick={() => setRimDesign(s => ({ ...s, pattern: 'stars' }))} 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimDesign.pattern === 'stars' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                                  >
+                                    Stars
+                                  </Button>
+                                  <Button 
+                                    onClick={() => setRimDesign(s => ({ ...s, pattern: 'dots' }))} 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimDesign.pattern === 'dots' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                                  >
+                                    Dots
+                                  </Button>
+                                  <Button 
+                                    onClick={() => setRimDesign(s => ({ ...s, pattern: 'diamonds' }))} 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimDesign.pattern === 'diamonds' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                                  >
+                                    Diamonds
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label className="text-xs text-vibrant-purple/70">Density: {rimDesign.density}</Label>
+                                  <Slider 
+                                    value={[rimDesign.density]} 
+                                    onValueChange={v => setRimDesign(s => ({ ...s, density: v[0] }))} 
+                                    max={50} 
+                                    min={5} 
+                                    step={1} 
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-xs text-vibrant-purple/70">Size: {rimDesign.size}px</Label>
+                                  <Slider 
+                                    value={[rimDesign.size]} 
+                                    onValueChange={v => setRimDesign(s => ({ ...s, size: v[0] }))} 
+                                    max={8} 
+                                    min={1} 
+                                    step={0.5} 
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex gap-2 items-center">
+                                <Label className="text-sm text-enhanced-text">Color</Label>
+                                <ColorPicker 
+                                  color={rimDesign.color} 
+                                  onChange={color => setRimDesign(s => ({ ...s, color }))} 
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
                   </div>
                 </TabsContent>
 
