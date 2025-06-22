@@ -1408,7 +1408,7 @@ const LogoTokenEditor = () => {
                     <Button 
                           onClick={() => setMainView('templates')}
                       variant="outline"
-                          className="w-full mt-2 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white"
+                          className="w-full mt-2 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white"
                     >
                       <ImageIcon className="w-4 h-4 mr-2" />
                       Browse Templates
@@ -1422,7 +1422,7 @@ const LogoTokenEditor = () => {
                         onClick={() => setCanvasShape('circle')}
                             variant="outline"
                         size="sm"
-                            className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${canvasShape === 'circle' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                            className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${canvasShape === 'circle' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
                       >
                         <Circle className="w-4 h-4 mr-1" />
                         Circle
@@ -1431,7 +1431,7 @@ const LogoTokenEditor = () => {
                         onClick={() => setCanvasShape('square')}
                             variant="outline"
                         size="sm"
-                            className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${canvasShape === 'square' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                            className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${canvasShape === 'square' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
                       >
                         <Square className="w-4 h-4 mr-1" />
                         Square
@@ -1460,7 +1460,7 @@ const LogoTokenEditor = () => {
                         <Label className="text-enhanced-text">Rim Shadow</Label>
                         <div className="p-2 border border-vibrant-purple/20 rounded-md mt-2 space-y-3">
                           <div className="flex items-center justify-between">
-                            <Label htmlFor="rim-shadow-enable" className="text-sm text-enhanced-text">Enable Shadow</Label>
+                            <Label htmlFor="rim-shadow-enable" className="text-sm text-gray-300">Enable Shadow</Label>
                             <input
                               type="checkbox"
                               id="rim-shadow-enable"
@@ -1472,8 +1472,8 @@ const LogoTokenEditor = () => {
                           {rimShadow.enabled && (
                             <>
                               <div className="flex gap-2">
-                                <Button onClick={() => setRimShadow(s => ({ ...s, type: 'outer' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimShadow.type === 'outer' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Outer</Button>
-                                <Button onClick={() => setRimShadow(s => ({ ...s, type: 'inner' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimShadow.type === 'inner' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Inner</Button>
+                                <Button onClick={() => setRimShadow(s => ({ ...s, type: 'outer' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.type === 'outer' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Outer</Button>
+                                <Button onClick={() => setRimShadow(s => ({ ...s, type: 'inner' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.type === 'inner' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Inner</Button>
                               </div>
                               <div className="flex gap-2 items-center">
                                 <div className='flex-1'>
@@ -1504,7 +1504,7 @@ const LogoTokenEditor = () => {
                         onClick={() => setBackgroundColor('transparent')}
                             variant="outline"
                         size="sm"
-                            className={`border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${backgroundColor === 'transparent' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                            className={`border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${backgroundColor === 'transparent' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
                       >
                         Transparent
                       </Button>
@@ -1828,7 +1828,7 @@ const LogoTokenEditor = () => {
                               });
                             }
                           }} 
-                          className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white"
+                          className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white"
                         >
                           Reset
                         </Button>
@@ -2014,7 +2014,7 @@ const LogoTokenEditor = () => {
                       })()}
                     </>
                   ) : (
-                    <div className="text-center text-enhanced-text-muted py-8">
+                    <div className="text-center text-gray-400 py-8">
                       <Palette className="w-12 h-12 mx-auto mb-4 opacity-50" />
                       <p>Select an image layer to adjust its properties</p>
                     </div>
@@ -2023,12 +2023,12 @@ const LogoTokenEditor = () => {
 
                 <TabsContent value="layers" className="space-y-4">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-medium text-enhanced-text">Layers</h3>
-                    <span className="text-xs text-enhanced-text-muted">{layers.length} layers</span>
+                    <h3 className="text-sm font-medium text-gray-300">Layers</h3>
+                    <span className="text-xs text-gray-400">{layers.length} layers</span>
                   </div>
                   
                   {layers.length === 0 ? (
-                    <div className="text-center py-8 text-enhanced-text-muted">
+                    <div className="text-center py-8 text-gray-400">
                       <Layers className="w-8 h-8 mx-auto mb-2 opacity-50" />
                       <p className="text-sm">No layers yet</p>
                       <p className="text-xs">Upload an image or add text to get started</p>
@@ -2057,10 +2057,10 @@ const LogoTokenEditor = () => {
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-enhanced-text truncate">
+                                <p className="text-sm font-medium text-gray-200 truncate">
                                   {layer.type === 'text' ? layer.content || 'Text' : `${layer.type.charAt(0).toUpperCase() + layer.type.slice(1)} ${layer.id.slice(-4)}`}
                                 </p>
-                                <p className="text-xs text-enhanced-text-muted">
+                                <p className="text-xs text-gray-400">
                                   {layer.type === 'text' ? `${layer.fontSize || 24}px ${layer.fontFamily || 'Arial'}` : `${Math.round(layer.width)}×${Math.round(layer.height)}`}
                                 </p>
                               </div>
@@ -2078,9 +2078,9 @@ const LogoTokenEditor = () => {
                                 className="w-6 h-6 hover:bg-vibrant-purple/20"
                               >
                                 {layer.visible ? (
-                                  <Eye className="w-3 h-3 text-enhanced-text" />
+                                  <Eye className="w-3 h-3 text-gray-300" />
                                 ) : (
-                                  <EyeOff className="w-3 h-3 text-enhanced-text-muted" />
+                                  <EyeOff className="w-3 h-3 text-gray-500" />
                                 )}
                             </Button>
                               
@@ -2097,7 +2097,7 @@ const LogoTokenEditor = () => {
                                 {layer.locked ? (
                                   <Lock className="w-3 h-3 text-vibrant-purple" />
                                 ) : (
-                                  <Unlock className="w-3 h-3 text-enhanced-text" />
+                                  <Unlock className="w-3 h-3 text-gray-300" />
                                 )}
                             </Button>
                               
@@ -2112,7 +2112,7 @@ const LogoTokenEditor = () => {
                                 className="w-6 h-6 hover:bg-vibrant-purple/20"
                                 disabled={index === 0}
                             >
-                                <ChevronUp className="w-3 h-3 text-enhanced-text" />
+                                <ChevronUp className="w-3 h-3 text-gray-300" />
                             </Button>
                               
                               {/* Move down */}
@@ -2126,8 +2126,8 @@ const LogoTokenEditor = () => {
                                 className="w-6 h-6 hover:bg-vibrant-purple/20"
                                 disabled={index === layers.length - 1}
                               >
-                                <ChevronDown className="w-3 h-3 text-enhanced-text" />
-                            </Button>
+                                <ChevronDown className="w-3 h-3 text-gray-300" />
+                              </Button>
                               
                               {/* Delete */}
                               <Button
@@ -2146,7 +2146,7 @@ const LogoTokenEditor = () => {
                         
                           {/* Layer opacity slider */}
                           <div className="mt-2">
-                            <div className="flex items-center justify-between text-xs text-enhanced-text-muted mb-1">
+                            <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
                               <span>Opacity</span>
                               <span>{Math.round(layer.opacity * 100)}%</span>
                             </div>
@@ -2176,13 +2176,13 @@ const LogoTokenEditor = () => {
             {mainView === 'canvas' ? (
               <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-6 rounded-2xl shadow-lg h-[calc(100vh-12rem)] flex flex-col overflow-visible">
               <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-enhanced-text">Canvas (1:1 Ratio)</h2>
+                  <h2 className="text-xl font-semibold text-gray-200">Canvas (1:1 Ratio)</h2>
                 <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setZoom(Math.max(0.5, zoom - 0.1))} className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white">
+                    <Button size="sm" variant="outline" onClick={() => setZoom(Math.max(0.5, zoom - 0.1))} className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white">
                     <ZoomOut className="w-4 h-4" />
                   </Button>
-                    <span className="h-9 w-16 rounded-md flex items-center justify-center text-sm bg-enhanced-gray-dark">{Math.round(zoom * 100)}%</span>
-                    <Button size="sm" variant="outline" onClick={() => setZoom(Math.min(1.1, zoom + 0.1))} className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white">
+                    <span className="h-9 w-16 rounded-md flex items-center justify-center text-sm bg-black/20">{Math.round(zoom * 100)}%</span>
+                    <Button size="sm" variant="outline" onClick={() => setZoom(Math.min(1.1, zoom + 0.1))} className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white">
                     <ZoomIn className="w-4 h-4" />
                   </Button>
                 </div>
@@ -2219,14 +2219,23 @@ const LogoTokenEditor = () => {
 
           {/* Export Panel */}
                 <div className="flex-shrink-0 pt-4 flex justify-center">
-                  <div className="bg-black/40 backdrop-blur-xl border border-vibrant-purple/20 rounded-xl px-6 py-3 shadow-lg flex justify-between items-center w-full max-w-sm">
-                    <div className="text-xs text-enhanced-text-muted">
-                      <p>Optimized • 1:1 Ratio • Under 2MB</p>
-                    </div>
-                    <Button onClick={handleExport} className="bg-gradient-to-r from-vibrant-purple to-vibrant-pink hover:from-vibrant-purple/80 hover:to-vibrant-pink/80 text-white px-6">
-                      Download
-                      <Download className="w-5 h-5 ml-3" />
-                    </Button>
+                  <div className="bg-black/40 backdrop-blur-xl border border-vibrant-purple/20 rounded-xl px-6 py-3 shadow-lg flex justify-center">
+                    <div className="flex items-center gap-4">
+                      <div className="text-xs text-vibrant-purple/70 flex items-center gap-2">
+                        <span>Optimized</span>
+                        <span className="text-gray-600">•</span>
+                        <span>1:1 ratio</span>
+                        <span className="text-gray-600">•</span>
+                        <span>Under 2MB</span>
+                      </div>
+                <Button 
+                  onClick={handleExport}
+                  className="bg-vibrant-purple hover:bg-vibrant-purple text-white font-bold py-3 px-6 rounded-xl shadow-[0_0_20px_0] shadow-vibrant-purple/40 hover:shadow-[0_0_25px_3px] hover:shadow-vibrant-purple/60 border border-t-purple-400/80 border-l-purple-400/80 border-b-purple-900/80 border-r-purple-900/80 transition-all duration-300 transform hover:scale-105"
+                >
+                  Download
+                  <Download className="w-5 h-5 ml-3" />
+                </Button>
+              </div>
                   </div>
                 </div>
               </Card>
@@ -2255,7 +2264,7 @@ const LogoTokenEditor = () => {
             <div className="sticky top-6 h-[calc(100vh-12rem)]">
               <ScrollArea className="h-full w-full pr-4">
                 <div className="flex flex-col h-full">
-                  <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 rounded-2xl shadow-lg flex-1 flex flex-col justify-center items-center relative overflow-hidden group">
+                  <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 rounded-2xl shadow-lg flex-1 flex flex-col justify-center items-center relative overflow-hidden group animate-subtle-glow">
                     {/* Subtle animated glow effect */}
                     <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                          style={{
@@ -2304,7 +2313,7 @@ const LogoTokenEditor = () => {
               </div>
             </Card>
 
-                  <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 rounded-2xl shadow-lg mt-6">
+                  <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 rounded-2xl shadow-lg mt-6 animate-subtle-glow">
                     <h3 className="text-lg font-semibold mb-4 text-gray-200">Promoted Channels</h3>
                     <div className="space-y-3">
                       {/* First channel - full width */}

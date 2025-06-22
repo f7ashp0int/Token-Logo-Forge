@@ -84,11 +84,20 @@ export default {
 					to: {
 						height: '0'
 					}
-				}
+				},
+				'subtle-glow': {
+					'0%, 100%': {
+						boxShadow: '0 0 20px rgba(138, 43, 226, 0.2), 0 0 30px rgba(138, 43, 226, 0.1)',
+					},
+					'50%': {
+						boxShadow: '0 0 25px rgba(138, 43, 226, 0.3), 0 0 35px rgba(138, 43, 226, 0.15)',
+					},
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'subtle-glow': 'subtle-glow 8s ease-in-out infinite',
 			}
 		}
 	},
