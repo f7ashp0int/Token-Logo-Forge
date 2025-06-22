@@ -1162,35 +1162,30 @@ const LogoTokenEditor = () => {
   const hasImageLayers = layers.some(layer => layer.type === 'image');
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 p-4 relative overflow-hidden">
+      {/* Background gradient overlays */}
+      <div className="absolute inset-0 bg-gradient-radial from-purple-500/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
+      
+      <div className="relative z-10 max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 
-            className="text-4xl font-bold mb-2" 
-            style={{ 
-              background: 'linear-gradient(to right, #00d4aa, #9945ff, #ff69b4)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}
-          >
-            Token Logo Creator
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-vibrant-purple via-vibrant-pink to-vibrant-blue bg-clip-text text-transparent mb-2">
+            Token Logo Forge
           </h1>
-          <p className="text-sm text-vibrant-purple/70">Create your unique token image</p>
+          <p className="text-enhanced-text-muted">Create your unique token image</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Tools Panel */}
           <div className="lg:col-span-3">
             <div className="sticky top-6">
-              <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 h-[calc(100vh-12rem)] rounded-2xl shadow-lg flex flex-col">
+              <div className="glass-morphism-enhanced rounded-2xl shadow-lg flex flex-col h-[calc(100vh-12rem)]">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full">
-                    <TabsList className="grid w-full grid-cols-4 bg-black/20 flex-shrink-0 sticky top-0 z-10">
-                      <TabsTrigger value="upload" className="data-[state=active]:bg-vibrant-purple/20 text-gray-200 hover:text-white hover:bg-vibrant-purple/10"><Upload className="w-4 h-4" /></TabsTrigger>
-                      <TabsTrigger value="text" className="data-[state=active]:bg-vibrant-purple/20 text-gray-200 hover:text-white hover:bg-vibrant-purple/10"><Type className="w-4 h-4" /></TabsTrigger>
-                      <TabsTrigger value="adjust" className="data-[state=active]:bg-vibrant-purple/20 text-gray-200 hover:text-white hover:bg-vibrant-purple/10"><Palette className="w-4 h-4" /></TabsTrigger>
-                      <TabsTrigger value="layers" className="data-[state=active]:bg-vibrant-purple/20 text-gray-200 hover:text-white hover:bg-vibrant-purple/10"><Layers className="w-4 h-4" /></TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-4 bg-enhanced-gray-dark/80 flex-shrink-0 sticky top-0 z-10 border-b border-vibrant-purple/20">
+                      <TabsTrigger value="upload" className="data-[state=active]:bg-vibrant-purple/20 text-enhanced-text hover:text-white hover:bg-vibrant-purple/10"><Upload className="w-4 h-4" /></TabsTrigger>
+                      <TabsTrigger value="text" className="data-[state=active]:bg-vibrant-purple/20 text-enhanced-text hover:text-white hover:bg-vibrant-purple/10"><Type className="w-4 h-4" /></TabsTrigger>
+                      <TabsTrigger value="adjust" className="data-[state=active]:bg-vibrant-purple/20 text-enhanced-text hover:text-white hover:bg-vibrant-purple/10"><Palette className="w-4 h-4" /></TabsTrigger>
+                      <TabsTrigger value="layers" className="data-[state=active]:bg-vibrant-purple/20 text-enhanced-text hover:text-white hover:bg-vibrant-purple/10"><Layers className="w-4 h-4" /></TabsTrigger>
                 </TabsList>
                 <div className="flex-grow mt-4 overflow-hidden">
                     <ScrollArea className="h-full w-full pr-4">
@@ -1945,471 +1940,235 @@ const LogoTokenEditor = () => {
                     </ScrollArea>
                 </div>
               </Tabs>
-            </Card>
             </div>
           </div>
 
           {/* Canvas Area */}
-          <div className="lg:col-span-6">
-            {mainView === 'canvas' ? (
-              <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-6 rounded-2xl shadow-lg h-[calc(100vh-12rem)] flex flex-col overflow-visible">
-              <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-gray-200">Canvas (1:1 Ratio)</h2>
-                <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setZoom(Math.max(0.5, zoom - 0.1))} className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white">
+          <div className="lg:col-span-9">
+            <div className="glass-morphism rounded-2xl p-6 h-[calc(100vh-12rem)] flex flex-col">
+              {/* Canvas Header */}
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-4">
+                  <Button
+                    onClick={() => setMainView('canvas')}
+                    variant="outline"
+                    size="sm"
+                    className={`border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${mainView === 'canvas' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                  >
+                    <ImageIcon className="w-4 h-4 mr-2" />
+                    Canvas
+                  </Button>
+                  <Button
+                    onClick={() => setMainView('templates')}
+                    variant="outline"
+                    size="sm"
+                    className={`border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${mainView === 'templates' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                  >
+                    <ImageIcon className="w-4 h-4 mr-2" />
+                    Templates
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setZoom(Math.max(0.1, zoom - 0.1))}
+                    variant="outline"
+                    size="sm"
+                    className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white"
+                  >
                     <ZoomOut className="w-4 h-4" />
                   </Button>
-                    <span className="h-9 w-16 rounded-md flex items-center justify-center text-sm bg-black/20">{Math.round(zoom * 100)}%</span>
-                    <Button size="sm" variant="outline" onClick={() => setZoom(Math.min(1.1, zoom + 0.1))} className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white">
+                  <span className="text-sm text-enhanced-text-muted min-w-[60px] text-center">
+                    {Math.round(zoom * 100)}%
+                  </span>
+                  <Button
+                    onClick={() => setZoom(Math.min(3, zoom + 0.1))}
+                    variant="outline"
+                    size="sm"
+                    className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white"
+                  >
                     <ZoomIn className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={handleExport}
+                    className="bg-gradient-to-r from-vibrant-purple to-vibrant-pink hover:from-vibrant-purple/80 hover:to-vibrant-pink/80 text-white"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export
                   </Button>
                 </div>
               </div>
-              
-                <div className="flex-grow flex items-center justify-center">
-                <div 
-                    className={`border-2 border-dashed border-vibrant-purple/20 overflow-hidden ${canvasShape === 'circle' ? 'rounded-full' : 'rounded-lg'} transition-all duration-300 ease-in-out`}
-                  style={{ 
-                    width: canvasSize * zoom, 
-                    height: canvasSize * zoom,
-                      marginTop: '-4rem',
-                    backgroundImage: backgroundColor === 'transparent' ? 'linear-gradient(45deg, #374151 25%, transparent 25%), linear-gradient(-45deg, #374151 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #374151 75%), linear-gradient(-45deg, transparent 75%, #374151 75%)' : 'none',
-                    backgroundSize: '20px 20px',
-                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
-                  }}
-                >
-                  <canvas
-                    ref={canvasRef}
-                    width={canvasSize}
-                    height={canvasSize}
-                    style={{ 
-                      width: canvasSize * zoom, 
-                      height: canvasSize * zoom,
-                      cursor: tool === 'select' ? 'pointer' : 'crosshair'
+
+              {/* Canvas Content */}
+              <div className="flex-1 relative overflow-hidden rounded-xl bg-enhanced-gray-dark/50 border border-vibrant-purple/20">
+                {mainView === 'canvas' ? (
+                  <div 
+                    className="w-full h-full relative"
+                    style={{
+                      background: canvasShape === 'circle' 
+                        ? `radial-gradient(circle, ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor} 0%, ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor} 100%)`
+                        : backgroundColor === 'transparent' ? 'transparent' : backgroundColor
                     }}
-                    className="block"
-                    onMouseDown={handleCanvasMouseDown}
-                    onMouseMove={handleCanvasMouseMove}
-                    onMouseUp={handleCanvasMouseUp}
-                  />
-                </div>
-          </div>
-
-          {/* Export Panel */}
-                <div className="flex-shrink-0 pt-4 flex justify-center">
-                  <div className="bg-black/40 backdrop-blur-xl border border-vibrant-purple/20 rounded-xl px-6 py-3 shadow-lg flex justify-center">
-                    <div className="flex items-center gap-4">
-                      <div className="text-xs text-vibrant-purple/70 flex items-center gap-2">
-                        <span>Optimized</span>
-                        <span className="text-gray-600">•</span>
-                        <span>1:1 ratio</span>
-                        <span className="text-gray-600">•</span>
-                        <span>Under 2MB</span>
-                      </div>
-                <Button 
-                  onClick={handleExport}
-                  className="bg-vibrant-purple hover:bg-vibrant-purple text-white font-bold py-3 px-6 rounded-xl shadow-[0_0_20px_0] shadow-vibrant-purple/40 hover:shadow-[0_0_25px_3px] hover:shadow-vibrant-purple/60 border border-t-purple-400/80 border-l-purple-400/80 border-b-purple-900/80 border-r-purple-900/80 transition-all duration-300 transform hover:scale-105"
-                >
-                  Download
-                  <Download className="w-5 h-5 ml-3" />
-                </Button>
-              </div>
-                  </div>
-                </div>
-              </Card>
-            ) : (
-              <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-6 rounded-2xl shadow-lg h-[calc(100vh-12rem)]">
-                <ScrollArea className="h-full w-full pr-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold text-gray-200">Browse Templates</h2>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setMainView('canvas')}
-                      className="text-gray-400 hover:text-white hover:bg-vibrant-purple/20"
+                  >
+                    {/* Canvas with layers */}
+                    <div 
+                      className="absolute inset-0 flex items-center justify-center"
+                      style={{
+                        transform: `scale(${zoom})`,
+                        transformOrigin: 'center'
+                      }}
                     >
-                      <X className="w-5 h-5" />
-                    </Button>
-                  </div>
-                  <TemplateGallery onSelectTemplate={handleTemplateSelect} />
-                </ScrollArea>
-              </Card>
-            )}
-              </div>
-
-          {/* Export Panel */}
-          <div className="lg:col-span-3">
-            <div className="sticky top-6 h-[calc(100vh-12rem)]">
-              <ScrollArea className="h-full w-full pr-4">
-                <div className="flex flex-col h-full">
-                  <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 rounded-2xl shadow-lg flex-1 flex flex-col justify-center items-center relative overflow-hidden group">
-                    {/* Subtle animated glow effect */}
-                    <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                         style={{
-                           background: 'radial-gradient(circle at center, rgba(138, 43, 226, 0.1) 0%, transparent 70%)',
-                           boxShadow: '0 0 30px rgba(138, 43, 226, 0.2)',
-                         }}
-                    />
-                    
-                    {/* Enhanced border glow */}
-                    <div className="absolute inset-0 rounded-2xl opacity-30 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none"
-                         style={{
-                           border: '1px solid rgba(138, 43, 226, 0.3)',
-                           boxShadow: 'inset 0 0 20px rgba(138, 43, 226, 0.1), 0 0 20px rgba(138, 43, 226, 0.1)',
-                         }}
-                    />
-
-              {/* Donation Section */}
-                    <p className="text-xs text-center text-vibrant-purple/70 mb-4 w-full relative z-10">
-                  Donations of Tokens accepted
-                </p>
-                    <div className="w-11/12 flex items-center gap-3 p-2 bg-transparent rounded-lg border border-vibrant-purple/30 relative z-10 group-hover:border-vibrant-purple/50 transition-colors duration-300">
-                      <a href={`https://solana.fm/address/${solanaAddress}/transactions?cluster=mainnet-alpha`} target="_blank" rel="noopener noreferrer" aria-label="View address on Solana Explorer">
-                        <div className="w-8 h-8 rounded-full bg-vibrant-purple/20 flex items-center justify-center group-hover:bg-vibrant-purple/30 transition-colors duration-300">
-                          <svg width="16" height="16" viewBox="0 0 397.7 311.7" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <linearGradient id="logosGradient" x1="360.8793" y1="351.4553" x2="141.213" y2="-69.2936" gradientUnits="userSpaceOnUse">
-                        <stop offset="0" stopColor="#00FFA3"/>
-                        <stop offset="1" stopColor="#DC1FFF"/>
-                      </linearGradient>
-                      <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 237.9z" fill="url(#logosGradient)"/>
-                      <path d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#logosGradient)"/>
-                      <path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#logosGradient)"/>
-                    </svg>
-                  </div>
-                      </a>
-                      <span className="text-sm font-mono flex-1 text-center text-gray-300 group-hover:text-gray-200 transition-colors duration-300">
-                    {formatAddress(solanaAddress)}
-                  </span>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => copyToClipboard(solanaAddress)}
-                        className="hover:bg-vibrant-purple/20 text-gray-200 hover:text-white transition-all duration-300 hover:scale-110"
-                      >
-                        <Copy className="w-5 h-5" />
-                      </Button>
-              </div>
-            </Card>
-
-                  <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 rounded-2xl shadow-lg mt-6">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-200">Promoted Channels</h3>
-                    <div className="space-y-3">
-                      {/* First channel - full width */}
-                      <a
-                        href={promotedChannels[0].url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group relative flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ease-out hover:scale-[1.02]"
+                      <div 
+                        className={`relative ${canvasShape === 'circle' ? 'rounded-full' : 'rounded-lg'} overflow-hidden`}
                         style={{
-                          background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.2) 0%, rgba(59, 7, 100, 0.1) 100%)',
-                          backdropFilter: 'blur(20px)',
-                          border: '1px solid rgba(59, 7, 100, 0.4)',
-                          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(59, 7, 100, 0.2)',
+                          width: canvasSize,
+                          height: canvasSize,
+                          background: canvasShape === 'circle' 
+                            ? `radial-gradient(circle, ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor} 0%, ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor} 100%)`
+                            : backgroundColor === 'transparent' ? 'transparent' : backgroundColor,
+                          border: canvasBorderWidth > 0 ? `${canvasBorderWidth}px solid ${canvasBorderColor}` : 'none',
+                          boxShadow: rimShadow.enabled 
+                            ? `${rimShadow.offsetX}px ${rimShadow.offsetY}px ${rimShadow.blur}px ${rimShadow.color} ${rimShadow.type === 'inner' ? 'inset' : ''}`
+                            : 'none'
                         }}
                       >
-                        {/* Animated gradient border */}
-                        <div
-                          className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                          style={{
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
-                            padding: '1px',
-                            mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                            maskComposite: 'exclude',
-                          }}
-                        />
-
-                        {/* Logo container with glassmorphism */}
-                        <div className="relative w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-[#F53566]">
-                          {promotedChannels[0].logo ? (
-                            <img
-                              src={promotedChannels[0].logo}
-                              alt={`${promotedChannels[0].name} logo`}
-                              className="w-7 h-7 object-contain group-hover:scale-110 transition-transform duration-300"
-                            />
-                          ) : (
-                            <User className="w-5 h-5 text-gray-400" />
-                          )}
-            </div>
-
-                        {/* Channel name with enhanced styling */}
-                        <span className="text-sm font-semibold flex-1 text-gray-200 group-hover:text-white transition-colors duration-300">
-                          {promotedChannels[0].name}
-                        </span>
-
-                        {/* External link icon with glow effect */}
-                        <div className="relative">
-                          <ExternalLink
-                            className="w-4 h-4 text-gray-400 group-hover:text-white transition-all duration-300 group-hover:scale-110"
-                            style={{
-                              filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.3))',
-                            }}
-                          />
-          </div>
-
-                        {/* Hover glow effect */}
-                        <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                             style={{
-                               background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
-                               boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
-                             }}
-                        />
-                      </a>
-
-                      {/* Side by side channels */}
-                      <div className="grid grid-cols-2 gap-3">
-                        {promotedChannels.slice(1, 3).map((channel) => (
-                          <a
-                            key={channel.name}
-                            href={channel.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group relative flex items-center gap-2 p-3 rounded-xl transition-all duration-300 ease-out hover:scale-[1.02]"
-                            style={{
-                              background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.2) 0%, rgba(59, 7, 100, 0.1) 100%)',
-                              backdropFilter: 'blur(20px)',
-                              border: '1px solid rgba(59, 7, 100, 0.4)',
-                              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(59, 7, 100, 0.2)',
-                            }}
-                          >
-                            <div
-                              className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                              style={{
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
-                                padding: '1px',
-                                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                                maskComposite: 'exclude',
-                              }}
-                            />
-                            {/* Logo container */}
-                            <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-                                 style={{
-                                   background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.3) 0%, rgba(59, 7, 100, 0.2) 100%)',
-                                   backdropFilter: 'blur(10px)',
-                                   border: '1px solid rgba(59, 7, 100, 0.5)',
-                                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(59, 7, 100, 0.3)',
-                                 }}>
-                              {channel.logo ? (
-                                <img
-                                  src={channel.logo}
-                                  alt={`${channel.name} logo`}
-                                  className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
-                                />
-                              ) : (
-                                <User className="w-4 h-4 text-gray-400" />
-                              )}
-        </div>
-
-                            {/* Channel name */}
-                            <span className="text-xs font-semibold flex-1 text-gray-200 group-hover:text-white transition-colors duration-300 truncate">
-                              {channel.name}
-                            </span>
-
-                            {/* External link icon */}
-                            <ExternalLink
-                              className="w-3 h-3 text-gray-400 group-hover:text-white transition-all duration-300 group-hover:scale-110"
-                              style={{
-                                filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.3))',
-                              }}
-                            />
-                            <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                                 style={{
-                                   background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
-                                   boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
-                                 }}
-                            />
-                          </a>
-                        ))}
-      </div>
-
-                      {/* Second row of side by side channels */}
-                      <div className="grid grid-cols-2 gap-3">
-                        {promotedChannels.slice(3, 5).map((channel) => (
-                          <a
-                            key={channel.name}
-                            href={channel.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group relative flex items-center gap-2 p-3 rounded-xl transition-all duration-300 ease-out hover:scale-[1.02]"
-                            style={{
-                              background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.2) 0%, rgba(59, 7, 100, 0.1) 100%)',
-                              backdropFilter: 'blur(20px)',
-                              border: '1px solid rgba(59, 7, 100, 0.4)',
-                              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(59, 7, 100, 0.2)',
-                            }}
-                          >
-                            <div
-                              className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                              style={{
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
-                                padding: '1px',
-                                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                                maskComposite: 'exclude',
-                              }}
-                            />
-                            {/* Logo container */}
-                            <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-                                 style={{
-                                   background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.3) 0%, rgba(59, 7, 100, 0.2) 100%)',
-                                   backdropFilter: 'blur(10px)',
-                                   border: '1px solid rgba(59, 7, 100, 0.5)',
-                                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(59, 7, 100, 0.3)',
-                                 }}>
-                              {channel.logo ? (
-                                <img
-                                  src={channel.logo}
-                                  alt={`${channel.name} logo`}
-                                  className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
-                                />
-                              ) : (
-                                <User className="w-4 h-4 text-gray-400" />
-                              )}
-                            </div>
-
-                            {/* Channel name */}
-                            <span className="text-xs font-semibold flex-1 text-gray-200 group-hover:text-white transition-colors duration-300 truncate">
-                              {channel.name}
-                            </span>
-
-                            {/* External link icon */}
-                            <ExternalLink
-                              className="w-3 h-3 text-gray-400 group-hover:text-white transition-all duration-300 group-hover:scale-110"
-                              style={{
-                                filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.3))',
-                              }}
-                            />
-                            <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                                 style={{
-                                   background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
-                                   boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
-                                 }}
-                            />
-                          </a>
-                        ))}
-                      </div>
-
-                      {/* Third row with last channel and placeholder */}
-                      <div className="grid grid-cols-2 gap-3">
-                        {/* Last channel */}
-                        <a
-                          href={promotedChannels[5].url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group relative flex items-center gap-2 p-3 rounded-xl transition-all duration-300 ease-out hover:scale-[1.02]"
-                          style={{
-                            background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.2) 0%, rgba(59, 7, 100, 0.1) 100%)',
-                            backdropFilter: 'blur(20px)',
-                            border: '1px solid rgba(59, 7, 100, 0.4)',
-                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(59, 7, 100, 0.2)',
-                          }}
-                        >
+                        {layers.map((layer) => (
                           <div
-                            className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            key={layer.id}
+                            className={`absolute ${layer.visible ? 'block' : 'hidden'}`}
                             style={{
-                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
-                              padding: '1px',
-                              mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                              maskComposite: 'exclude',
+                              left: layer.x,
+                              top: layer.y,
+                              width: layer.width,
+                              height: layer.height,
+                              transform: `rotate(${layer.rotation}deg)`,
+                              opacity: layer.opacity,
+                              zIndex: layer.zIndex,
+                              cursor: isDragging && selectedLayer === layer.id ? 'grabbing' : 'grab'
                             }}
-                          />
-                          {/* Logo container */}
-                          <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-                               style={{
-                                 background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.3) 0%, rgba(59, 7, 100, 0.2) 100%)',
-                                 backdropFilter: 'blur(10px)',
-                                 border: '1px solid rgba(59, 7, 100, 0.5)',
-                                 boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(59, 7, 100, 0.3)',
-                               }}>
-                            {promotedChannels[5].logo ? (
+                            onMouseDown={(e) => {
+                              if (!layer.locked) {
+                                setIsDragging(true);
+                                setSelectedLayer(layer.id);
+                                setDragStart({ x: e.clientX - layer.x, y: e.clientY - layer.y });
+                              }
+                            }}
+                            onMouseUp={() => setIsDragging(false)}
+                            onMouseLeave={() => setIsDragging(false)}
+                            onMouseMove={(e) => {
+                              if (isDragging && selectedLayer === layer.id && !layer.locked) {
+                                const newX = e.clientX - dragStart.x;
+                                const newY = e.clientY - dragStart.y;
+                                setLayers(prev => prev.map(l => 
+                                  l.id === layer.id ? { ...l, x: newX, y: newY } : l
+                                ));
+                              }
+                            }}
+                          >
+                            {layer.type === 'image' && (
                               <img
-                                src={promotedChannels[5].logo}
-                                alt={`${promotedChannels[5].name} logo`}
-                                className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
+                                src={layer.content}
+                                alt="Layer"
+                                className="w-full h-full object-cover"
+                                style={{
+                                  filter: layer.imageAdjustments ? `
+                                    brightness(${layer.imageAdjustments.brightness}%)
+                                    contrast(${layer.imageAdjustments.contrast}%)
+                                    saturate(${layer.imageAdjustments.saturation}%)
+                                    blur(${layer.imageAdjustments.blur}px)
+                                    hue-rotate(${layer.imageAdjustments.hue}deg)
+                                    opacity(${layer.imageAdjustments.opacity}%)
+                                    sepia(${layer.imageAdjustments.sepia}%)
+                                    ${layer.imageAdjustments.invert ? 'invert(1)' : ''}
+                                    ${layer.imageAdjustments.grayscale ? 'grayscale(1)' : ''}
+                                  ` : 'none',
+                                  mixBlendMode: layer.imageAdjustments?.blendMode || 'normal'
+                                }}
                               />
-                            ) : (
-                              <User className="w-4 h-4 text-gray-400" />
+                            )}
+                            {layer.type === 'text' && (
+                              <div
+                                className="w-full h-full flex items-center justify-center text-center"
+                                style={{
+                                  fontSize: layer.fontSize || fontSize,
+                                  color: layer.fontColor || textColor,
+                                  fontFamily: layer.fontFamily || fontFamily,
+                                  textShadow: layer.strokeWidth > 0 
+                                    ? `${layer.strokeWidth}px ${layer.strokeWidth}px ${layer.strokeColor || strokeColor}` 
+                                    : 'none',
+                                  filter: layer.shadowBlur > 0 
+                                    ? `drop-shadow(${layer.shadowOffsetX || shadowOffsetX}px ${layer.shadowOffsetY || shadowOffsetY}px ${layer.shadowBlur}px ${layer.shadowColor || shadowColor})` 
+                                    : 'none'
+                                }}
+                              >
+                                {layer.isCircularText ? (
+                                  <svg
+                                    className="w-full h-full"
+                                    viewBox="0 0 300 300"
+                                    style={{
+                                      filter: layer.glowBlur > 0 
+                                        ? `drop-shadow(0 0 ${layer.glowBlur}px ${layer.glowColor || glowColor})` 
+                                        : 'none'
+                                    }}
+                                  >
+                                    <defs>
+                                      <path
+                                        id={`textPath-${layer.id}`}
+                                        d={`M 150,150 m -${layer.textRadius || textRadius},0 a ${layer.textRadius || textRadius},${layer.textRadius || textRadius} 0 1,1 ${(layer.textRadius || textRadius) * 2},0 a ${layer.textRadius || textRadius},${layer.textRadius || textRadius} 0 1,1 -${(layer.textRadius || textRadius) * 2},0`}
+                                      />
+                                    </defs>
+                                    <text>
+                                      <textPath
+                                        href={`#textPath-${layer.id}`}
+                                        startOffset={`${layer.textStartAngle || textStartAngle}%`}
+                                        spacing="auto"
+                                        style={{
+                                          fontSize: layer.fontSize || fontSize,
+                                          fontFamily: layer.fontFamily || fontFamily,
+                                          letterSpacing: `${layer.textKerning || textKerning}px`
+                                        }}
+                                      >
+                                        {layer.content}
+                                      </textPath>
+                                    </text>
+                                  </svg>
+                                ) : (
+                                  <span
+                                    style={{
+                                      filter: layer.glowBlur > 0 
+                                        ? `drop-shadow(0 0 ${layer.glowBlur}px ${layer.glowColor || glowColor})` 
+                                        : 'none'
+                                    }}
+                                  >
+                                    {layer.content}
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
-
-                          {/* Channel name */}
-                          <span className="text-xs font-semibold flex-1 text-gray-200 group-hover:text-white transition-colors duration-300 truncate">
-                            {promotedChannels[5].name}
-                          </span>
-
-                          {/* External link icon */}
-                          <ExternalLink
-                            className="w-3 h-3 text-gray-400 group-hover:text-white transition-all duration-300 group-hover:scale-110"
-                            style={{
-                              filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.3))',
-                            }}
-                          />
-                          <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                               style={{
-                                 background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
-                                 boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
-                               }}
-                          />
-                        </a>
-
-                        {/* Placeholder for "Your Channel" */}
-                        <div className="group relative flex items-center gap-2 p-3 rounded-xl transition-all duration-300 ease-out border-2 border-dashed border-vibrant-purple/30 bg-black/10">
-                          {/* Logo container */}
-                          <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-vibrant-purple/20">
-                            <User className="w-4 h-4 text-vibrant-purple/60" />
-                          </div>
-
-                          {/* Placeholder text */}
-                          <span className="text-xs font-semibold flex-1 text-vibrant-purple/60">
-                            Your Channel
-                          </span>
-
-                          {/* Question mark icon */}
-                          <div className="w-3 h-3 text-vibrant-purple/60">?</div>
-                        </div>
-                      </div>
-
-                      {/* Additional placeholder rows to fill space */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="group relative flex items-center gap-2 p-3 rounded-xl transition-all duration-300 ease-out border-2 border-dashed border-vibrant-purple/30 bg-black/10">
-                          <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-vibrant-purple/20">
-                            <User className="w-4 h-4 text-vibrant-purple/60" />
-                          </div>
-                          <span className="text-xs font-semibold flex-1 text-vibrant-purple/60">
-                            Your Channel
-                          </span>
-                          <div className="w-3 h-3 text-vibrant-purple/60">?</div>
-                        </div>
-                        <div className="group relative flex items-center gap-2 p-3 rounded-xl transition-all duration-300 ease-out border-2 border-dashed border-vibrant-purple/30 bg-black/10">
-                          <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-vibrant-purple/20">
-                            <User className="w-4 h-4 text-vibrant-purple/60" />
-                          </div>
-                          <span className="text-xs font-semibold flex-1 text-vibrant-purple/60">
-                            Your Channel
-                          </span>
-                          <div className="w-3 h-3 text-vibrant-purple/60">?</div>
-                        </div>
-                      </div>
-
-                      {/* Get featured text */}
-                      <div className="text-center pt-2">
-                        <p className="text-xs text-vibrant-purple/70 italic">
-                          Get featured here based on donations sent
-                        </p>
+                        ))}
                       </div>
                     </div>
-                  </Card>
-      </div>
-              </ScrollArea>
+                  </div>
+                ) : (
+                  <TemplateGallery onSelectTemplate={handleTemplateSelect} />
+                )}
+              </div>
             </div>
           </div>
         </div>
+        
+        {/* Footer */}
         <footer className="w-full py-4 mt-8 text-center">
-          <p className="text-sm text-vibrant-purple/70 mb-4">Made with ❤️ by <a href="https://xeenon.xyz/f7ash" target="_blank" rel="noopener noreferrer" className="text-vibrant-purple hover:text-vibrant-pink transition-colors">f7ash</a></p>
-        <div className="container mx-auto flex items-center justify-center">
-            <p className="text-lg mr-2 text-gray-300">Made for</p>
-          <img src="/xeenon-logo.png" alt="Xeenon Logo" className="h-8 w-auto" />
-            <p className="text-lg ml-2 text-gray-300">Community</p>
-        </div>
-      </footer>
+          <p className="text-sm text-enhanced-text-muted mb-4">
+            Made with ❤️ by <a href="https://xeenon.xyz/f7ash" target="_blank" rel="noopener noreferrer" className="text-vibrant-purple hover:text-vibrant-pink transition-colors">f7ash</a>
+          </p>
+          <div className="container mx-auto flex items-center justify-center">
+            <p className="text-lg mr-2 text-enhanced-text">Made for</p>
+            <img src="/xeenon-logo.png" alt="Xeenon Logo" className="h-8 w-auto" />
+            <p className="text-lg ml-2 text-enhanced-text">Community</p>
+          </div>
+        </footer>
       </div>
     </div>
   );
