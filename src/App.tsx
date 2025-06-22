@@ -11,6 +11,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <div className="app-container">
+          <div className="noise-overlay"></div>
           <LogoTokenEditor />
           <Toaster />
         </div>
