@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import Confetti from 'react-confetti';
 import { Upload, Download, Layers, Type, Image as ImageIcon, Palette, ZoomIn, ZoomOut, Circle, Square, Copy, Lock, Unlock, Sparkles, X, User, ExternalLink, Eye, EyeOff, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -144,6 +145,7 @@ const LogoTokenEditor = () => {
   const [fontChangeTrigger, setFontChangeTrigger] = useState(0);
   const [fontLoadingStatus, setFontLoadingStatus] = useState<string>('');
   const [activeTab, setActiveTab] = useState('upload');
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const loadFontIfNeeded = async (fontFamily: string | undefined) => {
     if (!fontFamily || fontFamily === 'Arial') return;
@@ -161,7 +163,11 @@ const LogoTokenEditor = () => {
   const copyToClipboard = useCallback(async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success('Address copied to clipboard!');
+      setShowConfetti(true);
+      toast.success('Thank you for taking a first step in supporting this project', {
+        duration: 5000,
+      });
+      setTimeout(() => setShowConfetti(false), 5000);
     } catch (error) {
       toast.error('Failed to copy address');
     }
@@ -1299,6 +1305,7 @@ const LogoTokenEditor = () => {
 
   return (
     <div className="min-h-screen text-foreground">
+      {showConfetti && <Confetti recycle={false} numberOfPieces={400} />}
       <div className="p-6">
         {/* Header */}
         <div className="text-center mb-8">
