@@ -1551,6 +1551,36 @@ const LogoTokenEditor = () => {
                 </TabsContent>
 
                 <TabsContent value="adjust" className="space-y-4">
+                  {selectedLayer && layers.find(l => l.id === selectedLayer && l.type === 'image') && (
+                    <div className="space-y-2 mb-4">
+                      <Label htmlFor="image-zoom" className="text-sm font-medium text-gray-300">Image Zoom: {Math.round(imageZoom * 100)}%</Label>
+                      <Slider
+                        value={[imageZoom]}
+                        onValueChange={(value) => {
+                          const newZoom = value[0];
+                          setImageZoom(newZoom);
+                          if (selectedLayer) {
+                            setLayers(prev => prev.map(l => {
+                              if (l.id === selectedLayer && l.type === 'image') {
+                                const baseSize = canvasSize - 100;
+                                const newWidth = baseSize * newZoom;
+                                const newHeight = baseSize * newZoom;
+                                const newX = l.x + (l.width - newWidth) / 2;
+                                const newY = l.y + (l.height - newHeight) / 2;
+                                return { ...l, width: newWidth, height: newHeight, x: newX, y: newY };
+                              }
+                              return l;
+                            }));
+                          }
+                        }}
+                        max={2}
+                        min={0.1}
+                        step={0.1}
+                        className="mt-2"
+                      />
+                    </div>
+                  )}
+
                   {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'image' ? (
                     <>
                       <div className="flex justify-between items-center mb-4">
