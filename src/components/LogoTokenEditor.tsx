@@ -2264,7 +2264,7 @@ const LogoTokenEditor = () => {
             <div className="sticky top-6 h-[calc(100vh-12rem)]">
               <ScrollArea className="h-full w-full pr-4">
                 <div className="flex flex-col h-full">
-                  <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 rounded-2xl shadow-lg flex-1 flex flex-col justify-center items-center relative overflow-hidden group animate-subtle-glow">
+                  <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 rounded-2xl shadow-lg flex-1 flex flex-col justify-center items-center relative overflow-hidden group shimmer-effect">
                     {/* Subtle animated glow effect */}
                     <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                          style={{
