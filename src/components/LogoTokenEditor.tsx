@@ -146,6 +146,8 @@ const LogoTokenEditor = () => {
   const [fontLoadingStatus, setFontLoadingStatus] = useState<string>('');
   const [activeTab, setActiveTab] = useState('upload');
   const [showConfetti, setShowConfetti] = useState(false);
+  const [coinRimEnabled, setCoinRimEnabled] = useState(true);
+  const renderTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const loadFontIfNeeded = async (fontFamily: string | undefined) => {
     if (!fontFamily || fontFamily === 'Arial') return;
@@ -236,485 +238,377 @@ const LogoTokenEditor = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvasSize, canvasSize);
-    ctx.globalCompositeOperation = 'source-over';
+    // Double buffering: create offscreen canvas
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = canvasSize;
+    offCanvas.height = canvasSize;
+    const offCtx = offCanvas.getContext('2d');
+    if (!offCtx) return;
 
+    // All drawing operations now use offCtx instead of ctx
+    offCtx.clearRect(0, 0, canvasSize, canvasSize);
+    offCtx.globalCompositeOperation = 'source-over';
 
-      if (canvasShape === 'circle') {
-      ctx.save();
-      // Draw outer shadow for the entire coin
+    if (coinRimEnabled && canvasShape === 'circle') {
+      offCtx.save();
       if (rimShadow.enabled && rimShadow.type === 'outer' && canvasBorderWidth > 0) {
-        ctx.shadowColor = rimShadow.color;
-        ctx.shadowBlur = rimShadow.blur;
-        ctx.shadowOffsetX = rimShadow.offsetX;
-        ctx.shadowOffsetY = rimShadow.offsetY;
+        offCtx.shadowColor = rimShadow.color;
+        offCtx.shadowBlur = rimShadow.blur;
+        offCtx.shadowOffsetX = rimShadow.offsetX;
+        offCtx.shadowOffsetY = rimShadow.offsetY;
       }
-      
-      // 1. Draw the outer rim
       if (canvasBorderWidth > 0) {
-        ctx.fillStyle = canvasBorderColor;
-        ctx.beginPath();
-        ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, Math.PI * 2);
-        ctx.fill();
+        offCtx.fillStyle = canvasBorderColor;
+        offCtx.beginPath();
+        offCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, Math.PI * 2);
+        offCtx.fill();
       }
-
-      ctx.restore(); // Restore to remove shadow for subsequent operations
-
-      // Draw inner shadow for the rim
+      offCtx.restore();
       if (rimShadow.enabled && rimShadow.type === 'inner' && canvasBorderWidth > 0) {
-        ctx.save();
-        ctx.strokeStyle = rimShadow.color;
-        ctx.shadowColor = rimShadow.color;
-        ctx.shadowBlur = rimShadow.blur;
-        ctx.shadowOffsetX = rimShadow.offsetX;
-        ctx.shadowOffsetY = rimShadow.offsetY;
-        
-        ctx.beginPath();
-        ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - canvasBorderWidth, 0, Math.PI * 2);
-        
-        // This creates an "inner" shadow effect by stroking inside the rim area
-        ctx.lineWidth = rimShadow.blur;
-        ctx.stroke();
-        ctx.restore();
+        offCtx.save();
+        offCtx.strokeStyle = rimShadow.color;
+        offCtx.shadowColor = rimShadow.color;
+        offCtx.shadowBlur = rimShadow.blur;
+        offCtx.shadowOffsetX = rimShadow.offsetX;
+        offCtx.shadowOffsetY = rimShadow.offsetY;
+        offCtx.beginPath();
+        offCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - canvasBorderWidth, 0, Math.PI * 2);
+        offCtx.lineWidth = rimShadow.blur;
+        offCtx.stroke();
+        offCtx.restore();
       }
-      
-      // 2. "Punch out" the middle for the content area
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.beginPath();
-      ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - canvasBorderWidth, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalCompositeOperation = 'source-over';
-
-      // 3. Draw rim design patterns if enabled
+      offCtx.globalCompositeOperation = 'destination-out';
+      offCtx.beginPath();
+      offCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - canvasBorderWidth, 0, Math.PI * 2);
+      offCtx.fill();
+      offCtx.globalCompositeOperation = 'source-over';
       if (rimDesign.enabled && canvasBorderWidth > 0) {
-        ctx.save();
-        ctx.fillStyle = rimDesign.color;
-        
+        offCtx.save();
+        offCtx.fillStyle = rimDesign.color;
         const centerX = canvasSize / 2;
         const centerY = canvasSize / 2;
         const outerRadius = canvasSize / 2;
         const innerRadius = outerRadius - canvasBorderWidth;
         const patternRadius = (outerRadius + innerRadius) / 2;
-        
         const numElements = rimDesign.density;
         const angleStep = (Math.PI * 2) / numElements;
-        
         for (let i = 0; i < numElements; i++) {
           const angle = i * angleStep;
           const x = centerX + Math.cos(angle) * patternRadius;
           const y = centerY + Math.sin(angle) * patternRadius;
-          
-          ctx.save();
-          ctx.translate(x, y);
-          ctx.rotate(angle + Math.PI / 2); // Rotate to align with rim
-          
+          offCtx.save();
+          offCtx.translate(x, y);
+          offCtx.rotate(angle + Math.PI / 2);
           switch (rimDesign.pattern) {
             case 'stripes':
-              // Draw vertical stripes
-              ctx.fillRect(-rimDesign.size / 2, -canvasBorderWidth / 2, rimDesign.size, canvasBorderWidth);
+              offCtx.fillRect(-rimDesign.size / 2, -canvasBorderWidth / 2, rimDesign.size, canvasBorderWidth);
               break;
             case 'stars':
-              // Draw star shapes
-              ctx.beginPath();
+              offCtx.beginPath();
               for (let j = 0; j < 5; j++) {
                 const starAngle = (j * Math.PI * 2) / 5;
                 const starRadius = j % 2 === 0 ? rimDesign.size : rimDesign.size / 2;
                 const starX = Math.cos(starAngle) * starRadius;
                 const starY = Math.sin(starAngle) * starRadius;
-                if (j === 0) ctx.moveTo(starX, starY);
-                else ctx.lineTo(starX, starY);
+                if (j === 0) offCtx.moveTo(starX, starY);
+                else offCtx.lineTo(starX, starY);
               }
-              ctx.closePath();
-              ctx.fill();
+              offCtx.closePath();
+              offCtx.fill();
               break;
             case 'dots':
-              // Draw circular dots
-              ctx.beginPath();
-              ctx.arc(0, 0, rimDesign.size / 2, 0, Math.PI * 2);
-              ctx.fill();
+              offCtx.beginPath();
+              offCtx.arc(0, 0, rimDesign.size / 2, 0, Math.PI * 2);
+              offCtx.fill();
               break;
             case 'diamonds':
-              // Draw diamond shapes
-              ctx.beginPath();
-              ctx.moveTo(0, -rimDesign.size / 2);
-              ctx.lineTo(rimDesign.size / 2, 0);
-              ctx.lineTo(0, rimDesign.size / 2);
-              ctx.lineTo(-rimDesign.size / 2, 0);
-              ctx.closePath();
-              ctx.fill();
+              offCtx.beginPath();
+              offCtx.moveTo(0, -rimDesign.size / 2);
+              offCtx.lineTo(rimDesign.size / 2, 0);
+              offCtx.lineTo(0, rimDesign.size / 2);
+              offCtx.lineTo(-rimDesign.size / 2, 0);
+              offCtx.closePath();
+              offCtx.fill();
               break;
           }
-          
-          ctx.restore();
+          offCtx.restore();
         }
-        
-        ctx.restore();
+        offCtx.restore();
       }
-
-      // 4. Clip the content area for subsequent drawing
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - canvasBorderWidth, 0, Math.PI * 2);
-      ctx.clip();
+      offCtx.save();
+      offCtx.beginPath();
+      offCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - canvasBorderWidth, 0, Math.PI * 2);
+      offCtx.clip();
     }
-
-    // Draw background color
     if (backgroundColor !== 'transparent') {
-      ctx.fillStyle = backgroundColor;
-      ctx.fillRect(0, 0, canvasSize, canvasSize);
+      offCtx.fillStyle = backgroundColor;
+      offCtx.fillRect(0, 0, canvasSize, canvasSize);
     }
-    
-    // Draw layers
     const sortedLayers = [...layers].sort((a, b) => a.zIndex - b.zIndex);
     for (const layer of sortedLayers) {
       if (!layer.visible) continue;
-
       await loadFontIfNeeded(layer.fontFamily);
-      
-      ctx.save();
+      offCtx.save();
       const centerX = layer.x + layer.width / 2;
       const centerY = layer.y + layer.height / 2;
-      
-      ctx.translate(centerX, centerY);
-      ctx.rotate(layer.rotation * Math.PI / 180);
-      ctx.translate(-centerX, -centerY);
-      
-      ctx.globalAlpha = layer.opacity * (layer.type === 'image' ? (layer.imageAdjustments?.opacity || 100) / 100 : 1);
-
-      // Apply blend mode for images
-      if (layer.type === 'image' && layer.imageAdjustments) {
-        ctx.globalCompositeOperation = layer.imageAdjustments.blendMode as GlobalCompositeOperation;
-      }
-
-      // Only apply image adjustments to image layers
-      if (layer.type === 'image' && layer.imageAdjustments) {
-        const adjustments = layer.imageAdjustments;
-        const filterParts = [];
-        
-        // Only add filters that have meaningful values
-        if (adjustments.brightness !== 100) {
-          filterParts.push(`brightness(${adjustments.brightness / 100})`);
-        }
-        if (adjustments.contrast !== 100) {
-          filterParts.push(`contrast(${adjustments.contrast / 100})`);
-        }
-        if (adjustments.saturation !== 100) {
-          filterParts.push(`saturate(${adjustments.saturation / 100})`);
-        }
-        if (adjustments.blur > 0) {
-          filterParts.push(`blur(${adjustments.blur / 10}px)`);
-        }
-        if (adjustments.hue !== 0) {
-          filterParts.push(`hue-rotate(${adjustments.hue}deg)`);
-        }
-        if (adjustments.sepia > 0) {
-          filterParts.push(`sepia(${adjustments.sepia / 100})`);
-        }
-        if (adjustments.invert) {
-          filterParts.push('invert(1)');
-        }
-        if (adjustments.grayscale) {
-          filterParts.push('grayscale(1)');
-        }
-        
-        // Apply the filter if there are any parts
-        if (filterParts.length > 0) {
-          ctx.filter = filterParts.join(' ');
-        } else {
-          ctx.filter = 'none';
-        }
-        
-        // Apply opacity separately since it's not a filter
-        if (adjustments.opacity !== 100) {
-          ctx.globalAlpha = layer.opacity * (adjustments.opacity / 100);
-        }
-        
-        // Apply fill effect using globalCompositeOperation
-        if (adjustments.fill > 0) {
-          ctx.globalCompositeOperation = 'color';
-        }
-        } else {
-        ctx.filter = 'none';
-      }
-      
+      offCtx.translate(centerX, centerY);
+      offCtx.rotate(layer.rotation * Math.PI / 180);
+      offCtx.translate(-centerX, -centerY);
+      offCtx.globalAlpha = layer.opacity * (layer.type === 'image' ? (layer.imageAdjustments?.opacity || 100) / 100 : 1);
       if (layer.type === 'image') {
-        // --- Photoshop-style Fill/Opacity for images ---
-        // 1. Draw image with fill alpha to an offscreen canvas
-        const offCanvas = document.createElement('canvas');
-        offCanvas.width = layer.width;
-        offCanvas.height = layer.height;
-        const offCtx = offCanvas.getContext('2d')!;
-        offCtx.filter = ctx.filter;
-        offCtx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
+        offCtx.globalCompositeOperation = ((layer.imageAdjustments?.blendMode && layer.imageAdjustments.blendMode !== 'normal') ? layer.imageAdjustments.blendMode : 'source-over') as GlobalCompositeOperation;
+      }
+      if (layer.type === 'image') {
+        const imgOffCanvas = document.createElement('canvas');
+        imgOffCanvas.width = layer.width;
+        imgOffCanvas.height = layer.height;
+        const imgOffCtx = imgOffCanvas.getContext('2d')!;
+        imgOffCtx.filter = offCtx.filter;
+        imgOffCtx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.src = layer.content;
         await new Promise(resolve => { img.onload = resolve; });
-        offCtx.drawImage(img, 0, 0, layer.width, layer.height);
-        // 2. Draw offscreen canvas to main canvas with layer opacity
-        ctx.globalAlpha = layer.opacity * (layer.imageAdjustments?.opacity ?? 100) / 100;
-        ctx.drawImage(offCanvas, layer.x, layer.y);
-        ctx.globalAlpha = 1;
+        imgOffCtx.drawImage(img, 0, 0, layer.width, layer.height);
+        offCtx.globalAlpha = layer.opacity * (layer.imageAdjustments?.opacity ?? 100) / 100;
+        offCtx.drawImage(imgOffCanvas, layer.x, layer.y);
+        offCtx.globalAlpha = 1;
       } else if (layer.type === 'text') {
-        // --- Photoshop-style Fill/Opacity for text ---
-      ctx.save();
-        ctx.fillStyle = layer.fontColor || '#ffffff';
-        ctx.font = `${layer.fontSize || 24}px "${layer.fontFamily || 'Arial'}"`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        offCtx.save();
+        offCtx.fillStyle = layer.fontColor || '#ffffff';
+        offCtx.font = `${layer.fontSize || 24}px "${layer.fontFamily || 'Arial'}"`;
+        offCtx.textAlign = 'center';
+        offCtx.textBaseline = 'middle';
         const textContent = layer.content || '';
         
-        // Use layer's actual position
-      const centerX = layer.x + layer.width / 2;
-      const centerY = layer.y + layer.height / 2;
-      
-        // Apply layer rotation
-      ctx.translate(centerX, centerY);
-        ctx.rotate(layer.rotation * Math.PI / 180);
-      ctx.translate(-centerX, -centerY);
-      
+        const centerX = layer.x + layer.width / 2;
+        const centerY = layer.y + layer.height / 2;
+        
+        offCtx.translate(centerX, centerY);
+        offCtx.rotate(layer.rotation * Math.PI / 180);
+        offCtx.translate(-centerX, -centerY);
+        
         if (layer.isCircularText) {
-          // Circular text rendering
           const radius = layer.textRadius || 150;
           const kerning = layer.textKerning || 0;
           const startAngle = (layer.textStartAngle || 0) * Math.PI / 180;
           const canvasCenterX = canvasSize / 2;
           const canvasCenterY = canvasSize / 2;
           
-          ctx.save();
-          ctx.translate(canvasCenterX, canvasCenterY);
+          offCtx.save();
+          offCtx.translate(canvasCenterX, canvasCenterY);
           
-          // Calculate total angle needed for the text
           let totalAngle = 0;
           for (let i = 0; i < textContent.length; i++) {
-            totalAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+            totalAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
           }
           
-          // Shadow for circular text
           if (layer.shadowBlur && layer.shadowBlur > 0) {
-            ctx.shadowColor = layer.shadowColor || '#000000';
-            ctx.shadowBlur = layer.shadowBlur;
-            ctx.shadowOffsetX = layer.shadowOffsetX || 0;
-            ctx.shadowOffsetY = layer.shadowOffsetY || 0;
+            offCtx.shadowColor = layer.shadowColor || '#000000';
+            offCtx.shadowBlur = layer.shadowBlur;
+            offCtx.shadowOffsetX = layer.shadowOffsetX || 0;
+            offCtx.shadowOffsetY = layer.shadowOffsetY || 0;
           }
           
-          // Stroke for circular text
           if (layer.strokeWidth && layer.strokeWidth > 0) {
-            ctx.strokeStyle = layer.strokeColor || '#000000';
-            ctx.lineWidth = layer.strokeWidth;
+            offCtx.strokeStyle = layer.strokeColor || '#000000';
+            offCtx.lineWidth = layer.strokeWidth;
             let currentAngle = startAngle;
             for (let i = 0; i < textContent.length; i++) {
-              ctx.save();
-              ctx.rotate(currentAngle);
-              ctx.strokeText(textContent[i], 0, -radius);
-              ctx.restore();
-              currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+              offCtx.save();
+              offCtx.rotate(currentAngle);
+              offCtx.strokeText(textContent[i], 0, -radius);
+              offCtx.restore();
+              currentAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
             }
           }
           
-          // Glow for circular text
           if (layer.glowBlur && layer.glowBlur > 0) {
-          ctx.shadowColor = layer.glowColor || '#ffffff';
-            ctx.shadowBlur = layer.glowBlur;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 0;
+            offCtx.shadowColor = layer.glowColor || '#ffffff';
+            offCtx.shadowBlur = layer.glowBlur;
+            offCtx.shadowOffsetX = 0;
+            offCtx.shadowOffsetY = 0;
             let currentAngle = startAngle;
             for (let i = 0; i < textContent.length; i++) {
-              ctx.save();
-              ctx.rotate(currentAngle);
-              ctx.fillText(textContent[i], 0, -radius);
-              ctx.restore();
-              currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+              offCtx.save();
+              offCtx.rotate(currentAngle);
+              offCtx.fillText(textContent[i], 0, -radius);
+              offCtx.restore();
+              currentAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
             }
-            // Draw glow multiple times for stronger effect
             for (let i = 0; i < textContent.length; i++) {
-              ctx.save();
-              ctx.rotate(currentAngle);
-              ctx.fillText(textContent[i], 0, -radius);
-              ctx.restore();
-              currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+              offCtx.save();
+              offCtx.rotate(currentAngle);
+              offCtx.fillText(textContent[i], 0, -radius);
+              offCtx.restore();
+              currentAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
             }
           }
           
-          // Text fill for circular text
-          ctx.shadowColor = 'transparent';
-          ctx.shadowBlur = 0;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 0;
-          ctx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
+          offCtx.shadowColor = 'transparent';
+          offCtx.shadowBlur = 0;
+          offCtx.shadowOffsetX = 0;
+          offCtx.shadowOffsetY = 0;
+          offCtx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
           let currentAngle = startAngle;
           for (let i = 0; i < textContent.length; i++) {
-            ctx.save();
-            ctx.rotate(currentAngle);
-            ctx.fillText(textContent[i], 0, -radius);
-            ctx.restore();
-            currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+            offCtx.save();
+            offCtx.rotate(currentAngle);
+            offCtx.fillText(textContent[i], 0, -radius);
+            offCtx.restore();
+            currentAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
           }
           
-          ctx.restore();
+          offCtx.restore();
         } else {
-          // Regular text rendering
-          // Shadow
           if (layer.shadowBlur && layer.shadowBlur > 0) {
-          ctx.shadowColor = layer.shadowColor || '#000000';
-            ctx.shadowBlur = layer.shadowBlur;
-          ctx.shadowOffsetX = layer.shadowOffsetX || 0;
-          ctx.shadowOffsetY = layer.shadowOffsetY || 0;
-        }
-          // Stroke
+            offCtx.shadowColor = layer.shadowColor || '#000000';
+            offCtx.shadowBlur = layer.shadowBlur;
+            offCtx.shadowOffsetX = layer.shadowOffsetX || 0;
+            offCtx.shadowOffsetY = layer.shadowOffsetY || 0;
+          }
           if (layer.strokeWidth && layer.strokeWidth > 0) {
-          ctx.strokeStyle = layer.strokeColor || '#000000';
-            ctx.lineWidth = layer.strokeWidth;
-            ctx.strokeText(textContent, centerX, centerY);
+            offCtx.strokeStyle = layer.strokeColor || '#000000';
+            offCtx.lineWidth = layer.strokeWidth;
+            offCtx.strokeText(textContent, centerX, centerY);
           }
-          // Glow
           if (layer.glowBlur && layer.glowBlur > 0) {
-            ctx.shadowColor = layer.glowColor || '#ffffff';
-            ctx.shadowBlur = layer.glowBlur;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-            ctx.fillText(textContent, centerX, centerY);
-            ctx.fillText(textContent, centerX, centerY);
-            ctx.fillText(textContent, centerX, centerY);
+            offCtx.shadowColor = layer.glowColor || '#ffffff';
+            offCtx.shadowBlur = layer.glowBlur;
+            offCtx.shadowOffsetX = 0;
+            offCtx.shadowOffsetY = 0;
+            offCtx.fillText(textContent, centerX, centerY);
+            offCtx.fillText(textContent, centerX, centerY);
+            offCtx.fillText(textContent, centerX, centerY);
           }
-          // 2. Draw text content with fill alpha
-          ctx.shadowColor = 'transparent';
-          ctx.shadowBlur = 0;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 0;
-          ctx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
-          ctx.fillText(textContent, centerX, centerY);
+          offCtx.shadowColor = 'transparent';
+          offCtx.shadowBlur = 0;
+          offCtx.shadowOffsetX = 0;
+          offCtx.shadowOffsetY = 0;
+          offCtx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
+          offCtx.fillText(textContent, centerX, centerY);
         }
         
-        ctx.globalAlpha = 1;
-        ctx.restore();
+        offCtx.globalAlpha = 1;
+        offCtx.restore();
         
-        // 3. Apply layer opacity to the whole group
-        // For text, we need to apply opacity to the entire text group including effects
         if (layer.opacity < 1) {
-          ctx.save();
-          ctx.globalAlpha = layer.opacity;
-          // Redraw the entire text with effects at reduced opacity
-          ctx.fillStyle = layer.fontColor || '#ffffff';
-          ctx.font = `${layer.fontSize || 24}px "${layer.fontFamily || 'Arial'}"`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
+          offCtx.save();
+          offCtx.globalAlpha = layer.opacity;
+          offCtx.fillStyle = layer.fontColor || '#ffffff';
+          offCtx.font = `${layer.fontSize || 24}px "${layer.fontFamily || 'Arial'}"`;
+          offCtx.textAlign = 'center';
+          offCtx.textBaseline = 'middle';
           
-          ctx.translate(centerX, centerY);
-          ctx.rotate(layer.rotation * Math.PI / 180);
-          ctx.translate(-centerX, -centerY);
+          offCtx.translate(centerX, centerY);
+          offCtx.rotate(layer.rotation * Math.PI / 180);
+          offCtx.translate(-centerX, -centerY);
           
           if (layer.isCircularText) {
-            // Circular text with opacity
             const radius = layer.textRadius || 150;
             const kerning = layer.textKerning || 0;
             const startAngle = (layer.textStartAngle || 0) * Math.PI / 180;
             const canvasCenterX = canvasSize / 2;
             const canvasCenterY = canvasSize / 2;
             
-            ctx.save();
-            ctx.translate(canvasCenterX, canvasCenterY);
+            offCtx.save();
+            offCtx.translate(canvasCenterX, canvasCenterY);
             
-            // Shadow for circular text
             if (layer.shadowBlur && layer.shadowBlur > 0) {
-              ctx.shadowColor = layer.shadowColor || '#000000';
-              ctx.shadowBlur = layer.shadowBlur;
-              ctx.shadowOffsetX = layer.shadowOffsetX || 0;
-              ctx.shadowOffsetY = layer.shadowOffsetY || 0;
+              offCtx.shadowColor = layer.shadowColor || '#000000';
+              offCtx.shadowBlur = layer.shadowBlur;
+              offCtx.shadowOffsetX = layer.shadowOffsetX || 0;
+              offCtx.shadowOffsetY = layer.shadowOffsetY || 0;
             }
             
-            // Stroke for circular text
             if (layer.strokeWidth && layer.strokeWidth > 0) {
-              ctx.strokeStyle = layer.strokeColor || '#000000';
-              ctx.lineWidth = layer.strokeWidth;
+              offCtx.strokeStyle = layer.strokeColor || '#000000';
+              offCtx.lineWidth = layer.strokeWidth;
               let currentAngle = startAngle;
               for (let i = 0; i < textContent.length; i++) {
-              ctx.save();
-                ctx.rotate(currentAngle);
-                ctx.strokeText(textContent[i], 0, -radius);
-              ctx.restore();
-                currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+                offCtx.save();
+                offCtx.rotate(currentAngle);
+                offCtx.strokeText(textContent[i], 0, -radius);
+                offCtx.restore();
+                currentAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
               }
             }
             
-            // Glow for circular text
             if (layer.glowBlur && layer.glowBlur > 0) {
-              ctx.shadowColor = layer.glowColor || '#ffffff';
-              ctx.shadowBlur = layer.glowBlur;
-              ctx.shadowOffsetX = 0;
-              ctx.shadowOffsetY = 0;
+              offCtx.shadowColor = layer.glowColor || '#ffffff';
+              offCtx.shadowBlur = layer.glowBlur;
+              offCtx.shadowOffsetX = 0;
+              offCtx.shadowOffsetY = 0;
               let currentAngle = startAngle;
               for (let i = 0; i < textContent.length; i++) {
-                ctx.save();
-                ctx.rotate(currentAngle);
-                ctx.fillText(textContent[i], 0, -radius);
-                ctx.restore();
-                currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+                offCtx.save();
+                offCtx.rotate(currentAngle);
+                offCtx.fillText(textContent[i], 0, -radius);
+                offCtx.restore();
+                currentAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
               }
             }
             
-            // Text fill for circular text
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-            ctx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
+            offCtx.shadowColor = 'transparent';
+            offCtx.shadowBlur = 0;
+            offCtx.shadowOffsetX = 0;
+            offCtx.shadowOffsetY = 0;
+            offCtx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
             let currentAngle = startAngle;
             for (let i = 0; i < textContent.length; i++) {
-              ctx.save();
-              ctx.rotate(currentAngle);
-              ctx.fillText(textContent[i], 0, -radius);
-              ctx.restore();
-              currentAngle += (ctx.measureText(textContent[i]).width + kerning) / radius;
+              offCtx.save();
+              offCtx.rotate(currentAngle);
+              offCtx.fillText(textContent[i], 0, -radius);
+              offCtx.restore();
+              currentAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
             }
             
-            ctx.restore();
+            offCtx.restore();
         } else {
-            // Regular text with opacity
-            // Shadow
             if (layer.shadowBlur && layer.shadowBlur > 0) {
-              ctx.shadowColor = layer.shadowColor || '#000000';
-              ctx.shadowBlur = layer.shadowBlur;
-              ctx.shadowOffsetX = layer.shadowOffsetX || 0;
-              ctx.shadowOffsetY = layer.shadowOffsetY || 0;
+              offCtx.shadowColor = layer.shadowColor || '#000000';
+              offCtx.shadowBlur = layer.shadowBlur;
+              offCtx.shadowOffsetX = layer.shadowOffsetX || 0;
+              offCtx.shadowOffsetY = layer.shadowOffsetY || 0;
             }
-            // Stroke
             if (layer.strokeWidth && layer.strokeWidth > 0) {
-              ctx.strokeStyle = layer.strokeColor || '#000000';
-              ctx.lineWidth = layer.strokeWidth;
-              ctx.strokeText(textContent, centerX, centerY);
+              offCtx.strokeStyle = layer.strokeColor || '#000000';
+              offCtx.lineWidth = layer.strokeWidth;
+              offCtx.strokeText(textContent, centerX, centerY);
             }
-            // Glow
             if (layer.glowBlur && layer.glowBlur > 0) {
-              ctx.shadowColor = layer.glowColor || '#ffffff';
-              ctx.shadowBlur = layer.glowBlur;
-              ctx.shadowOffsetX = 0;
-              ctx.shadowOffsetY = 0;
-              ctx.fillText(textContent, centerX, centerY);
-              ctx.fillText(textContent, centerX, centerY);
-              ctx.fillText(textContent, centerX, centerY);
+              offCtx.shadowColor = layer.glowColor || '#ffffff';
+              offCtx.shadowBlur = layer.glowBlur;
+              offCtx.shadowOffsetX = 0;
+              offCtx.shadowOffsetY = 0;
+              offCtx.fillText(textContent, centerX, centerY);
+              offCtx.fillText(textContent, centerX, centerY);
+              offCtx.fillText(textContent, centerX, centerY);
             }
-            // Text fill
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-            ctx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
-            ctx.fillText(textContent, centerX, centerY);
+            offCtx.shadowColor = 'transparent';
+            offCtx.shadowBlur = 0;
+            offCtx.shadowOffsetX = 0;
+            offCtx.shadowOffsetY = 0;
+            offCtx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
+            offCtx.fillText(textContent, centerX, centerY);
       }
-      ctx.restore();
+      offCtx.restore();
         }
       }
     }
-    
-    if (canvasShape === 'circle') {
-      ctx.restore(); // Restore from the clip
-    }
-  }, [layers, backgroundColor, canvasShape, canvasSize, canvasBorderWidth, canvasBorderColor, rimShadow, rimDesign]);
+    // Blit offscreen canvas to visible canvas
+    ctx.clearRect(0, 0, canvasSize, canvasSize);
+    ctx.drawImage(offCanvas, 0, 0);
+  }, [layers, backgroundColor, canvasShape, canvasSize, canvasBorderWidth, canvasBorderColor, rimShadow, rimDesign, coinRimEnabled]);
 
   useEffect(() => {
-    renderCanvas();
+    if (renderTimeout.current) clearTimeout(renderTimeout.current);
+    renderTimeout.current = setTimeout(() => {
+      renderCanvas();
+    }, 50);
+    return () => {
+      if (renderTimeout.current) clearTimeout(renderTimeout.current);
+    };
   }, [renderCanvas]);
 
   const handleTemplateSelect = useCallback((template: Template) => {
@@ -948,122 +842,111 @@ const LogoTokenEditor = () => {
         }
       };
 
-      // Add a second layer for the coin edge/rim
-      const rimCanvas = document.createElement('canvas');
-      rimCanvas.width = rimCanvas.height = canvasSize;
-      const rimCtx = rimCanvas.getContext('2d')!;
-      
-      const rimWidth = canvasBorderWidth; // Use state for consistency
-      rimCtx.strokeStyle = canvasBorderColor;
-      rimCtx.lineWidth = rimWidth;
-      rimCtx.beginPath();
-      rimCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - rimWidth / 2, 0, 2 * Math.PI);
-      rimCtx.stroke();
-      
-      // Add rim design patterns if enabled
-      if (rimDesign.enabled && rimWidth > 0) {
-        rimCtx.fillStyle = rimDesign.color;
-        
-        const centerX = canvasSize / 2;
-        const centerY = canvasSize / 2;
-        const outerRadius = canvasSize / 2;
-        const innerRadius = outerRadius - rimWidth;
-        const patternRadius = (outerRadius + innerRadius) / 2;
-        
-        const numElements = rimDesign.density;
-        const angleStep = (Math.PI * 2) / numElements;
-        
-        for (let i = 0; i < numElements; i++) {
-          const angle = i * angleStep;
-          const x = centerX + Math.cos(angle) * patternRadius;
-          const y = centerY + Math.sin(angle) * patternRadius;
-          
-          rimCtx.save();
-          rimCtx.translate(x, y);
-          rimCtx.rotate(angle + Math.PI / 2); // Rotate to align with rim
-          
-          switch (rimDesign.pattern) {
-            case 'stripes':
-              // Draw vertical stripes
-              rimCtx.fillRect(-rimDesign.size / 2, -rimWidth / 2, rimDesign.size, rimWidth);
-              break;
-            case 'stars':
-              // Draw star shapes
-              rimCtx.beginPath();
-              for (let j = 0; j < 5; j++) {
-                const starAngle = (j * Math.PI * 2) / 5;
-                const starRadius = j % 2 === 0 ? rimDesign.size : rimDesign.size / 2;
-                const starX = Math.cos(starAngle) * starRadius;
-                const starY = Math.sin(starAngle) * starRadius;
-                if (j === 0) rimCtx.moveTo(starX, starY);
-                else rimCtx.lineTo(starX, starY);
-              }
-              rimCtx.closePath();
-              rimCtx.fill();
-              break;
-            case 'dots':
-              // Draw circular dots
-              rimCtx.beginPath();
-              rimCtx.arc(0, 0, rimDesign.size / 2, 0, Math.PI * 2);
-              rimCtx.fill();
-              break;
-            case 'diamonds':
-              // Draw diamond shapes
-              rimCtx.beginPath();
-              rimCtx.moveTo(0, -rimDesign.size / 2);
-              rimCtx.lineTo(rimDesign.size / 2, 0);
-              rimCtx.lineTo(0, rimDesign.size / 2);
-              rimCtx.lineTo(-rimDesign.size / 2, 0);
-              rimCtx.closePath();
-              rimCtx.fill();
-              break;
+      // Only add a rim layer if coinRimEnabled is true
+      let newLayers: Layer[] = [baseLayer];
+      if (coinRimEnabled) {
+        const rimCanvas = document.createElement('canvas');
+        rimCanvas.width = rimCanvas.height = canvasSize;
+        const rimCtx = rimCanvas.getContext('2d')!;
+        const rimWidth = canvasBorderWidth; // Use state for consistency
+        rimCtx.strokeStyle = canvasBorderColor;
+        rimCtx.lineWidth = rimWidth;
+        rimCtx.beginPath();
+        rimCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - rimWidth / 2, 0, 2 * Math.PI);
+        rimCtx.stroke();
+        // Add rim design patterns if enabled
+        if (rimDesign.enabled && rimWidth > 0) {
+          rimCtx.fillStyle = rimDesign.color;
+          const centerX = canvasSize / 2;
+          const centerY = canvasSize / 2;
+          const outerRadius = canvasSize / 2;
+          const innerRadius = outerRadius - rimWidth;
+          const patternRadius = (outerRadius + innerRadius) / 2;
+          const numElements = rimDesign.density;
+          const angleStep = (Math.PI * 2) / numElements;
+          for (let i = 0; i < numElements; i++) {
+            const angle = i * angleStep;
+            const x = centerX + Math.cos(angle) * patternRadius;
+            const y = centerY + Math.sin(angle) * patternRadius;
+            rimCtx.save();
+            rimCtx.translate(x, y);
+            rimCtx.rotate(angle + Math.PI / 2);
+            switch (rimDesign.pattern) {
+              case 'stripes':
+                rimCtx.fillRect(-rimDesign.size / 2, -rimWidth / 2, rimDesign.size, rimWidth);
+                break;
+              case 'stars':
+                rimCtx.beginPath();
+                for (let j = 0; j < 5; j++) {
+                  const starAngle = (j * Math.PI * 2) / 5;
+                  const starRadius = j % 2 === 0 ? rimDesign.size : rimDesign.size / 2;
+                  const starX = Math.cos(starAngle) * starRadius;
+                  const starY = Math.sin(starAngle) * starRadius;
+                  if (j === 0) rimCtx.moveTo(starX, starY);
+                  else rimCtx.lineTo(starX, starY);
+                }
+                rimCtx.closePath();
+                rimCtx.fill();
+                break;
+              case 'dots':
+                rimCtx.beginPath();
+                rimCtx.arc(0, 0, rimDesign.size / 2, 0, Math.PI * 2);
+                rimCtx.fill();
+                break;
+              case 'diamonds':
+                rimCtx.beginPath();
+                rimCtx.moveTo(0, -rimDesign.size / 2);
+                rimCtx.lineTo(rimDesign.size / 2, 0);
+                rimCtx.lineTo(0, rimDesign.size / 2);
+                rimCtx.lineTo(-rimDesign.size / 2, 0);
+                rimCtx.closePath();
+                rimCtx.fill();
+                break;
+            }
+            rimCtx.restore();
           }
-          
-          rimCtx.restore();
         }
+        // Add a subtle inner shadow to the rim for depth
+        rimCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+        rimCtx.lineWidth = 2;
+        rimCtx.beginPath();
+        rimCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - rimWidth - 1, 0, 2 * Math.PI);
+        rimCtx.stroke();
+        const rimLayer: Layer = {
+          id: Date.now().toString() + "-rim",
+          type: 'image',
+          content: rimCanvas.toDataURL(),
+          x: 0,
+          y: 0,
+          width: canvasSize,
+          height: canvasSize,
+          rotation: 0,
+          opacity: 1,
+          visible: true,
+          locked: true,
+          zIndex: layers.length, // Ensure it's on top
+          imageAdjustments: {
+            brightness: 100,
+            contrast: 100,
+            saturation: 100,
+            blur: 0,
+            hue: 0,
+            blendMode: 'normal',
+            opacity: 100,
+            fill: 100,
+            sepia: 0,
+            invert: false,
+            grayscale: false
+          }
+        };
+        newLayers.push(rimLayer);
       }
-      
-      // Add a subtle inner shadow to the rim for depth
-      rimCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-      rimCtx.lineWidth = 2;
-      rimCtx.beginPath();
-      rimCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - rimWidth - 1, 0, 2 * Math.PI);
-      rimCtx.stroke();
-
-      const rimLayer: Layer = {
-        id: Date.now().toString() + "-rim",
-        type: 'image',
-        content: rimCanvas.toDataURL(),
-        x: 0,
-        y: 0,
-        width: canvasSize,
-        height: canvasSize,
-        rotation: 0,
-        opacity: 1,
-        visible: true,
-        locked: true,
-        zIndex: layers.length, // Ensure it's on top
-        imageAdjustments: {
-          brightness: 100,
-          contrast: 100,
-          saturation: 100,
-          blur: 0,
-          hue: 0,
-          blendMode: 'normal',
-          opacity: 100,
-          fill: 100,
-          sepia: 0,
-          invert: false,
-          grayscale: false
-        }
-      };
-      
-      setLayers([baseLayer, rimLayer]);
+      setLayers(newLayers);
       setSelectedLayer(null); // Nothing is selected initially
       setMainView('canvas');
       toast.success(`${template.name} template applied!`);
     }
-  }, [canvasSize, canvasShape, canvasBorderWidth, canvasBorderColor, rimShadow, rimDesign, layers]);
+  }, [canvasSize, canvasShape, canvasBorderWidth, canvasBorderColor, rimShadow, rimDesign, layers, coinRimEnabled]);
 
   const handleImageUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -1081,17 +964,15 @@ const LogoTokenEditor = () => {
         const size = Math.min(img.width, img.height);
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
         if (ctx) {
           canvas.width = canvas.height = size;
           const offsetX = (img.width - size) / 2;
           const offsetY = (img.height - size) / 2;
-          
           ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, size, size);
-          
           const imageWidth = (canvasSize - 100) * imageZoom;
           const imageHeight = (canvasSize - 100) * imageZoom;
-          
+          // Always add uploaded image on top
+          const maxZIndex = layers.length > 0 ? Math.max(...layers.map(l => l.zIndex)) : 0;
           const newLayer: Layer = {
             id: Date.now().toString(),
             type: 'image',
@@ -1104,7 +985,7 @@ const LogoTokenEditor = () => {
             opacity: 1,
             visible: true,
             locked: false,
-            zIndex: layers.length,
+            zIndex: maxZIndex + 1,
             imageAdjustments: {
               brightness: 100,
               contrast: 100,
@@ -1119,7 +1000,6 @@ const LogoTokenEditor = () => {
               grayscale: false
             }
           };
-          
           setLayers(prev => [...prev, newLayer]);
           setSelectedLayer(newLayer.id);
           toast.success('Image uploaded and auto-cropped to 1:1 ratio');
@@ -1447,6 +1327,16 @@ const LogoTokenEditor = () => {
                   </div>
                   
                   <div>
+                        <Label className="text-enhanced-text">Enable Coin Rim</Label>
+                        <input
+                          type="checkbox"
+                          checked={coinRimEnabled}
+                          onChange={e => setCoinRimEnabled(e.target.checked)}
+                          className="rounded ml-2"
+                        />
+                  </div>
+
+                  <div>
                         <Label className="text-enhanced-text">Coin Rim</Label>
                         <div className="flex gap-2 mt-2 items-center">
                       <Slider
@@ -1580,7 +1470,7 @@ const LogoTokenEditor = () => {
                                   <Slider 
                                     value={[rimDesign.density]} 
                                     onValueChange={v => setRimDesign(s => ({ ...s, density: v[0] }))} 
-                                    max={50} 
+                                    max={200} 
                                     min={5} 
                                     step={1} 
                                   />
@@ -2645,3 +2535,6 @@ const LogoTokenEditor = () => {
 };
 
 export default LogoTokenEditor;
+
+
+
