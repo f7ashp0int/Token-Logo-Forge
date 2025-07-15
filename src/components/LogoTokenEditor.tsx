@@ -93,6 +93,17 @@ const promotedChannels = [
   { name: 'iWhiffBetter', url: 'https://xeenon.xyz/67fdf3334dd95bd19504af13', logo: '/iwhiffbetter-logo.png' },
 ];
 
+// Helper to convert hex color to RGB
+function hexToRgb(hex) {
+  const match = hex.replace('#', '').match(/.{1,2}/g);
+  if (!match) return { r: 0, g: 0, b: 0 };
+  return {
+    r: parseInt(match[0], 16),
+    g: parseInt(match[1], 16),
+    b: parseInt(match[2], 16),
+  };
+}
+
 const LogoTokenEditor = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -148,6 +159,8 @@ const LogoTokenEditor = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [coinRimEnabled, setCoinRimEnabled] = useState(true);
   const renderTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [chromaKeyColor, setChromaKeyColor] = useState('#000000');
+  const [chromaKeyEnabled, setChromaKeyEnabled] = useState(false);
 
   const loadFontIfNeeded = async (fontFamily: string | undefined) => {
     if (!fontFamily || fontFamily === 'Arial') return;
@@ -159,7 +172,7 @@ const LogoTokenEditor = () => {
   };
 
   const formatAddress = (address: string) => {
-    return `${address.slice(0, 10)}...${address.slice(-10)}`;
+    return `${address.slice(0, 4)}...${address.slice(-4)}`;
   };
 
   const copyToClipboard = useCallback(async (text: string) => {
@@ -381,13 +394,13 @@ const LogoTokenEditor = () => {
         offCtx.textBaseline = 'middle';
         const textContent = layer.content || '';
         
-        const centerX = layer.x + layer.width / 2;
-        const centerY = layer.y + layer.height / 2;
-        
+      const centerX = layer.x + layer.width / 2;
+      const centerY = layer.y + layer.height / 2;
+      
         offCtx.translate(centerX, centerY);
         offCtx.rotate(layer.rotation * Math.PI / 180);
         offCtx.translate(-centerX, -centerY);
-        
+      
         if (layer.isCircularText) {
           const radius = layer.textRadius || 150;
           const kerning = layer.textKerning || 0;
@@ -604,7 +617,7 @@ const LogoTokenEditor = () => {
   useEffect(() => {
     if (renderTimeout.current) clearTimeout(renderTimeout.current);
     renderTimeout.current = setTimeout(() => {
-      renderCanvas();
+    renderCanvas();
     }, 50);
     return () => {
       if (renderTimeout.current) clearTimeout(renderTimeout.current);
@@ -845,100 +858,100 @@ const LogoTokenEditor = () => {
       // Only add a rim layer if coinRimEnabled is true
       let newLayers: Layer[] = [baseLayer];
       if (coinRimEnabled) {
-        const rimCanvas = document.createElement('canvas');
-        rimCanvas.width = rimCanvas.height = canvasSize;
-        const rimCtx = rimCanvas.getContext('2d')!;
-        const rimWidth = canvasBorderWidth; // Use state for consistency
-        rimCtx.strokeStyle = canvasBorderColor;
-        rimCtx.lineWidth = rimWidth;
-        rimCtx.beginPath();
-        rimCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - rimWidth / 2, 0, 2 * Math.PI);
-        rimCtx.stroke();
-        // Add rim design patterns if enabled
-        if (rimDesign.enabled && rimWidth > 0) {
-          rimCtx.fillStyle = rimDesign.color;
-          const centerX = canvasSize / 2;
-          const centerY = canvasSize / 2;
-          const outerRadius = canvasSize / 2;
-          const innerRadius = outerRadius - rimWidth;
-          const patternRadius = (outerRadius + innerRadius) / 2;
-          const numElements = rimDesign.density;
-          const angleStep = (Math.PI * 2) / numElements;
-          for (let i = 0; i < numElements; i++) {
-            const angle = i * angleStep;
-            const x = centerX + Math.cos(angle) * patternRadius;
-            const y = centerY + Math.sin(angle) * patternRadius;
-            rimCtx.save();
-            rimCtx.translate(x, y);
+      const rimCanvas = document.createElement('canvas');
+      rimCanvas.width = rimCanvas.height = canvasSize;
+      const rimCtx = rimCanvas.getContext('2d')!;
+      const rimWidth = canvasBorderWidth; // Use state for consistency
+      rimCtx.strokeStyle = canvasBorderColor;
+      rimCtx.lineWidth = rimWidth;
+      rimCtx.beginPath();
+      rimCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - rimWidth / 2, 0, 2 * Math.PI);
+      rimCtx.stroke();
+      // Add rim design patterns if enabled
+      if (rimDesign.enabled && rimWidth > 0) {
+        rimCtx.fillStyle = rimDesign.color;
+        const centerX = canvasSize / 2;
+        const centerY = canvasSize / 2;
+        const outerRadius = canvasSize / 2;
+        const innerRadius = outerRadius - rimWidth;
+        const patternRadius = (outerRadius + innerRadius) / 2;
+        const numElements = rimDesign.density;
+        const angleStep = (Math.PI * 2) / numElements;
+        for (let i = 0; i < numElements; i++) {
+          const angle = i * angleStep;
+          const x = centerX + Math.cos(angle) * patternRadius;
+          const y = centerY + Math.sin(angle) * patternRadius;
+          rimCtx.save();
+          rimCtx.translate(x, y);
             rimCtx.rotate(angle + Math.PI / 2);
-            switch (rimDesign.pattern) {
-              case 'stripes':
-                rimCtx.fillRect(-rimDesign.size / 2, -rimWidth / 2, rimDesign.size, rimWidth);
-                break;
-              case 'stars':
-                rimCtx.beginPath();
-                for (let j = 0; j < 5; j++) {
-                  const starAngle = (j * Math.PI * 2) / 5;
-                  const starRadius = j % 2 === 0 ? rimDesign.size : rimDesign.size / 2;
-                  const starX = Math.cos(starAngle) * starRadius;
-                  const starY = Math.sin(starAngle) * starRadius;
-                  if (j === 0) rimCtx.moveTo(starX, starY);
-                  else rimCtx.lineTo(starX, starY);
-                }
-                rimCtx.closePath();
-                rimCtx.fill();
-                break;
-              case 'dots':
-                rimCtx.beginPath();
-                rimCtx.arc(0, 0, rimDesign.size / 2, 0, Math.PI * 2);
-                rimCtx.fill();
-                break;
-              case 'diamonds':
-                rimCtx.beginPath();
-                rimCtx.moveTo(0, -rimDesign.size / 2);
-                rimCtx.lineTo(rimDesign.size / 2, 0);
-                rimCtx.lineTo(0, rimDesign.size / 2);
-                rimCtx.lineTo(-rimDesign.size / 2, 0);
-                rimCtx.closePath();
-                rimCtx.fill();
-                break;
-            }
-            rimCtx.restore();
+          switch (rimDesign.pattern) {
+            case 'stripes':
+              rimCtx.fillRect(-rimDesign.size / 2, -rimWidth / 2, rimDesign.size, rimWidth);
+              break;
+            case 'stars':
+              rimCtx.beginPath();
+              for (let j = 0; j < 5; j++) {
+                const starAngle = (j * Math.PI * 2) / 5;
+                const starRadius = j % 2 === 0 ? rimDesign.size : rimDesign.size / 2;
+                const starX = Math.cos(starAngle) * starRadius;
+                const starY = Math.sin(starAngle) * starRadius;
+                if (j === 0) rimCtx.moveTo(starX, starY);
+                else rimCtx.lineTo(starX, starY);
+              }
+              rimCtx.closePath();
+              rimCtx.fill();
+              break;
+            case 'dots':
+              rimCtx.beginPath();
+              rimCtx.arc(0, 0, rimDesign.size / 2, 0, Math.PI * 2);
+              rimCtx.fill();
+              break;
+            case 'diamonds':
+              rimCtx.beginPath();
+              rimCtx.moveTo(0, -rimDesign.size / 2);
+              rimCtx.lineTo(rimDesign.size / 2, 0);
+              rimCtx.lineTo(0, rimDesign.size / 2);
+              rimCtx.lineTo(-rimDesign.size / 2, 0);
+              rimCtx.closePath();
+              rimCtx.fill();
+              break;
           }
+          rimCtx.restore();
         }
-        // Add a subtle inner shadow to the rim for depth
-        rimCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-        rimCtx.lineWidth = 2;
-        rimCtx.beginPath();
-        rimCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - rimWidth - 1, 0, 2 * Math.PI);
-        rimCtx.stroke();
-        const rimLayer: Layer = {
-          id: Date.now().toString() + "-rim",
-          type: 'image',
-          content: rimCanvas.toDataURL(),
-          x: 0,
-          y: 0,
-          width: canvasSize,
-          height: canvasSize,
-          rotation: 0,
-          opacity: 1,
-          visible: true,
-          locked: true,
-          zIndex: layers.length, // Ensure it's on top
-          imageAdjustments: {
-            brightness: 100,
-            contrast: 100,
-            saturation: 100,
-            blur: 0,
-            hue: 0,
-            blendMode: 'normal',
-            opacity: 100,
-            fill: 100,
-            sepia: 0,
-            invert: false,
-            grayscale: false
-          }
-        };
+      }
+      // Add a subtle inner shadow to the rim for depth
+      rimCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+      rimCtx.lineWidth = 2;
+      rimCtx.beginPath();
+      rimCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - rimWidth - 1, 0, 2 * Math.PI);
+      rimCtx.stroke();
+      const rimLayer: Layer = {
+        id: Date.now().toString() + "-rim",
+        type: 'image',
+        content: rimCanvas.toDataURL(),
+        x: 0,
+        y: 0,
+        width: canvasSize,
+        height: canvasSize,
+        rotation: 0,
+        opacity: 1,
+        visible: true,
+        locked: true,
+        zIndex: layers.length, // Ensure it's on top
+        imageAdjustments: {
+          brightness: 100,
+          contrast: 100,
+          saturation: 100,
+          blur: 0,
+          hue: 0,
+          blendMode: 'normal',
+          opacity: 100,
+          fill: 100,
+          sepia: 0,
+          invert: false,
+          grayscale: false
+        }
+      };
         newLayers.push(rimLayer);
       }
       setLayers(newLayers);
@@ -1183,6 +1196,40 @@ const LogoTokenEditor = () => {
   // Check if there are any image layers
   const hasImageLayers = layers.some(layer => layer.type === 'image');
 
+  const handleChromaKeyRemove = () => {
+    if (selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'image') {
+      const layer = layers.find(l => l.id === selectedLayer);
+      if (layer) {
+        const canvas = document.createElement('canvas');
+        canvas.width = layer.width;
+        canvas.height = layer.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          const img = new window.Image();
+          img.src = layer.content;
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0, layer.width, layer.height);
+            const imageData = ctx.getImageData(0, 0, layer.width, layer.height);
+            const data = imageData.data;
+            const { r, g, b } = hexToRgb(chromaKeyColor);
+            const threshold = 40;
+            for (let i = 0; i < data.length; i += 4) {
+              if (
+                Math.abs(data[i] - r) < threshold &&
+                Math.abs(data[i + 1] - g) < threshold &&
+                Math.abs(data[i + 2] - b) < threshold
+              ) {
+                data[i + 3] = 0;
+              }
+            }
+            ctx.putImageData(imageData, 0, 0);
+            updateLayerProperty(selectedLayer, 'content', canvas.toDataURL());
+          };
+        }
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen text-foreground">
       {showConfetti && <Confetti recycle={false} numberOfPieces={400} />}
@@ -1198,14 +1245,102 @@ const LogoTokenEditor = () => {
               backgroundClip: 'text'
             }}
           >
-            Token Logo Creator
+            Token Logo Forge
           </h1>
           <p className="text-sm text-vibrant-purple/70">Create your unique token image</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Tools Panel */}
-          <div className="lg:col-span-3">
+          {/* Canvas Area - now first (left) */}
+          <div className="lg:col-span-6 order-1 lg:order-1">
+            {mainView === 'canvas' ? (
+              <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-6 rounded-2xl shadow-lg h-[calc(100vh-12rem)] flex flex-col overflow-visible">
+              <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-200">Canvas (1:1 Ratio)</h2>
+                <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setZoom(Math.max(0.5, zoom - 0.1))} className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white">
+                    <ZoomOut className="w-4 h-4" />
+                  </Button>
+                    <span className="h-9 w-16 rounded-md flex items-center justify-center text-sm bg-black/20">{Math.round(zoom * 100)}%</span>
+                    <Button size="sm" variant="outline" onClick={() => setZoom(Math.min(1.1, zoom + 0.1))} className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white">
+                    <ZoomIn className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              
+                <div className="flex-grow flex items-center justify-center">
+                <div 
+                    className={`border-2 border-dashed border-vibrant-purple/20 overflow-hidden ${canvasShape === 'circle' ? 'rounded-full' : 'rounded-lg'} transition-all duration-300 ease-in-out`}
+                  style={{ 
+                    width: canvasSize * zoom, 
+                    height: canvasSize * zoom,
+                      marginTop: '-4rem',
+                    backgroundImage: backgroundColor === 'transparent' ? 'linear-gradient(45deg, #374151 25%, transparent 25%), linear-gradient(-45deg, #374151 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #374151 75%), linear-gradient(-45deg, transparent 75%, #374151 75%)' : 'none',
+                    backgroundSize: '20px 20px',
+                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
+                  }}
+                >
+                  <canvas
+                    ref={canvasRef}
+                    width={canvasSize}
+                    height={canvasSize}
+                    style={{ 
+                      width: canvasSize * zoom, 
+                      height: canvasSize * zoom,
+                      cursor: tool === 'select' ? 'pointer' : 'crosshair'
+                    }}
+                    className="block"
+                    onMouseDown={handleCanvasMouseDown}
+                    onMouseMove={handleCanvasMouseMove}
+                    onMouseUp={handleCanvasMouseUp}
+                  />
+                </div>
+          </div>
+
+          {/* Export Panel */}
+                <div className="flex-shrink-0 pt-4 flex justify-center">
+                  <div className="bg-black/40 backdrop-blur-xl border border-vibrant-purple/20 rounded-xl px-6 py-3 shadow-lg flex justify-center">
+                    <div className="flex items-center gap-4">
+                      <div className="text-xs text-vibrant-purple/70 flex items-center gap-2">
+                        <span>Optimized</span>
+                        <span className="text-gray-600">•</span>
+                        <span>1:1 ratio</span>
+                        <span className="text-gray-600">•</span>
+                        <span>Under 2MB</span>
+                      </div>
+                <Button 
+                  onClick={handleExport}
+                  className="bg-vibrant-purple hover:bg-vibrant-purple text-white font-bold py-3 px-6 rounded-xl shadow-[0_0_20px_0] shadow-vibrant-purple/40 hover:shadow-[0_0_25px_3px] hover:shadow-vibrant-purple/60 border border-t-purple-400/80 border-l-purple-400/80 border-b-purple-900/80 border-r-purple-900/80 transition-all duration-300 transform hover:scale-105"
+                >
+                  Download
+                  <Download className="w-5 h-5 ml-3" />
+                </Button>
+              </div>
+                  </div>
+                </div>
+              </Card>
+            ) : (
+              <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-6 rounded-2xl shadow-lg h-[calc(100vh-12rem)]">
+                <ScrollArea className="h-full w-full pr-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-200">Browse Templates</h2>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setMainView('canvas')}
+                      className="text-gray-400 hover:text-white hover:bg-vibrant-purple/20"
+                    >
+                      <X className="w-5 h-5" />
+                    </Button>
+                  </div>
+                  <TemplateGallery onSelectTemplate={handleTemplateSelect} />
+                </ScrollArea>
+              </Card>
+            )}
+              </div>
+
+          {/* Tools Panel - now center */}
+          <div className="lg:col-span-3 order-2 lg:order-2">
             <div className="sticky top-6">
               <Card className="glass-morphism-dark border border-vibrant-purple/20 p-4 h-[calc(100vh-12rem)] rounded-2xl shadow-lg flex flex-col">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full">
@@ -1326,35 +1461,41 @@ const LogoTokenEditor = () => {
                     </div>
                   </div>
                   
-                  <div>
-                        <Label className="text-enhanced-text">Enable Coin Rim</Label>
-                        <input
-                          type="checkbox"
-                          checked={coinRimEnabled}
-                          onChange={e => setCoinRimEnabled(e.target.checked)}
-                          className="rounded ml-2"
-                        />
+                  {/* Coin Rim section */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-semibold text-sm text-gray-200">Coin Rim</span>
+                    <button
+                      className={`relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none ${coinRimEnabled ? 'bg-vibrant-purple' : 'bg-gray-400'}`}
+                      onClick={() => setCoinRimEnabled(v => !v)}
+                      aria-pressed={coinRimEnabled}
+                      type="button"
+                    >
+                      <span className={`absolute left-1 top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 ${coinRimEnabled ? 'translate-x-5' : ''}`}></span>
+                    </button>
                   </div>
-
+                  {coinRimEnabled && (
                   <div>
-                        <Label className="text-enhanced-text">Coin Rim</Label>
+                      <Label className="text-enhanced-text">Coin Rim Width</Label>
                         <div className="flex gap-2 mt-2 items-center">
-                      <Slider
-                        value={[canvasBorderWidth]}
-                        onValueChange={(value) => setCanvasBorderWidth(value[0])}
-                        max={30}
-                        min={0}
-                        step={1}
-                          />
-                          <ColorPicker
-                            color={canvasBorderColor}
-                            onChange={setCanvasBorderColor}
-                      />
+                        <Slider value={[canvasBorderWidth]} onValueChange={v => setCanvasBorderWidth(v[0])} max={30} min={0} step={1} />
+                        <ColorPicker color={canvasBorderColor} onChange={setCanvasBorderColor} />
                     </div>
                   </div>
+                  )}
 
-                  <div>
-                        <Label className="text-enhanced-text">Rim Shadow</Label>
+                  {/* Rim Shadow section */}
+                  <div className="flex items-center gap-2 mt-4 mb-2">
+                    <span className="font-semibold text-sm text-gray-200">Rim Shadow</span>
+                    <button
+                      className={`relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none ${rimShadow.enabled ? 'bg-vibrant-purple' : 'bg-gray-400'}`}
+                      onClick={() => setRimShadow(s => ({...s, enabled: !s.enabled}))}
+                      aria-pressed={rimShadow.enabled}
+                      type="button"
+                    >
+                      <span className={`absolute left-1 top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 ${rimShadow.enabled ? 'translate-x-5' : ''}`}></span>
+                    </button>
+                  </div>
+                  {rimShadow.enabled && (
                         <div className="p-2 border border-vibrant-purple/20 rounded-md mt-2 space-y-3">
                           <div className="flex items-center justify-between">
                             <Label htmlFor="rim-shadow-enable" className="text-sm text-gray-300">Enable Shadow</Label>
@@ -1392,28 +1533,21 @@ const LogoTokenEditor = () => {
                             </>
                           )}
                         </div>
-                  </div>
+                  )}
 
-                  <div>
-                        <Label className="text-enhanced-text">Background</Label>
-                        <div className="flex gap-2 mt-2 items-center">
-                      <Button
-                        onClick={() => setBackgroundColor('transparent')}
-                            variant="outline"
-                        size="sm"
-                            className={`border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${backgroundColor === 'transparent' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
-                      >
-                        Transparent
-                      </Button>
-                          <ColorPicker
-                            color={backgroundColor === 'transparent' ? '#ffffff' : backgroundColor}
-                            onChange={setBackgroundColor}
-                      />
-                    </div>
+                  {/* Rim Design section */}
+                  <div className="flex items-center gap-2 mt-4 mb-2">
+                    <span className="font-semibold text-sm text-gray-200">Rim Design</span>
+                    <button
+                      className={`relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none ${rimDesign.enabled ? 'bg-vibrant-purple' : 'bg-gray-400'}`}
+                      onClick={() => setRimDesign(s => ({...s, enabled: !s.enabled}))}
+                      aria-pressed={rimDesign.enabled}
+                      type="button"
+                    >
+                      <span className={`absolute left-1 top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 ${rimDesign.enabled ? 'translate-x-5' : ''}`}></span>
+                    </button>
                   </div>
-
-                  <div>
-                        <Label className="text-enhanced-text">Rim Design</Label>
+                  {rimDesign.enabled && (
                         <div className="p-2 border border-vibrant-purple/20 rounded-md mt-2 space-y-3">
                           <div className="flex items-center justify-between">
                             <Label htmlFor="rim-design-enable" className="text-sm text-enhanced-text">Enable Design</Label>
@@ -1470,7 +1604,7 @@ const LogoTokenEditor = () => {
                                   <Slider 
                                     value={[rimDesign.density]} 
                                     onValueChange={v => setRimDesign(s => ({ ...s, density: v[0] }))} 
-                                    max={200} 
+                                max={200} 
                                     min={5} 
                                     step={1} 
                                   />
@@ -1496,6 +1630,25 @@ const LogoTokenEditor = () => {
                             </>
                           )}
                         </div>
+                  )}
+
+                  {/* Background section */}
+                  <div>
+                        <Label className="text-enhanced-text">Background</Label>
+                        <div className="flex gap-2 mt-2 items-center">
+                      <Button
+                        onClick={() => setBackgroundColor('transparent')}
+                            variant="outline"
+                        size="sm"
+                            className={`border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${backgroundColor === 'transparent' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                      >
+                        Transparent
+                      </Button>
+                          <ColorPicker
+                            color={backgroundColor === 'transparent' ? '#ffffff' : backgroundColor}
+                            onChange={setBackgroundColor}
+                      />
+                    </div>
                   </div>
                 </TabsContent>
 
@@ -1557,8 +1710,17 @@ const LogoTokenEditor = () => {
                         <Label className="text-sm font-medium text-enhanced-text">Font Size</Label>
                           <Slider
                           value={[fontSize]}
-                          onValueChange={(value) => setFontSize(value[0])}
-                          max={72}
+                          onValueChange={(value) => {
+                            setFontSize(value[0]);
+                            if (selectedLayer) {
+                              setLayers(prev => prev.map(l =>
+                                l.id === selectedLayer && l.type === 'text'
+                                  ? { ...l, fontSize: value[0] }
+                                  : l
+                              ));
+                            }
+                          }}
+                          max={200}
                           min={12}
                             step={1}
                           className="mt-2"
@@ -1916,6 +2078,30 @@ const LogoTokenEditor = () => {
                       <p>Select an image layer to adjust its properties</p>
                     </div>
                   )}
+                  {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'image' && (
+                    <div className="mt-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label className="text-sm font-medium text-enhanced-text">Chroma Key Remove</Label>
+                        <button
+                          className={`relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none ${chromaKeyEnabled ? 'bg-vibrant-purple' : 'bg-gray-400'}`}
+                          onClick={() => setChromaKeyEnabled(v => !v)}
+                          aria-pressed={chromaKeyEnabled}
+                          type="button"
+                        >
+                          <span className={`absolute left-1 top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 ${chromaKeyEnabled ? 'translate-x-5' : ''}`}></span>
+                        </button>
+                      </div>
+                      {chromaKeyEnabled && (
+                        <div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <ColorPicker color={chromaKeyColor} onChange={setChromaKeyColor} />
+                            <Button onClick={handleChromaKeyRemove} className="bg-vibrant-purple text-white px-4 py-2 rounded">Remove Background</Button>
+                          </div>
+                          <p className="text-xs text-gray-400 mt-1">Pick a color to remove from the image background.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="layers" className="space-y-4">
@@ -2068,96 +2254,8 @@ const LogoTokenEditor = () => {
             </div>
           </div>
 
-          {/* Canvas Area */}
-          <div className="lg:col-span-6">
-            {mainView === 'canvas' ? (
-              <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-6 rounded-2xl shadow-lg h-[calc(100vh-12rem)] flex flex-col overflow-visible">
-              <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-gray-200">Canvas (1:1 Ratio)</h2>
-                <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setZoom(Math.max(0.5, zoom - 0.1))} className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white">
-                    <ZoomOut className="w-4 h-4" />
-                  </Button>
-                    <span className="h-9 w-16 rounded-md flex items-center justify-center text-sm bg-black/20">{Math.round(zoom * 100)}%</span>
-                    <Button size="sm" variant="outline" onClick={() => setZoom(Math.min(1.1, zoom + 0.1))} className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white">
-                    <ZoomIn className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-              
-                <div className="flex-grow flex items-center justify-center">
-                <div 
-                    className={`border-2 border-dashed border-vibrant-purple/20 overflow-hidden ${canvasShape === 'circle' ? 'rounded-full' : 'rounded-lg'} transition-all duration-300 ease-in-out`}
-                  style={{ 
-                    width: canvasSize * zoom, 
-                    height: canvasSize * zoom,
-                      marginTop: '-4rem',
-                    backgroundImage: backgroundColor === 'transparent' ? 'linear-gradient(45deg, #374151 25%, transparent 25%), linear-gradient(-45deg, #374151 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #374151 75%), linear-gradient(-45deg, transparent 75%, #374151 75%)' : 'none',
-                    backgroundSize: '20px 20px',
-                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
-                  }}
-                >
-                  <canvas
-                    ref={canvasRef}
-                    width={canvasSize}
-                    height={canvasSize}
-                    style={{ 
-                      width: canvasSize * zoom, 
-                      height: canvasSize * zoom,
-                      cursor: tool === 'select' ? 'pointer' : 'crosshair'
-                    }}
-                    className="block"
-                    onMouseDown={handleCanvasMouseDown}
-                    onMouseMove={handleCanvasMouseMove}
-                    onMouseUp={handleCanvasMouseUp}
-                  />
-                </div>
-          </div>
-
-          {/* Export Panel */}
-                <div className="flex-shrink-0 pt-4 flex justify-center">
-                  <div className="bg-black/40 backdrop-blur-xl border border-vibrant-purple/20 rounded-xl px-6 py-3 shadow-lg flex justify-center">
-                    <div className="flex items-center gap-4">
-                      <div className="text-xs text-vibrant-purple/70 flex items-center gap-2">
-                        <span>Optimized</span>
-                        <span className="text-gray-600">•</span>
-                        <span>1:1 ratio</span>
-                        <span className="text-gray-600">•</span>
-                        <span>Under 2MB</span>
-                      </div>
-                <Button 
-                  onClick={handleExport}
-                  className="bg-vibrant-purple hover:bg-vibrant-purple text-white font-bold py-3 px-6 rounded-xl shadow-[0_0_20px_0] shadow-vibrant-purple/40 hover:shadow-[0_0_25px_3px] hover:shadow-vibrant-purple/60 border border-t-purple-400/80 border-l-purple-400/80 border-b-purple-900/80 border-r-purple-900/80 transition-all duration-300 transform hover:scale-105"
-                >
-                  Download
-                  <Download className="w-5 h-5 ml-3" />
-                </Button>
-              </div>
-                  </div>
-                </div>
-              </Card>
-            ) : (
-              <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-6 rounded-2xl shadow-lg h-[calc(100vh-12rem)]">
-                <ScrollArea className="h-full w-full pr-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold text-gray-200">Browse Templates</h2>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setMainView('canvas')}
-                      className="text-gray-400 hover:text-white hover:bg-vibrant-purple/20"
-                    >
-                      <X className="w-5 h-5" />
-                    </Button>
-                  </div>
-                  <TemplateGallery onSelectTemplate={handleTemplateSelect} />
-                </ScrollArea>
-              </Card>
-            )}
-              </div>
-
-          {/* Export Panel */}
-          <div className="lg:col-span-3">
+          {/* Right Panel - donations, promoted channels, etc. */}
+          <div className="lg:col-span-3 order-3 lg:order-3">
             <div className="sticky top-6 h-[calc(100vh-12rem)]">
               <ScrollArea className="h-full w-full pr-4">
                 <div className="flex flex-col h-full">
@@ -2179,12 +2277,23 @@ const LogoTokenEditor = () => {
                     />
 
               {/* Donation Section */}
-                    <p className="text-xs text-center text-vibrant-purple/70 mb-4 w-full relative z-10">
-                  Donations of Tokens accepted
-                </p>
-                    <div className="w-11/12 flex items-center gap-3 p-2 bg-transparent rounded-lg border border-vibrant-purple/30 relative z-10 group-hover:border-vibrant-purple/50 transition-colors duration-300">
+                    <p className="text-xs text-center text-vibrant-purple/70 mt-4 mb-1 w-full relative z-10">
+                      Made with <span role="img" aria-label="love">❤️</span> by <a href="https://xeenon.xyz/f7ash" target="_blank" rel="noopener noreferrer" className="text-vibrant-purple hover:text-vibrant-pink transition-colors">f7ash</a>
+                    </p>
+                    <div className="container mx-auto flex items-center justify-center mb-2">
+                      <p className="text-sm mr-2 text-gray-300">Made for</p>
+                      <img src="/xeenon-logo.png" alt="Xeenon Logo" className="h-6 w-auto" />
+                      <p className="text-sm ml-2 text-gray-300">Community</p>
+                    </div>
+                    <hr className="my-2 border-t border-vibrant-purple/20 w-full" />
+                    <p className="text-xs text-center text-vibrant-purple/70 mb-2 w-full relative z-10">
+                      A way to support the project and creator
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full items-center justify-center mb-2 mt-4">
+                      {/* Solana address copy box */}
+                      <div className="flex-1 min-w-0 h-12 flex items-center gap-3 px-4 bg-transparent rounded-lg border border-vibrant-purple/30">
                       <a href={`https://solana.fm/address/${solanaAddress}/transactions?cluster=mainnet-alpha`} target="_blank" rel="noopener noreferrer" aria-label="View address on Solana Explorer">
-                        <div className="w-8 h-8 rounded-full bg-vibrant-purple/20 flex items-center justify-center group-hover:bg-vibrant-purple/30 transition-colors duration-300">
+                          <div className="w-8 h-8 rounded-full bg-vibrant-purple/20 flex items-center justify-center">
                           <svg width="16" height="16" viewBox="0 0 397.7 311.7" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <linearGradient id="logosGradient" x1="360.8793" y1="351.4553" x2="141.213" y2="-69.2936" gradientUnits="userSpaceOnUse">
                         <stop offset="0" stopColor="#00FFA3"/>
@@ -2196,7 +2305,7 @@ const LogoTokenEditor = () => {
                     </svg>
                   </div>
                       </a>
-                      <span className="text-sm font-mono flex-1 text-center text-gray-300 group-hover:text-gray-200 transition-colors duration-300">
+                        <span className="text-sm font-mono flex-1 text-center text-gray-300">
                     {formatAddress(solanaAddress)}
                   </span>
                       <Button
@@ -2207,6 +2316,16 @@ const LogoTokenEditor = () => {
                       >
                         <Copy className="w-5 h-5" />
                       </Button>
+                      </div>
+                      {/* Buy $FLASH button */}
+                      <button
+                        className="flex-1 min-w-0 h-12 flex items-center justify-center gap-2 px-4 bg-transparent rounded-lg border border-vibrant-purple/30 text-white font-semibold text-base transition-colors duration-150 hover:bg-gradient-to-r hover:from-vibrant-purple hover:to-vibrant-green hover:text-white"
+                        style={{ boxSizing: 'border-box' }}
+                        onClick={() => window.open('https://xeenon.xyz/f7ash?tab=token', '_blank')}
+                      >
+                        <img src="/FlashToken.png" alt="$FLASH" className="h-6 w-6" />
+                        Buy $FLASH
+                      </button>
               </div>
             </Card>
 
@@ -2521,14 +2640,6 @@ const LogoTokenEditor = () => {
             </div>
           </div>
         </div>
-        <footer className="w-full py-4 mt-8 text-center">
-          <p className="text-sm text-vibrant-purple/70 mb-4">Made with ❤️ by <a href="https://xeenon.xyz/f7ash" target="_blank" rel="noopener noreferrer" className="text-vibrant-purple hover:text-vibrant-pink transition-colors">f7ash</a></p>
-        <div className="container mx-auto flex items-center justify-center">
-            <p className="text-lg mr-2 text-gray-300">Made for</p>
-          <img src="/xeenon-logo.png" alt="Xeenon Logo" className="h-8 w-auto" />
-            <p className="text-lg ml-2 text-gray-300">Community</p>
-        </div>
-      </footer>
       </div>
     </div>
   );
