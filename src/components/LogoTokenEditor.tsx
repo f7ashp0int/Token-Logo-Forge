@@ -161,6 +161,7 @@ const LogoTokenEditor = () => {
   const renderTimeout = useRef<NodeJS.Timeout | null>(null);
   const [chromaKeyColor, setChromaKeyColor] = useState('#000000');
   const [chromaKeyEnabled, setChromaKeyEnabled] = useState(false);
+  const [originalImages, setOriginalImages] = useState<Record<string, string>>({});
 
   const loadFontIfNeeded = async (fontFamily: string | undefined) => {
     if (!fontFamily || fontFamily === 'Arial') return;
@@ -376,7 +377,42 @@ const LogoTokenEditor = () => {
         imgOffCanvas.width = layer.width;
         imgOffCanvas.height = layer.height;
         const imgOffCtx = imgOffCanvas.getContext('2d')!;
-        imgOffCtx.filter = offCtx.filter;
+        
+        // Apply image adjustments
+        if (layer.imageAdjustments) {
+          const adjustments = layer.imageAdjustments;
+          
+          // Apply brightness, contrast, saturation
+          if (adjustments.brightness !== 100 || adjustments.contrast !== 100 || adjustments.saturation !== 100) {
+            imgOffCtx.filter = `brightness(${adjustments.brightness}%) contrast(${adjustments.contrast}%) saturate(${adjustments.saturation}%)`;
+          }
+          
+          // Apply blur
+          if (adjustments.blur > 0) {
+            imgOffCtx.filter += ` blur(${adjustments.blur}px)`;
+          }
+          
+          // Apply hue rotation
+          if (adjustments.hue !== 0) {
+            imgOffCtx.filter += ` hue-rotate(${adjustments.hue}deg)`;
+          }
+          
+          // Apply sepia
+          if (adjustments.sepia > 0) {
+            imgOffCtx.filter += ` sepia(${adjustments.sepia}%)`;
+          }
+          
+          // Apply invert
+          if (adjustments.invert) {
+            imgOffCtx.filter += ' invert(1)';
+          }
+          
+          // Apply grayscale
+          if (adjustments.grayscale) {
+            imgOffCtx.filter += ' grayscale(1)';
+          }
+        }
+        
         imgOffCtx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
         const img = new Image();
         img.crossOrigin = "anonymous";
@@ -856,7 +892,7 @@ const LogoTokenEditor = () => {
       };
 
       // Only add a rim layer if coinRimEnabled is true
-      let newLayers: Layer[] = [baseLayer];
+      const newLayers: Layer[] = [baseLayer];
       if (coinRimEnabled) {
       const rimCanvas = document.createElement('canvas');
       rimCanvas.width = rimCanvas.height = canvasSize;
@@ -1013,6 +1049,8 @@ const LogoTokenEditor = () => {
               grayscale: false
             }
           };
+          // Store original image for potential restoration
+          setOriginalImages(prev => ({ ...prev, [newLayer.id]: canvas.toDataURL() }));
           setLayers(prev => [...prev, newLayer]);
           setSelectedLayer(newLayer.id);
           toast.success('Image uploaded and auto-cropped to 1:1 ratio');
@@ -1224,9 +1262,17 @@ const LogoTokenEditor = () => {
             }
             ctx.putImageData(imageData, 0, 0);
             updateLayerProperty(selectedLayer, 'content', canvas.toDataURL());
+            toast.success('Background removed successfully!');
           };
         }
       }
+    }
+  };
+
+  const restoreOriginalImage = () => {
+    if (selectedLayer && originalImages[selectedLayer]) {
+      updateLayerProperty(selectedLayer, 'content', originalImages[selectedLayer]);
+      toast.success('Original image restored!');
     }
   };
 
@@ -1730,14 +1776,25 @@ const LogoTokenEditor = () => {
                         <Label className="text-sm font-medium text-enhanced-text">Font Color</Label>
                         <ColorPicker
                           color={textColor}
-                          onChange={setTextColor}
+                          onChange={(color) => {
+                            setTextColor(color);
+                            if (selectedLayer) {
+                              updateLayerProperty(selectedLayer, 'fontColor', color);
+                            }
+                          }}
                           />
                         </div>
                       <div className="col-span-1">
                         <Label className="text-sm font-medium text-enhanced-text">Font Family</Label>
                     <select
                       value={fontFamily}
-                          onChange={(e) => setFontFamily(e.target.value)}
+                          onChange={(e) => {
+                            const newFontFamily = e.target.value;
+                            setFontFamily(newFontFamily);
+                            if (selectedLayer) {
+                              updateLayerProperty(selectedLayer, 'fontFamily', newFontFamily);
+                            }
+                          }}
                           className="w-full mt-2 p-2 bg-enhanced-gray-dark border border-vibrant-purple/30 rounded-md text-enhanced-text"
                         >
                           {GOOGLE_FONTS.map((font) => (
@@ -1755,14 +1812,24 @@ const LogoTokenEditor = () => {
                         <Label className="text-sm font-medium text-enhanced-text">Stroke Color</Label>
                         <ColorPicker
                           color={strokeColor}
-                          onChange={setStrokeColor}
+                          onChange={(color) => {
+                            setStrokeColor(color);
+                            if (selectedLayer) {
+                              updateLayerProperty(selectedLayer, 'strokeColor', color);
+                            }
+                          }}
                     />
                   </div>
                       <div className="col-span-1">
                         <Label className="text-sm font-medium text-enhanced-text">Stroke Width</Label>
                         <Slider
                           value={[strokeWidth]}
-                          onValueChange={(value) => setStrokeWidth(value[0])}
+                          onValueChange={(value) => {
+                            setStrokeWidth(value[0]);
+                            if (selectedLayer) {
+                              updateLayerProperty(selectedLayer, 'strokeWidth', value[0]);
+                            }
+                          }}
                           max={10}
                           min={0}
                           step={1}
@@ -1773,14 +1840,24 @@ const LogoTokenEditor = () => {
                         <Label className="text-sm font-medium text-enhanced-text">Shadow Color</Label>
                         <ColorPicker
                           color={shadowColor}
-                          onChange={setShadowColor}
+                          onChange={(color) => {
+                            setShadowColor(color);
+                            if (selectedLayer) {
+                              updateLayerProperty(selectedLayer, 'shadowColor', color);
+                            }
+                          }}
                         />
                       </div>
                       <div className="col-span-1">
                         <Label className="text-sm font-medium text-enhanced-text">Shadow Blur</Label>
                         <Slider
                           value={[shadowBlur]}
-                          onValueChange={(value) => setShadowBlur(value[0])}
+                          onValueChange={(value) => {
+                            setShadowBlur(value[0]);
+                            if (selectedLayer) {
+                              updateLayerProperty(selectedLayer, 'shadowBlur', value[0]);
+                            }
+                          }}
                           max={50}
                           min={0}
                           step={1}
@@ -1791,7 +1868,12 @@ const LogoTokenEditor = () => {
                         <Label className="text-sm font-medium text-enhanced-text">Shadow Offset X</Label>
                         <Slider
                           value={[shadowOffsetX]}
-                          onValueChange={(value) => setShadowOffsetX(value[0])}
+                          onValueChange={(value) => {
+                            setShadowOffsetX(value[0]);
+                            if (selectedLayer) {
+                              updateLayerProperty(selectedLayer, 'shadowOffsetX', value[0]);
+                            }
+                          }}
                           max={50}
                           min={-50}
                           step={1}
@@ -1802,7 +1884,12 @@ const LogoTokenEditor = () => {
                         <Label className="text-sm font-medium text-enhanced-text">Shadow Offset Y</Label>
                         <Slider
                           value={[shadowOffsetY]}
-                          onValueChange={(value) => setShadowOffsetY(value[0])}
+                          onValueChange={(value) => {
+                            setShadowOffsetY(value[0]);
+                            if (selectedLayer) {
+                              updateLayerProperty(selectedLayer, 'shadowOffsetY', value[0]);
+                            }
+                          }}
                           max={50}
                           min={-50}
                           step={1}
@@ -1813,14 +1900,24 @@ const LogoTokenEditor = () => {
                         <Label className="text-sm font-medium text-enhanced-text">Glow Color</Label>
                         <ColorPicker
                           color={glowColor}
-                          onChange={setGlowColor}
+                          onChange={(color) => {
+                            setGlowColor(color);
+                            if (selectedLayer) {
+                              updateLayerProperty(selectedLayer, 'glowColor', color);
+                            }
+                          }}
                         />
                       </div>
                       <div className="col-span-1">
                         <Label className="text-sm font-medium text-enhanced-text">Glow Blur</Label>
                         <Slider
                           value={[glowBlur]}
-                          onValueChange={(value) => setGlowBlur(value[0])}
+                          onValueChange={(value) => {
+                            setGlowBlur(value[0]);
+                            if (selectedLayer) {
+                              updateLayerProperty(selectedLayer, 'glowBlur', value[0]);
+                            }
+                          }}
                           max={50}
                           min={0}
                           step={1}
@@ -1920,11 +2017,14 @@ const LogoTokenEditor = () => {
                         
                         return (
                           <>
-                  <div>
+                                              <div>
                               <Label className="text-enhanced-text">Blend Mode</Label>
                               <select
                                 value={layerAdjustments.blendMode}
-                                onChange={(e) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, blendMode: e.target.value })}
+                                onChange={(e) => {
+                                  const newBlendMode = e.target.value;
+                                  updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, blendMode: newBlendMode });
+                                }}
                                 className="w-full mt-2 p-2 bg-enhanced-gray-dark border border-vibrant-purple/30 rounded-md text-enhanced-text"
                               >
                                 <option value="normal">Normal</option>
@@ -1951,7 +2051,10 @@ const LogoTokenEditor = () => {
                                 <Label className="text-enhanced-text">Opacity: {layerAdjustments.opacity}%</Label>
                     <Slider
                                   value={[layerAdjustments.opacity]}
-                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, opacity: value[0] })}
+                                  onValueChange={(value) => {
+                                    const newOpacity = value[0];
+                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, opacity: newOpacity });
+                                  }}
                                   max={100}
                                   min={0}
                                   step={1}
@@ -1962,7 +2065,10 @@ const LogoTokenEditor = () => {
                                 <Label className="text-enhanced-text">Fill: {layerAdjustments.fill}%</Label>
                                 <Slider
                                   value={[layerAdjustments.fill]}
-                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, fill: value[0] })}
+                                  onValueChange={(value) => {
+                                    const newFill = value[0];
+                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, fill: newFill });
+                                  }}
                                   max={100}
                                   min={0}
                                   step={1}
@@ -1976,7 +2082,10 @@ const LogoTokenEditor = () => {
                                 <Label className="text-enhanced-text">Blur: {layerAdjustments.blur}px</Label>
                     <Slider
                                   value={[layerAdjustments.blur]}
-                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, blur: value[0] })}
+                                  onValueChange={(value) => {
+                                    const newBlur = value[0];
+                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, blur: newBlur });
+                                  }}
                                   max={50}
                                   min={0}
                                   step={1}
@@ -1987,7 +2096,10 @@ const LogoTokenEditor = () => {
                                 <Label className="text-enhanced-text">Hue: {layerAdjustments.hue}°</Label>
                                 <Slider
                                   value={[layerAdjustments.hue]}
-                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, hue: value[0] })}
+                                  onValueChange={(value) => {
+                                    const newHue = value[0];
+                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, hue: newHue });
+                                  }}
                                   max={360}
                                   min={0}
                                   step={1}
@@ -2000,7 +2112,10 @@ const LogoTokenEditor = () => {
                               <Label className="text-enhanced-text">Brightness: {layerAdjustments.brightness}%</Label>
                               <Slider
                                 value={[layerAdjustments.brightness]}
-                                onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, brightness: value[0] })}
+                                onValueChange={(value) => {
+                                  const newBrightness = value[0];
+                                  updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, brightness: newBrightness });
+                                }}
                       max={200}
                       min={0}
                       step={1}
@@ -2012,7 +2127,10 @@ const LogoTokenEditor = () => {
                               <Label className="text-enhanced-text">Contrast: {layerAdjustments.contrast}%</Label>
                     <Slider
                                 value={[layerAdjustments.contrast]}
-                                onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, contrast: value[0] })}
+                                onValueChange={(value) => {
+                                  const newContrast = value[0];
+                                  updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, contrast: newContrast });
+                                }}
                       max={200}
                       min={0}
                       step={1}
@@ -2024,7 +2142,10 @@ const LogoTokenEditor = () => {
                               <Label className="text-enhanced-text">Saturation: {layerAdjustments.saturation}%</Label>
                     <Slider
                                 value={[layerAdjustments.saturation]}
-                                onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, saturation: value[0] })}
+                                onValueChange={(value) => {
+                                  const newSaturation = value[0];
+                                  updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, saturation: newSaturation });
+                                }}
                       max={200}
                       min={0}
                       step={1}
@@ -2037,7 +2158,10 @@ const LogoTokenEditor = () => {
                                 <Label className="text-enhanced-text">Sepia: {layerAdjustments.sepia}%</Label>
                                 <Slider
                                   value={[layerAdjustments.sepia]}
-                                  onValueChange={(value) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, sepia: value[0] })}
+                                  onValueChange={(value) => {
+                                    const newSepia = value[0];
+                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, sepia: newSepia });
+                                  }}
                                   max={100}
                                   min={0}
                                   step={1}
@@ -2052,7 +2176,10 @@ const LogoTokenEditor = () => {
                                   type="checkbox"
                                   id="invert"
                                   checked={layerAdjustments.invert}
-                                  onChange={(e) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, invert: e.target.checked })}
+                                  onChange={(e) => {
+                                    const newInvert = e.target.checked;
+                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, invert: newInvert });
+                                  }}
                                   className="rounded"
                                 />
                                 <Label htmlFor="invert" className="text-sm text-enhanced-text">Invert Colors</Label>
@@ -2062,7 +2189,10 @@ const LogoTokenEditor = () => {
                                   type="checkbox"
                                   id="grayscale"
                                   checked={layerAdjustments.grayscale}
-                                  onChange={(e) => updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, grayscale: e.target.checked })}
+                                  onChange={(e) => {
+                                    const newGrayscale = e.target.checked;
+                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, grayscale: newGrayscale });
+                                  }}
                                   className="rounded"
                                 />
                                 <Label htmlFor="grayscale" className="text-sm text-enhanced-text">Grayscale</Label>
@@ -2098,6 +2228,18 @@ const LogoTokenEditor = () => {
                             <Button onClick={handleChromaKeyRemove} className="bg-vibrant-purple text-white px-4 py-2 rounded">Remove Background</Button>
                           </div>
                           <p className="text-xs text-gray-400 mt-1">Pick a color to remove from the image background.</p>
+                          {originalImages[selectedLayer] && (
+                            <div className="mt-2">
+                              <Button 
+                                onClick={restoreOriginalImage} 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white"
+                              >
+                                Restore Original Image
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
