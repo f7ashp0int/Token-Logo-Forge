@@ -136,11 +136,15 @@ const LogoTokenEditor = () => {
   const [canvasBorderColor, setCanvasBorderColor] = useState('#c0c0c0');
   const [rimShadow, setRimShadow] = useState({
     enabled: false,
-    type: 'outer' as 'outer' | 'inner',
+    type: 'outer' as 'outer' | 'inner' | 'both',
     blur: 10,
     color: '#000000',
     offsetX: 0,
-    offsetY: 0
+    offsetY: 0,
+    opacity: 0.5,
+    spread: 0,
+    intensity: 1,
+    style: 'normal' as 'normal' | 'glow' | 'drop' | 'inner-glow'
   });
   const [rimDesign, setRimDesign] = useState({
     enabled: false,
@@ -265,31 +269,88 @@ const LogoTokenEditor = () => {
 
     if (coinRimEnabled && canvasShape === 'circle') {
       offCtx.save();
-      if (rimShadow.enabled && rimShadow.type === 'outer' && canvasBorderWidth > 0) {
-        offCtx.shadowColor = rimShadow.color;
-        offCtx.shadowBlur = rimShadow.blur;
-        offCtx.shadowOffsetX = rimShadow.offsetX;
-        offCtx.shadowOffsetY = rimShadow.offsetY;
+      
+      // Enhanced Rim Shadow Rendering
+      if (rimShadow.enabled && canvasBorderWidth > 0) {
+        const shadowColor = rimShadow.color;
+        const shadowBlur = rimShadow.blur * rimShadow.intensity;
+        const shadowOpacity = rimShadow.opacity;
+        
+        // Create shadow color with opacity
+        const alpha = Math.round(shadowOpacity * 255);
+        const shadowColorWithOpacity = shadowColor + alpha.toString(16).padStart(2, '0');
+        
+        if (rimShadow.type === 'outer' || rimShadow.type === 'both') {
+          // Outer shadow
+          offCtx.save();
+          offCtx.shadowColor = shadowColorWithOpacity;
+          offCtx.shadowBlur = shadowBlur;
+          offCtx.shadowOffsetX = rimShadow.offsetX;
+          offCtx.shadowOffsetY = rimShadow.offsetY;
+          
+          if (rimShadow.style === 'glow') {
+            // Multiple glow layers for better effect
+            for (let i = 1; i <= 3; i++) {
+              offCtx.shadowBlur = shadowBlur * i;
+              offCtx.fillStyle = canvasBorderColor;
+              offCtx.beginPath();
+              offCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, Math.PI * 2);
+              offCtx.fill();
+            }
+          } else if (rimShadow.style === 'drop') {
+            // Drop shadow effect with offset
+            offCtx.shadowOffsetX = rimShadow.offsetX * 2;
+            offCtx.shadowOffsetY = rimShadow.offsetY * 2;
+            offCtx.fillStyle = canvasBorderColor;
+            offCtx.beginPath();
+            offCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, Math.PI * 2);
+            offCtx.fill();
+          } else {
+            // Normal outer shadow
+            offCtx.fillStyle = canvasBorderColor;
+            offCtx.beginPath();
+            offCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, Math.PI * 2);
+            offCtx.fill();
+          }
+          offCtx.restore();
+        }
+        
+        if (rimShadow.type === 'inner' || rimShadow.type === 'both') {
+          // Inner shadow
+          offCtx.save();
+          offCtx.shadowColor = shadowColorWithOpacity;
+          offCtx.shadowBlur = shadowBlur;
+          offCtx.shadowOffsetX = rimShadow.offsetX;
+          offCtx.shadowOffsetY = rimShadow.offsetY;
+          
+          if (rimShadow.style === 'inner-glow') {
+            // Inner glow effect
+            for (let i = 1; i <= 3; i++) {
+              offCtx.shadowBlur = shadowBlur * i;
+              offCtx.strokeStyle = shadowColorWithOpacity;
+              offCtx.lineWidth = rimShadow.spread + (i * 2);
+              offCtx.beginPath();
+              offCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - canvasBorderWidth, 0, Math.PI * 2);
+              offCtx.stroke();
+            }
+          } else {
+            // Normal inner shadow
+            offCtx.strokeStyle = shadowColorWithOpacity;
+            offCtx.lineWidth = rimShadow.spread + 2;
+            offCtx.beginPath();
+            offCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - canvasBorderWidth, 0, Math.PI * 2);
+            offCtx.stroke();
+          }
+          offCtx.restore();
+        }
       }
+      
+      // Draw the main rim
       if (canvasBorderWidth > 0) {
         offCtx.fillStyle = canvasBorderColor;
         offCtx.beginPath();
         offCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, Math.PI * 2);
         offCtx.fill();
-      }
-      offCtx.restore();
-      if (rimShadow.enabled && rimShadow.type === 'inner' && canvasBorderWidth > 0) {
-        offCtx.save();
-        offCtx.strokeStyle = rimShadow.color;
-        offCtx.shadowColor = rimShadow.color;
-        offCtx.shadowBlur = rimShadow.blur;
-        offCtx.shadowOffsetX = rimShadow.offsetX;
-        offCtx.shadowOffsetY = rimShadow.offsetY;
-        offCtx.beginPath();
-        offCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - canvasBorderWidth, 0, Math.PI * 2);
-        offCtx.lineWidth = rimShadow.blur;
-        offCtx.stroke();
-        offCtx.restore();
       }
       offCtx.globalCompositeOperation = 'destination-out';
       offCtx.beginPath();
@@ -1558,6 +1619,7 @@ const LogoTokenEditor = () => {
                               <div className="flex gap-2">
                                 <Button onClick={() => setRimShadow(s => ({ ...s, type: 'outer' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.type === 'outer' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Outer</Button>
                                 <Button onClick={() => setRimShadow(s => ({ ...s, type: 'inner' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.type === 'inner' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Inner</Button>
+                                <Button onClick={() => setRimShadow(s => ({ ...s, type: 'both' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.type === 'both' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Both</Button>
                               </div>
                               <div className="flex gap-2 items-center">
                                 <div className='flex-1'>
@@ -1565,6 +1627,16 @@ const LogoTokenEditor = () => {
                                    <Slider value={[rimShadow.blur]} onValueChange={v => setRimShadow(s => ({ ...s, blur: v[0] }))} max={50} min={0} step={1} />
                                 </div>
                                 <ColorPicker color={rimShadow.color} onChange={color => setRimShadow(s => ({ ...s, color }))} />
+                              </div>
+                              
+                              <div>
+                                <Label className="text-xs text-vibrant-purple/70">Shadow Style</Label>
+                                <div className="flex gap-1 mt-2">
+                                  <Button onClick={() => setRimShadow(s => ({ ...s, style: 'normal' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.style === 'normal' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Normal</Button>
+                                  <Button onClick={() => setRimShadow(s => ({ ...s, style: 'glow' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.style === 'glow' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Glow</Button>
+                                  <Button onClick={() => setRimShadow(s => ({ ...s, style: 'drop' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.style === 'drop' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Drop</Button>
+                                  <Button onClick={() => setRimShadow(s => ({ ...s, style: 'inner-glow' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.style === 'inner-glow' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Inner</Button>
+                                </div>
                               </div>
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -1575,6 +1647,22 @@ const LogoTokenEditor = () => {
                                   <Label className="text-xs text-vibrant-purple/70">Y: {rimShadow.offsetY}px</Label>
                                   <Slider value={[rimShadow.offsetY]} onValueChange={v => setRimShadow(s => ({ ...s, offsetY: v[0] }))} max={50} min={-50} step={1} />
                                 </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label className="text-xs text-vibrant-purple/70">Opacity: {Math.round(rimShadow.opacity * 100)}%</Label>
+                                  <Slider value={[rimShadow.opacity]} onValueChange={v => setRimShadow(s => ({ ...s, opacity: v[0] }))} max={1} min={0.1} step={0.1} />
+                                </div>
+                                <div>
+                                  <Label className="text-xs text-vibrant-purple/70">Intensity: {rimShadow.intensity}x</Label>
+                                  <Slider value={[rimShadow.intensity]} onValueChange={v => setRimShadow(s => ({ ...s, intensity: v[0] }))} max={3} min={0.1} step={0.1} />
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <Label className="text-xs text-vibrant-purple/70">Spread: {rimShadow.spread}px</Label>
+                                <Slider value={[rimShadow.spread]} onValueChange={v => setRimShadow(s => ({ ...s, spread: v[0] }))} max={20} min={0} step={1} />
                               </div>
                             </>
                           )}
