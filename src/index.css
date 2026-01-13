@@ -46,17 +46,17 @@
     --sidebar-ring: 0 0% 83%;
 
     /* Custom vibrant accent colors */
+    /* Theme: Nebula (Default) */
     --vibrant-purple: 276 100% 64%;
     --vibrant-pink: 328 100% 70%;
     --vibrant-teal: 168 100% 50%;
     --vibrant-blue: 231 96% 60%;
     --vibrant-orange: 24 95% 53%;
     --vibrant-red-purple: 328 100% 44%;
-    
-    /* Enhanced color scheme for better contrast */
-    --enhanced-gray: 270 10% 18%; /* Dark purple-gray */
-    --enhanced-gray-light: 270 10% 25%; /* Lighter purple-gray */
-    --enhanced-gray-dark: 270 12% 12%; /* Very dark purple-gray */
+
+    --enhanced-gray: 270 10% 18%;
+    --enhanced-gray-light: 270 10% 25%;
+    --enhanced-gray-dark: 270 12% 12%;
     --enhanced-text: 270 10% 85%;
     --enhanced-text-muted: 270 10% 65%;
   }
@@ -89,7 +89,7 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
-    
+
     --sidebar-background: 210 11% 10%;
     --sidebar-foreground: 0 0% 83%;
     --sidebar-primary: 0 0% 100%;
@@ -101,56 +101,294 @@
   }
 }
 
+/* Theme overrides - MUST be outside @layer for proper specificity */
+body.theme-nexbank {
+  --vibrant-purple: 0 0% 100%;
+  --vibrant-pink: 0 0% 90%;
+  --vibrant-teal: 0 0% 95%;
+  --vibrant-blue: 0 0% 85%;
+  --vibrant-orange: 0 0% 100%;
+  --vibrant-red-purple: 0 0% 70%;
+  --enhanced-gray: 0 0% 11%;
+  --enhanced-gray-light: 0 0% 16%;
+  --enhanced-gray-dark: 0 0% 7%;
+  --enhanced-text: 0 0% 98%;
+  --enhanced-text-muted: 0 0% 60%;
+}
+
+body.theme-ashlime {
+  --vibrant-purple: 82 85% 55%;
+  --vibrant-pink: 90 70% 50%;
+  --vibrant-teal: 75 80% 48%;
+  --vibrant-blue: 85 75% 45%;
+  --vibrant-orange: 95 90% 50%;
+  --vibrant-red-purple: 70 60% 40%;
+  --enhanced-gray: 0 0% 13%;
+  --enhanced-gray-light: 0 0% 18%;
+  --enhanced-gray-dark: 0 0% 8%;
+  --enhanced-text: 80 10% 95%;
+  --enhanced-text-muted: 80 5% 55%;
+}
+
+body.theme-onyxgold {
+  --vibrant-purple: 43 100% 50%;
+  --vibrant-pink: 38 90% 55%;
+  --vibrant-teal: 48 95% 45%;
+  --vibrant-blue: 35 85% 50%;
+  --vibrant-orange: 45 100% 55%;
+  --vibrant-red-purple: 30 80% 40%;
+  --enhanced-gray: 30 5% 10%;
+  --enhanced-gray-light: 30 5% 15%;
+  --enhanced-gray-dark: 30 8% 6%;
+  --enhanced-text: 45 20% 95%;
+  --enhanced-text-muted: 40 10% 55%;
+}
+
+body.theme-velvet {
+  --vibrant-purple: 320 65% 42%;
+  --vibrant-pink: 330 70% 50%;
+  --vibrant-teal: 310 60% 45%;
+  --vibrant-blue: 340 55% 40%;
+  --vibrant-orange: 350 65% 55%;
+  --vibrant-red-purple: 355 80% 30%;
+  --enhanced-gray: 350 20% 8%;
+  --enhanced-gray-light: 345 15% 14%;
+  --enhanced-gray-dark: 355 25% 5%;
+  --enhanced-text: 340 15% 92%;
+  --enhanced-text-muted: 345 10% 55%;
+}
+
+body.theme-blackhole {
+  --theme-blackhole: 0 0% 0%;
+  /* Pure Black */
+  --theme-blackhole-foreground: 0 0% 100%;
+
+  /* Monochrome Accents - "Stealth" Look */
+  --vibrant-purple: 0 0% 20%;
+  /* Glossy Dark Grey (replacing purple) */
+  --vibrant-pink: 0 0% 60%;
+  /* Silver (replacing pink) */
+  --vibrant-teal: 0 0% 40%;
+  /* Steel Grey */
+  --vibrant-blue: 0 0% 50%;
+  /* Mid Grey */
+  --vibrant-orange: 0 0% 30%;
+  /* Dark Grey */
+  --vibrant-red-purple: 0 0% 25%;
+
+  --enhanced-gray: 0 0% 7%;
+  /* Slightly lighter than black for depth */
+  --enhanced-gray-light: 0 0% 12%;
+  --enhanced-gray-dark: 0 0% 3%;
+  --enhanced-text: 0 0% 95%;
+  --enhanced-text-muted: 0 0% 50%;
+}
+
 @layer base {
+  body.theme-blackhole {
+    --background: var(--theme-blackhole);
+    --foreground: var(--theme-blackhole-foreground);
+
+    /* Monochrome Primary */
+    --primary: 0 0% 100%;
+    /* White Text/Action */
+    --primary-foreground: 0 0% 0%;
+
+    /* Secondary - Titanium/Silver */
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 0% 40%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Variable Mapping for Components */
+    --vibrant-purple: 0 0% 20%;
+    /* Maps "Purple" classes to Dark Grey */
+    --vibrant-pink: 0 0% 80%;
+    /* Maps "Pink" classes to Silver/White glow */
+    --vibrant-teal: 0 0% 40%;
+
+    /* Darkest possible cards */
+    --card: 0 0% 3%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 100%;
+
+    /* Subtle stealth borders */
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 100%;
+    /* White focus ring */
+  }
+
+  /* Specific Text Overrides for Black Hole (Contrast Fix) */
+  body.theme-blackhole .text-vibrant-purple {
+    color: hsl(0 0% 100%);
+  }
+
+  body.theme-blackhole .text-vibrant-pink {
+    color: hsl(0 0% 90%);
+  }
+
+  body.theme-blackhole .text-vibrant-teal {
+    color: hsl(0 0% 90%);
+  }
+
+  body.theme-blackhole .text-vibrant-blue {
+    color: hsl(0 0% 90%);
+  }
+
+  body.theme-blackhole .text-vibrant-orange {
+    color: hsl(0 0% 90%);
+  }
+
+  body.theme-blackhole .text-vibrant-red-purple {
+    color: hsl(0 0% 90%);
+  }
+
+  /* Handle opacity variants used in placeholders */
+  body.theme-blackhole .text-vibrant-purple\/60 {
+    color: hsl(0 0% 60%);
+  }
+
+  body.theme-blackhole .text-vibrant-purple\/70 {
+    color: hsl(0 0% 70%);
+  }
+
+  body.theme-blackhole .text-vibrant-purple\/30 {
+    color: hsl(0 0% 50%);
+  }
+
+  /* Ensure borders/icons are visible */
+
   * {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground;
-    background-image: linear-gradient(to bottom, #3b0764, #000000);
+
+    /* Use variables for gradient */
+    background-image: linear-gradient(to bottom, hsl(var(--vibrant-purple) / 0.3), #000000);
     background-attachment: fixed;
   }
 }
 
 /* Custom utility classes for vibrant colors */
 @layer utilities {
-  .bg-vibrant-purple { background-color: hsl(var(--vibrant-purple)); }
-  .bg-vibrant-pink { background-color: hsl(var(--vibrant-pink)); }
-  .bg-vibrant-teal { background-color: hsl(var(--vibrant-teal)); }
-  .bg-vibrant-blue { background-color: hsl(var(--vibrant-blue)); }
-  .bg-vibrant-orange { background-color: hsl(var(--vibrant-orange)); }
-  .bg-vibrant-red-purple { background-color: hsl(var(--vibrant-red-purple)); }
-  
-  .text-vibrant-purple { color: hsl(var(--vibrant-purple)); }
-  .text-vibrant-pink { color: hsl(var(--vibrant-pink)); }
-  .text-vibrant-teal { color: hsl(var(--vibrant-teal)); }
-  .text-vibrant-blue { color: hsl(var(--vibrant-blue)); }
-  .text-vibrant-orange { color: hsl(var(--vibrant-orange)); }
-  .text-vibrant-red-purple { color: hsl(var(--vibrant-red-purple)); }
-  
-  .border-vibrant-purple { border-color: hsl(var(--vibrant-purple)); }
-  .border-vibrant-pink { border-color: hsl(var(--vibrant-pink)); }
-  .border-vibrant-teal { border-color: hsl(var(--vibrant-teal)); }
-  .border-vibrant-blue { border-color: hsl(var(--vibrant-blue)); }
-  .border-vibrant-orange { border-color: hsl(var(--vibrant-orange)); }
-  .border-vibrant-red-purple { border-color: hsl(var(--vibrant-red-purple)); }
-  
+  .bg-vibrant-purple {
+    background-color: hsl(var(--vibrant-purple));
+  }
+
+  .bg-vibrant-pink {
+    background-color: hsl(var(--vibrant-pink));
+  }
+
+  .bg-vibrant-teal {
+    background-color: hsl(var(--vibrant-teal));
+  }
+
+  .bg-vibrant-blue {
+    background-color: hsl(var(--vibrant-blue));
+  }
+
+  .bg-vibrant-orange {
+    background-color: hsl(var(--vibrant-orange));
+  }
+
+  .bg-vibrant-red-purple {
+    background-color: hsl(var(--vibrant-red-purple));
+  }
+
+  .text-vibrant-purple {
+    color: hsl(var(--vibrant-purple));
+  }
+
+  .text-vibrant-pink {
+    color: hsl(var(--vibrant-pink));
+  }
+
+  .text-vibrant-teal {
+    color: hsl(var(--vibrant-teal));
+  }
+
+  .text-vibrant-blue {
+    color: hsl(var(--vibrant-blue));
+  }
+
+  .text-vibrant-orange {
+    color: hsl(var(--vibrant-orange));
+  }
+
+  .text-vibrant-red-purple {
+    color: hsl(var(--vibrant-red-purple));
+  }
+
+  .border-vibrant-purple {
+    border-color: hsl(var(--vibrant-purple));
+  }
+
+  .border-vibrant-pink {
+    border-color: hsl(var(--vibrant-pink));
+  }
+
+  .border-vibrant-teal {
+    border-color: hsl(var(--vibrant-teal));
+  }
+
+  .border-vibrant-blue {
+    border-color: hsl(var(--vibrant-blue));
+  }
+
+  .border-vibrant-orange {
+    border-color: hsl(var(--vibrant-orange));
+  }
+
+  .border-vibrant-red-purple {
+    border-color: hsl(var(--vibrant-red-purple));
+  }
+
   /* Enhanced color utilities */
-  .bg-enhanced-gray { background-color: hsl(var(--enhanced-gray)); }
-  .bg-enhanced-gray-light { background-color: hsl(var(--enhanced-gray-light)); }
-  .bg-enhanced-gray-dark { background-color: hsl(var(--enhanced-gray-dark)); }
-  .text-enhanced-text { color: hsl(var(--enhanced-text)); }
-  .text-enhanced-text-muted { color: hsl(var(--enhanced-text-muted)); }
-  .border-enhanced-gray { border-color: hsl(var(--enhanced-gray)); }
+  .bg-enhanced-gray {
+    background-color: hsl(var(--enhanced-gray));
+  }
+
+  .bg-enhanced-gray-light {
+    background-color: hsl(var(--enhanced-gray-light));
+  }
+
+  .bg-enhanced-gray-dark {
+    background-color: hsl(var(--enhanced-gray-dark));
+  }
+
+  .text-enhanced-text {
+    color: hsl(var(--enhanced-text));
+  }
+
+  .text-enhanced-text-muted {
+    color: hsl(var(--enhanced-text-muted));
+  }
+
+  .border-enhanced-gray {
+    border-color: hsl(var(--enhanced-gray));
+  }
 }
 
-html, body, #root {
+html,
+body,
+#root {
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #0d0514; /* Deep space purple */
+  background-color: #0d0514;
+  /* Deep space purple */
   color: #f0f0f0;
   overflow-x: hidden;
 }
@@ -163,10 +401,10 @@ body::before {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: 
-    radial-gradient(circle at center, rgba(138, 43, 226, 0.15) 0%, transparent 40%),
-    radial-gradient(circle at 20% 20%, rgba(138, 43, 226, 0.12) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.08) 0%, transparent 50%);
+  background:
+    radial-gradient(circle at center, hsl(var(--vibrant-purple) / 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 20% 20%, hsl(var(--vibrant-purple) / 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, hsl(var(--vibrant-teal) / 0.08) 0%, transparent 50%);
   z-index: 0;
   pointer-events: none;
 }
@@ -180,7 +418,8 @@ body::after {
   height: 100%;
   background-image:
     /* Purple light radiant on top left */
-    radial-gradient(circle at 10% 10%, rgba(138, 43, 226, 0.15) 0%, transparent 40%);
+    /* Purple light radiant on top left */
+    radial-gradient(circle at 10% 10%, hsl(var(--vibrant-purple) / 0.15) 0%, transparent 40%);
   background-repeat: no-repeat;
   z-index: 0;
   pointer-events: none;
@@ -218,7 +457,7 @@ body::after {
 .glass-morphism-dark {
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(138, 43, 226, 0.2);
+  border: 1px solid hsl(var(--vibrant-purple) / 0.2);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
@@ -227,6 +466,7 @@ body::after {
   0% {
     transform: translateX(-100%) rotate(-45deg);
   }
+
   100% {
     transform: translateX(100%) rotate(-45deg);
   }
@@ -244,12 +484,10 @@ body::after {
   left: 0;
   width: 100%;
   height: 200%;
-  background: linear-gradient(
-    to right,
-    rgba(138, 43, 226, 0) 0%,
-    rgba(138, 43, 226, 0.2) 50%,
-    rgba(138, 43, 226, 0) 100%
-  );
+  background: linear-gradient(to right,
+      hsl(var(--vibrant-purple) / 0) 0%,
+      hsl(var(--vibrant-purple) / 0.2) 50%,
+      hsl(var(--vibrant-purple) / 0) 100%);
   filter: blur(30px);
   animation: shimmer 4s infinite linear;
 }

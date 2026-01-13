@@ -17,8 +17,19 @@ export default {
 		},
 		extend: {
 			colors: {
-				'vibrant-purple': '#8A2BE2',
-				'brand-purple': '#3b0764',
+				'vibrant-purple': 'hsl(var(--vibrant-purple))',
+				'vibrant-pink': 'hsl(var(--vibrant-pink))',
+				'vibrant-teal': 'hsl(var(--vibrant-teal))',
+				'vibrant-blue': 'hsl(var(--vibrant-blue))',
+				'vibrant-orange': 'hsl(var(--vibrant-orange))',
+				'vibrant-red-purple': 'hsl(var(--vibrant-red-purple))',
+
+				'enhanced-gray': 'hsl(var(--enhanced-gray))',
+				'enhanced-gray-light': 'hsl(var(--enhanced-gray-light))',
+				'enhanced-gray-dark': 'hsl(var(--enhanced-gray-dark))',
+				'enhanced-text': 'hsl(var(--enhanced-text))',
+				'enhanced-text-muted': 'hsl(var(--enhanced-text-muted))',
+
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

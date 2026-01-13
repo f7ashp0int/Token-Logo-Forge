@@ -13,7 +13,7 @@ function App() {
         <div className="app-container">
           <div className="noise-overlay"></div>
           <LogoTokenEditor />
-          <Toaster />
+          <Toaster position="top-center" />
         </div>
       </TooltipProvider>
     </QueryClientProvider>

@@ -1,8 +1,9 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Confetti from 'react-confetti';
-import { Upload, Download, Layers, Type, Image as ImageIcon, Palette, ZoomIn, ZoomOut, Circle, Square, Copy, Lock, Unlock, Sparkles, X, User, ExternalLink, Eye, EyeOff, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
+import { Upload, Download, Layers, Type, Image as ImageIcon, Palette, ZoomIn, ZoomOut, Circle, Square, Copy, Lock, Unlock, Sparkles, X, User, ExternalLink, Eye, EyeOff, ChevronUp, ChevronDown, Trash2, Move, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
@@ -163,9 +164,29 @@ const LogoTokenEditor = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [coinRimEnabled, setCoinRimEnabled] = useState(true);
   const renderTimeout = useRef<NodeJS.Timeout | null>(null);
+
   const [chromaKeyColor, setChromaKeyColor] = useState('#000000');
   const [chromaKeyEnabled, setChromaKeyEnabled] = useState(false);
   const [originalImages, setOriginalImages] = useState<Record<string, string>>({});
+  const [activeTheme, setActiveTheme] = useState('nebula'); // 'nebula', 'nexbank', 'ashlime', 'onyxgold', 'velvet', 'blackhole'
+
+  // Apply theme class to body
+  useEffect(() => {
+    // Remove all theme classes first
+    document.body.classList.remove('theme-nexbank', 'theme-ashlime', 'theme-onyxgold', 'theme-velvet', 'theme-blackhole');
+
+    if (activeTheme === 'nexbank') {
+      document.body.classList.add('theme-nexbank');
+    } else if (activeTheme === 'ashlime') {
+      document.body.classList.add('theme-ashlime');
+    } else if (activeTheme === 'onyxgold') {
+      document.body.classList.add('theme-onyxgold');
+    } else if (activeTheme === 'velvet') {
+      document.body.classList.add('theme-velvet');
+    } else if (activeTheme === 'blackhole') {
+      document.body.classList.add('theme-blackhole');
+    }
+  }, [activeTheme]);
 
   const loadFontIfNeeded = async (fontFamily: string | undefined) => {
     if (!fontFamily || fontFamily === 'Arial') return;
@@ -207,9 +228,9 @@ const LogoTokenEditor = () => {
 
     for (const layer of sortedLayers) {
       if (!layer.visible || layer.locked) continue;
-      
+
       if (x >= layer.x && x <= layer.x + layer.width &&
-          y >= layer.y && y <= layer.y + layer.height) {
+        y >= layer.y && y <= layer.y + layer.height) {
         clickedLayer = layer.id;
         break;
       }
@@ -237,8 +258,8 @@ const LogoTokenEditor = () => {
     const deltaX = x - dragStart.x;
     const deltaY = y - dragStart.y;
 
-    setLayers(prev => prev.map(layer => 
-      layer.id === selectedLayer 
+    setLayers(prev => prev.map(layer =>
+      layer.id === selectedLayer
         ? { ...layer, x: layer.x + deltaX, y: layer.y + deltaY }
         : layer
     ));
@@ -269,17 +290,17 @@ const LogoTokenEditor = () => {
 
     if (coinRimEnabled && canvasShape === 'circle') {
       offCtx.save();
-      
+
       // Enhanced Rim Shadow Rendering
       if (rimShadow.enabled && canvasBorderWidth > 0) {
         const shadowColor = rimShadow.color;
         const shadowBlur = rimShadow.blur * rimShadow.intensity;
         const shadowOpacity = rimShadow.opacity;
-        
+
         // Create shadow color with opacity
         const alpha = Math.round(shadowOpacity * 255);
         const shadowColorWithOpacity = shadowColor + alpha.toString(16).padStart(2, '0');
-        
+
         if (rimShadow.type === 'outer' || rimShadow.type === 'both') {
           // Outer shadow
           offCtx.save();
@@ -287,7 +308,7 @@ const LogoTokenEditor = () => {
           offCtx.shadowBlur = shadowBlur;
           offCtx.shadowOffsetX = rimShadow.offsetX;
           offCtx.shadowOffsetY = rimShadow.offsetY;
-          
+
           if (rimShadow.style === 'glow') {
             // Multiple glow layers for better effect
             for (let i = 1; i <= 3; i++) {
@@ -314,7 +335,7 @@ const LogoTokenEditor = () => {
           }
           offCtx.restore();
         }
-        
+
         if (rimShadow.type === 'inner' || rimShadow.type === 'both') {
           // Inner shadow
           offCtx.save();
@@ -322,7 +343,7 @@ const LogoTokenEditor = () => {
           offCtx.shadowBlur = shadowBlur;
           offCtx.shadowOffsetX = rimShadow.offsetX;
           offCtx.shadowOffsetY = rimShadow.offsetY;
-          
+
           if (rimShadow.style === 'inner-glow') {
             // Inner glow effect
             for (let i = 1; i <= 3; i++) {
@@ -344,7 +365,7 @@ const LogoTokenEditor = () => {
           offCtx.restore();
         }
       }
-      
+
       // Draw the main rim
       if (canvasBorderWidth > 0) {
         offCtx.fillStyle = canvasBorderColor;
@@ -438,42 +459,42 @@ const LogoTokenEditor = () => {
         imgOffCanvas.width = layer.width;
         imgOffCanvas.height = layer.height;
         const imgOffCtx = imgOffCanvas.getContext('2d')!;
-        
+
         // Apply image adjustments
         if (layer.imageAdjustments) {
           const adjustments = layer.imageAdjustments;
-          
+
           // Apply brightness, contrast, saturation
           if (adjustments.brightness !== 100 || adjustments.contrast !== 100 || adjustments.saturation !== 100) {
             imgOffCtx.filter = `brightness(${adjustments.brightness}%) contrast(${adjustments.contrast}%) saturate(${adjustments.saturation}%)`;
           }
-          
+
           // Apply blur
           if (adjustments.blur > 0) {
             imgOffCtx.filter += ` blur(${adjustments.blur}px)`;
           }
-          
+
           // Apply hue rotation
           if (adjustments.hue !== 0) {
             imgOffCtx.filter += ` hue-rotate(${adjustments.hue}deg)`;
           }
-          
+
           // Apply sepia
           if (adjustments.sepia > 0) {
             imgOffCtx.filter += ` sepia(${adjustments.sepia}%)`;
           }
-          
+
           // Apply invert
           if (adjustments.invert) {
             imgOffCtx.filter += ' invert(1)';
           }
-          
+
           // Apply grayscale
           if (adjustments.grayscale) {
             imgOffCtx.filter += ' grayscale(1)';
           }
         }
-        
+
         imgOffCtx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
         const img = new Image();
         img.crossOrigin = "anonymous";
@@ -490,36 +511,36 @@ const LogoTokenEditor = () => {
         offCtx.textAlign = 'center';
         offCtx.textBaseline = 'middle';
         const textContent = layer.content || '';
-        
-      const centerX = layer.x + layer.width / 2;
-      const centerY = layer.y + layer.height / 2;
-      
+
+        const centerX = layer.x + layer.width / 2;
+        const centerY = layer.y + layer.height / 2;
+
         offCtx.translate(centerX, centerY);
         offCtx.rotate(layer.rotation * Math.PI / 180);
         offCtx.translate(-centerX, -centerY);
-      
+
         if (layer.isCircularText) {
           const radius = layer.textRadius || 150;
           const kerning = layer.textKerning || 0;
           const startAngle = (layer.textStartAngle || 0) * Math.PI / 180;
           const canvasCenterX = canvasSize / 2;
           const canvasCenterY = canvasSize / 2;
-          
+
           offCtx.save();
           offCtx.translate(canvasCenterX, canvasCenterY);
-          
+
           let totalAngle = 0;
           for (let i = 0; i < textContent.length; i++) {
             totalAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
           }
-          
+
           if (layer.shadowBlur && layer.shadowBlur > 0) {
             offCtx.shadowColor = layer.shadowColor || '#000000';
             offCtx.shadowBlur = layer.shadowBlur;
             offCtx.shadowOffsetX = layer.shadowOffsetX || 0;
             offCtx.shadowOffsetY = layer.shadowOffsetY || 0;
           }
-          
+
           if (layer.strokeWidth && layer.strokeWidth > 0) {
             offCtx.strokeStyle = layer.strokeColor || '#000000';
             offCtx.lineWidth = layer.strokeWidth;
@@ -532,7 +553,7 @@ const LogoTokenEditor = () => {
               currentAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
             }
           }
-          
+
           if (layer.glowBlur && layer.glowBlur > 0) {
             offCtx.shadowColor = layer.glowColor || '#ffffff';
             offCtx.shadowBlur = layer.glowBlur;
@@ -554,7 +575,7 @@ const LogoTokenEditor = () => {
               currentAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
             }
           }
-          
+
           offCtx.shadowColor = 'transparent';
           offCtx.shadowBlur = 0;
           offCtx.shadowOffsetX = 0;
@@ -568,7 +589,7 @@ const LogoTokenEditor = () => {
             offCtx.restore();
             currentAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
           }
-          
+
           offCtx.restore();
         } else {
           if (layer.shadowBlur && layer.shadowBlur > 0) {
@@ -598,10 +619,10 @@ const LogoTokenEditor = () => {
           offCtx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
           offCtx.fillText(textContent, centerX, centerY);
         }
-        
+
         offCtx.globalAlpha = 1;
         offCtx.restore();
-        
+
         if (layer.opacity < 1) {
           offCtx.save();
           offCtx.globalAlpha = layer.opacity;
@@ -609,28 +630,28 @@ const LogoTokenEditor = () => {
           offCtx.font = `${layer.fontSize || 24}px "${layer.fontFamily || 'Arial'}"`;
           offCtx.textAlign = 'center';
           offCtx.textBaseline = 'middle';
-          
+
           offCtx.translate(centerX, centerY);
           offCtx.rotate(layer.rotation * Math.PI / 180);
           offCtx.translate(-centerX, -centerY);
-          
+
           if (layer.isCircularText) {
             const radius = layer.textRadius || 150;
             const kerning = layer.textKerning || 0;
             const startAngle = (layer.textStartAngle || 0) * Math.PI / 180;
             const canvasCenterX = canvasSize / 2;
             const canvasCenterY = canvasSize / 2;
-            
+
             offCtx.save();
             offCtx.translate(canvasCenterX, canvasCenterY);
-            
+
             if (layer.shadowBlur && layer.shadowBlur > 0) {
               offCtx.shadowColor = layer.shadowColor || '#000000';
               offCtx.shadowBlur = layer.shadowBlur;
               offCtx.shadowOffsetX = layer.shadowOffsetX || 0;
               offCtx.shadowOffsetY = layer.shadowOffsetY || 0;
             }
-            
+
             if (layer.strokeWidth && layer.strokeWidth > 0) {
               offCtx.strokeStyle = layer.strokeColor || '#000000';
               offCtx.lineWidth = layer.strokeWidth;
@@ -643,7 +664,7 @@ const LogoTokenEditor = () => {
                 currentAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
               }
             }
-            
+
             if (layer.glowBlur && layer.glowBlur > 0) {
               offCtx.shadowColor = layer.glowColor || '#ffffff';
               offCtx.shadowBlur = layer.glowBlur;
@@ -658,7 +679,7 @@ const LogoTokenEditor = () => {
                 currentAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
               }
             }
-            
+
             offCtx.shadowColor = 'transparent';
             offCtx.shadowBlur = 0;
             offCtx.shadowOffsetX = 0;
@@ -672,9 +693,9 @@ const LogoTokenEditor = () => {
               offCtx.restore();
               currentAngle += (offCtx.measureText(textContent[i]).width + kerning) / radius;
             }
-            
+
             offCtx.restore();
-        } else {
+          } else {
             if (layer.shadowBlur && layer.shadowBlur > 0) {
               offCtx.shadowColor = layer.shadowColor || '#000000';
               offCtx.shadowBlur = layer.shadowBlur;
@@ -701,8 +722,8 @@ const LogoTokenEditor = () => {
             offCtx.shadowOffsetY = 0;
             offCtx.globalAlpha = (layer.imageAdjustments?.fill ?? 100) / 100;
             offCtx.fillText(textContent, centerX, centerY);
-      }
-      offCtx.restore();
+          }
+          offCtx.restore();
         }
       }
     }
@@ -714,21 +735,46 @@ const LogoTokenEditor = () => {
   useEffect(() => {
     if (renderTimeout.current) clearTimeout(renderTimeout.current);
     renderTimeout.current = setTimeout(() => {
-    renderCanvas();
+      renderCanvas();
     }, 50);
     return () => {
       if (renderTimeout.current) clearTimeout(renderTimeout.current);
     };
   }, [renderCanvas]);
 
+  // Responsive zoom handling
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      // Calculate available width for canvas (approximate, accounting for padding)
+      // On mobile (width < 1024px), the canvas column takes full width
+      // 32px or 48px padding (p-4 or p-6)
+      const padding = width < 768 ? 32 : 48;
+      const availableWidth = width < 1024 ? width - padding : (width * 0.5) - padding; // simplified for lg grid
+
+      const targetZoom = Math.min(1, (availableWidth - 40) / canvasSize); // -40 for card padding
+
+      // Only update if significantly different or if it's the initial load (zoom = 0.9 default)
+      if (Math.abs(targetZoom - zoom) > 0.1 || (width < 600 && zoom > 0.6)) {
+        setZoom(Math.max(0.3, parseFloat(targetZoom.toFixed(2))));
+      }
+    };
+
+    // Initial check
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [canvasSize]);
+
   const handleTemplateSelect = useCallback((template: Template) => {
     // Create template background layer
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    
+
     if (ctx) {
       canvas.width = canvas.height = canvasSize;
-      
+
       // Create the gradient based on template style and specific template
       if (template.style === '3d') {
         // Enhanced 3D-like gradients with template-specific colors
@@ -736,7 +782,7 @@ const LogoTokenEditor = () => {
           canvasSize * 0.25, canvasSize * 0.25, 0,
           canvasSize / 2, canvasSize / 2, canvasSize * 0.8
         );
-        
+
         // Apply template-specific colors based on template name
         switch (template.name) {
           case 'Classic Gold Coin':
@@ -769,43 +815,43 @@ const LogoTokenEditor = () => {
             break;
           default:
             // Fallback to category-based colors
-        switch (template.category) {
-          case 'gold':
+            switch (template.category) {
+              case 'gold':
                 gradient.addColorStop(0, '#FFD700');
                 gradient.addColorStop(0.3, '#FFA500');
                 gradient.addColorStop(0.6, '#DAA520');
                 gradient.addColorStop(0.8, '#B8860B');
                 gradient.addColorStop(1, '#8B6914');
-            break;
-          case 'silver':
+                break;
+              case 'silver':
                 gradient.addColorStop(0, '#FFFFFF');
                 gradient.addColorStop(0.3, '#E5E5E5');
                 gradient.addColorStop(0.6, '#C0C0C0');
                 gradient.addColorStop(0.8, '#A8A8A8');
                 gradient.addColorStop(1, '#696969');
-            break;
-          case 'crypto':
+                break;
+              case 'crypto':
                 gradient.addColorStop(0, '#FFD700');
                 gradient.addColorStop(0.3, '#FFA500');
                 gradient.addColorStop(0.6, '#FF8C00');
                 gradient.addColorStop(0.8, '#FF4500');
                 gradient.addColorStop(1, '#8B0000');
-            break;
-          case 'colored':
+                break;
+              case 'colored':
                 gradient.addColorStop(0, '#FF69B4');
                 gradient.addColorStop(0.3, '#FF1493');
                 gradient.addColorStop(0.6, '#8A2BE2');
                 gradient.addColorStop(0.8, '#4B0082');
                 gradient.addColorStop(1, '#2E0854');
-            break;
+                break;
             }
         }
-        
+
         ctx.fillStyle = gradient;
       } else {
         // Enhanced 2D flat colors with template-specific gradients
         const gradient = ctx.createLinearGradient(0, 0, canvasSize, canvasSize);
-        
+
         // Apply template-specific colors for 2D templates
         switch (template.name) {
           case 'Bitcoin Style':
@@ -834,28 +880,28 @@ const LogoTokenEditor = () => {
             break;
           default:
             // Fallback to category-based colors
-        switch (template.category) {
-          case 'gold':
+            switch (template.category) {
+              case 'gold':
                 gradient.addColorStop(0, '#FFD700');
                 gradient.addColorStop(1, '#DAA520');
-            break;
-          case 'silver':
+                break;
+              case 'silver':
                 gradient.addColorStop(0, '#E5E5E5');
                 gradient.addColorStop(1, '#C0C0C0');
-            break;
-          case 'crypto':
+                break;
+              case 'crypto':
                 gradient.addColorStop(0, '#FFA500');
                 gradient.addColorStop(1, '#FF8C00');
-            break;
-          case 'colored':
+                break;
+              case 'colored':
                 gradient.addColorStop(0, '#FF69B4');
                 gradient.addColorStop(1, '#8A2BE2');
-            break;
-        }
+                break;
+            }
         }
         ctx.fillStyle = gradient;
       }
-      
+
       if (canvasShape === 'circle') {
         ctx.beginPath();
         ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, 2 * Math.PI);
@@ -863,7 +909,7 @@ const LogoTokenEditor = () => {
       } else {
         ctx.fillRect(0, 0, canvasSize, canvasSize);
       }
-      
+
       // Enhanced 3D effects for 3D templates
       if (template.style === '3d') {
         // Add realistic highlight
@@ -875,7 +921,7 @@ const LogoTokenEditor = () => {
         highlightGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.3)');
         highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         ctx.fillStyle = highlightGradient;
-        
+
         if (canvasShape === 'circle') {
           ctx.beginPath();
           ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, 2 * Math.PI);
@@ -883,7 +929,7 @@ const LogoTokenEditor = () => {
         } else {
           ctx.fillRect(0, 0, canvasSize, canvasSize);
         }
-        
+
         // Add realistic shadow
         const shadowGradient = ctx.createRadialGradient(
           canvasSize * 0.85, canvasSize * 0.85, 0,
@@ -893,7 +939,7 @@ const LogoTokenEditor = () => {
         shadowGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.2)');
         shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = shadowGradient;
-        
+
         if (canvasShape === 'circle') {
           ctx.beginPath();
           ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, 2 * Math.PI);
@@ -901,7 +947,7 @@ const LogoTokenEditor = () => {
         } else {
           ctx.fillRect(0, 0, canvasSize, canvasSize);
         }
-        
+
         // Add inner ring for depth
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 3;
@@ -910,7 +956,7 @@ const LogoTokenEditor = () => {
           ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - 15, 0, 2 * Math.PI);
           ctx.stroke();
         }
-        
+
         // Add outer ring for definition
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
         ctx.lineWidth = 2;
@@ -920,9 +966,9 @@ const LogoTokenEditor = () => {
           ctx.stroke();
         }
       }
-      
+
       const templateDataUrl = canvas.toDataURL();
-      
+
       // Add a base layer for the template background
       const baseLayer: Layer = {
         id: Date.now().toString() + "-base",
@@ -952,35 +998,67 @@ const LogoTokenEditor = () => {
         }
       };
 
-      // Only add a rim layer if coinRimEnabled is true
-      const newLayers: Layer[] = [baseLayer];
-      if (coinRimEnabled) {
+      setLayers([baseLayer]);
+      setSelectedLayer(null); // Nothing is selected initially
+      setMainView('canvas');
+      toast.success(`${template.name} template applied!`);
+    }
+  }, [canvasSize, canvasShape, layers]);
+
+  // Reactive Rim Update Effect - Ensures Rim is always synced with controls
+  useEffect(() => {
+    setLayers(prevLayers => {
+      const rimLayerIndex = prevLayers.findIndex(l => l.id.endsWith('-rim'));
+
+      // If rim is disabled, remove any existing rim layer
+      if (!coinRimEnabled) {
+        if (rimLayerIndex !== -1) {
+          return prevLayers.filter((_, i) => i !== rimLayerIndex);
+        }
+        return prevLayers;
+      }
+
+      // Rim is enabled: Generate the rim image
       const rimCanvas = document.createElement('canvas');
       rimCanvas.width = rimCanvas.height = canvasSize;
-      const rimCtx = rimCanvas.getContext('2d')!;
-      const rimWidth = canvasBorderWidth; // Use state for consistency
-      rimCtx.strokeStyle = canvasBorderColor;
-      rimCtx.lineWidth = rimWidth;
-      rimCtx.beginPath();
-      rimCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - rimWidth / 2, 0, 2 * Math.PI);
-      rimCtx.stroke();
-      // Add rim design patterns if enabled
+      const rimCtx = rimCanvas.getContext('2d');
+      if (!rimCtx) return prevLayers;
+
+      const rimWidth = canvasBorderWidth;
+
+      // Clear canvas
+      rimCtx.clearRect(0, 0, canvasSize, canvasSize);
+
+      // Draw Rim Stroke
+      if (rimWidth > 0) {
+        rimCtx.strokeStyle = canvasBorderColor;
+        rimCtx.lineWidth = rimWidth;
+        rimCtx.beginPath();
+        // Center the stroke on the edge of the derived circle
+        // Outer edge = radius + rimWidth/2. We want outer edge at canvasSize/2.
+        // So radius = canvasSize/2 - rimWidth/2.
+        rimCtx.arc(canvasSize / 2, canvasSize / 2, Math.max(0, canvasSize / 2 - rimWidth / 2), 0, 2 * Math.PI);
+        rimCtx.stroke();
+      }
+
+      // Rim Design
       if (rimDesign.enabled && rimWidth > 0) {
         rimCtx.fillStyle = rimDesign.color;
         const centerX = canvasSize / 2;
         const centerY = canvasSize / 2;
-        const outerRadius = canvasSize / 2;
-        const innerRadius = outerRadius - rimWidth;
-        const patternRadius = (outerRadius + innerRadius) / 2;
+        // Place design elements in the center of the rim band
+        const patternRadius = canvasSize / 2 - rimWidth / 2;
         const numElements = rimDesign.density;
         const angleStep = (Math.PI * 2) / numElements;
+
         for (let i = 0; i < numElements; i++) {
           const angle = i * angleStep;
           const x = centerX + Math.cos(angle) * patternRadius;
           const y = centerY + Math.sin(angle) * patternRadius;
           rimCtx.save();
           rimCtx.translate(x, y);
-            rimCtx.rotate(angle + Math.PI / 2);
+          rimCtx.rotate(angle + Math.PI / 2);
+
           switch (rimDesign.pattern) {
             case 'stripes':
               rimCtx.fillRect(-rimDesign.size / 2, -rimWidth / 2, rimDesign.size, rimWidth);
@@ -1016,47 +1094,70 @@ const LogoTokenEditor = () => {
           rimCtx.restore();
         }
       }
-      // Add a subtle inner shadow to the rim for depth
+
+      // Inner Shadow for Rim
       rimCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
       rimCtx.lineWidth = 2;
       rimCtx.beginPath();
-      rimCtx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - rimWidth - 1, 0, 2 * Math.PI);
+      rimCtx.arc(canvasSize / 2, canvasSize / 2, Math.max(0, canvasSize / 2 - rimWidth - 1), 0, 2 * Math.PI);
       rimCtx.stroke();
-      const rimLayer: Layer = {
-        id: Date.now().toString() + "-rim",
-        type: 'image',
-        content: rimCanvas.toDataURL(),
-        x: 0,
-        y: 0,
-        width: canvasSize,
-        height: canvasSize,
-        rotation: 0,
-        opacity: 1,
-        visible: true,
-        locked: true,
-        zIndex: layers.length, // Ensure it's on top
-        imageAdjustments: {
-          brightness: 100,
-          contrast: 100,
-          saturation: 100,
-          blur: 0,
-          hue: 0,
-          blendMode: 'normal',
-          opacity: 100,
-          fill: 100,
-          sepia: 0,
-          invert: false,
-          grayscale: false
-        }
-      };
-        newLayers.push(rimLayer);
+
+      const newRimContent = rimCanvas.toDataURL();
+
+      // Create or Update Layer
+      if (rimLayerIndex !== -1) {
+        // Update existing only if content changed to avoid loop (though toDataURL might vary slightly)
+        // We can skip check or trust React state batching
+        const updatedLayers = [...prevLayers];
+        updatedLayers[rimLayerIndex] = {
+          ...updatedLayers[rimLayerIndex],
+          content: newRimContent,
+          width: canvasSize,
+          height: canvasSize,
+          shadowBlur: rimShadow.enabled ? rimShadow.blur : 0,
+          shadowColor: rimShadow.enabled ? rimShadow.color : 'transparent',
+          shadowOffsetX: rimShadow.enabled ? rimShadow.offsetX : 0,
+          shadowOffsetY: rimShadow.enabled ? rimShadow.offsetY : 0,
+        };
+        return updatedLayers;
+      } else {
+        // Create new
+        const newRimLayer: Layer = {
+          id: Date.now().toString() + "-rim",
+          type: 'image',
+          content: newRimContent,
+          x: 0,
+          y: 0,
+          width: canvasSize,
+          height: canvasSize,
+          rotation: 0,
+          opacity: 1,
+          visible: true,
+          locked: true,
+          zIndex: 1000,
+          imageAdjustments: {
+            brightness: 100,
+            contrast: 100,
+            saturation: 100,
+            blur: 0,
+            hue: 0,
+            blendMode: 'normal',
+            opacity: 100,
+            fill: 100,
+            sepia: 0,
+            invert: false,
+            grayscale: false
+          },
+          shadowBlur: rimShadow.enabled ? rimShadow.blur : 0,
+          shadowColor: rimShadow.enabled ? rimShadow.color : 'transparent',
+          shadowOffsetX: rimShadow.enabled ? rimShadow.offsetX : 0,
+          shadowOffsetY: rimShadow.enabled ? rimShadow.offsetY : 0,
+        };
+        return [...prevLayers, newRimLayer];
       }
-      setLayers(newLayers);
-      setSelectedLayer(null); // Nothing is selected initially
-      setMainView('canvas');
-      toast.success(`${template.name} template applied!`);
-    }
-  }, [canvasSize, canvasShape, canvasBorderWidth, canvasBorderColor, rimShadow, rimDesign, layers, coinRimEnabled]);
+    });
+  }, [canvasSize, canvasBorderWidth, canvasBorderColor, rimShadow, rimDesign, coinRimEnabled]);
+
 
   const handleImageUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -1170,7 +1271,7 @@ const LogoTokenEditor = () => {
         grayscale: false
       }
     };
-    
+
     setLayers(prev => [...prev, newLayer]);
     setSelectedLayer(newLayer.id);
     setTextInput('');
@@ -1178,7 +1279,7 @@ const LogoTokenEditor = () => {
   }, [textInput, fontSize, textColor, isCircularText, textRadius, textKerning, textStartAngle, layers, canvasSize, fontFamily, strokeColor, strokeWidth, shadowColor, shadowBlur, shadowOffsetX, shadowOffsetY, glowColor, glowBlur]);
 
   const updateLayerProperty = useCallback(<K extends keyof Layer>(layerId: string, property: K, value: Layer[K]) => {
-    setLayers(prev => prev.map(layer => 
+    setLayers(prev => prev.map(layer =>
       layer.id === layerId ? { ...layer, [property]: value } : layer
     ));
   }, []);
@@ -1192,7 +1293,7 @@ const LogoTokenEditor = () => {
   }, [selectedLayer]);
 
   const toggleLayerLock = useCallback((layerId: string) => {
-    setLayers(prev => prev.map(layer => 
+    setLayers(prev => prev.map(layer =>
       layer.id === layerId ? { ...layer, locked: !layer.locked } : layer
     ));
     toast.success('Layer lock toggled');
@@ -1209,16 +1310,16 @@ const LogoTokenEditor = () => {
     setLayers(prev => {
       const layersSorted = [...prev].sort((a, b) => a.zIndex - b.zIndex);
       const currentIndex = layersSorted.findIndex(l => l.id === layerId);
-      
+
       if (currentIndex < layersSorted.length - 1) { // If it's not the topmost layer
-      const newLayers = [...prev];
+        const newLayers = [...prev];
         const currentLayer = newLayers.find(l => l.id === layerId)!;
         const otherLayer = newLayers.find(l => l.zIndex === layersSorted[currentIndex + 1].zIndex)!;
-        
+
         // Swap zIndex
         [currentLayer.zIndex, otherLayer.zIndex] = [otherLayer.zIndex, currentLayer.zIndex];
-        
-      return newLayers;
+
+        return newLayers;
       }
       return prev;
     });
@@ -1230,14 +1331,14 @@ const LogoTokenEditor = () => {
       const currentIndex = layersSorted.findIndex(l => l.id === layerId);
 
       if (currentIndex > 0) { // If it's not the bottommost layer
-      const newLayers = [...prev];
+        const newLayers = [...prev];
         const currentLayer = newLayers.find(l => l.id === layerId)!;
         const otherLayer = newLayers.find(l => l.zIndex === layersSorted[currentIndex - 1].zIndex)!;
-        
+
         // Swap zIndex
         [currentLayer.zIndex, otherLayer.zIndex] = [otherLayer.zIndex, currentLayer.zIndex];
 
-      return newLayers;
+        return newLayers;
       }
       return prev;
     });
@@ -1340,71 +1441,89 @@ const LogoTokenEditor = () => {
   return (
     <div className="min-h-screen text-foreground">
       {showConfetti && <Confetti recycle={false} numberOfPieces={400} />}
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 
-            className="text-4xl font-bold mb-2" 
-            style={{ 
-              background: 'linear-gradient(to right, #00d4aa, #9945ff, #ff69b4)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}
-          >
-            Token Logo Forge
-          </h1>
-          <p className="text-sm text-vibrant-purple/70">Create your unique token image</p>
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+          <div className="flex items-center gap-2 text-center md:text-left">
+            <img src="/token-logo.png" alt="Logo" className="w-8 h-8 rounded-full" />
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold text-white">
+                Token Logo Forge
+              </h1>
+              <p className="text-xs text-gray-400">Create your unique token image</p>
+            </div>
+          </div>
+
+          {/* Theme Switcher */}
+          <div className="flex bg-black/40 backdrop-blur-md rounded-lg border border-vibrant-purple/20">
+            <Select value={activeTheme} onValueChange={setActiveTheme}>
+              <SelectTrigger className="w-[180px] border-vibrant-purple/20 bg-transparent text-vibrant-purple">
+                <SelectValue placeholder="Theme" />
+              </SelectTrigger>
+              <SelectContent className="bg-black/90 border-vibrant-purple/20 text-gray-200">
+                <SelectItem value="nebula" className="focus:bg-vibrant-purple/20 focus:text-white">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-[#9945ff]"></div>
+                    <span>Nebula</span>
+                  </div>
+                </SelectItem>                <SelectItem value="nexbank">NexBank (Mono)</SelectItem>
+                <SelectItem value="ashlime">Ash & Lime</SelectItem>
+                <SelectItem value="onyxgold">Onyx & Gold</SelectItem>
+                <SelectItem value="velvet">Velvet</SelectItem>
+                <SelectItem value="blackhole">Black Hole</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
           {/* Canvas Area - now first (left) */}
           <div className="lg:col-span-6 order-1 lg:order-1">
             {mainView === 'canvas' ? (
-              <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-6 rounded-2xl shadow-lg h-[calc(100vh-12rem)] flex flex-col overflow-visible">
-              <div className="flex items-center justify-between mb-4">
+              <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-6 rounded-2xl shadow-lg min-h-[500px] lg:h-[calc(100vh-12rem)] flex flex-col overflow-visible">
+                <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold text-gray-200">Canvas (1:1 Ratio)</h2>
-                <div className="flex gap-2">
+                  <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={() => setZoom(Math.max(0.5, zoom - 0.1))} className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white">
-                    <ZoomOut className="w-4 h-4" />
-                  </Button>
+                      <ZoomOut className="w-4 h-4" />
+                    </Button>
                     <span className="h-9 w-16 rounded-md flex items-center justify-center text-sm bg-black/20">{Math.round(zoom * 100)}%</span>
                     <Button size="sm" variant="outline" onClick={() => setZoom(Math.min(1.1, zoom + 0.1))} className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white">
-                    <ZoomIn className="w-4 h-4" />
-                  </Button>
+                      <ZoomIn className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              
-                <div className="flex-grow flex items-center justify-center">
-                <div 
-                    className={`border-2 border-dashed border-vibrant-purple/20 overflow-hidden ${canvasShape === 'circle' ? 'rounded-full' : 'rounded-lg'} transition-all duration-300 ease-in-out`}
-                  style={{ 
-                    width: canvasSize * zoom, 
-                    height: canvasSize * zoom,
-                      marginTop: '-4rem',
-                    backgroundImage: backgroundColor === 'transparent' ? 'linear-gradient(45deg, #374151 25%, transparent 25%), linear-gradient(-45deg, #374151 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #374151 75%), linear-gradient(-45deg, transparent 75%, #374151 75%)' : 'none',
-                    backgroundSize: '20px 20px',
-                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
-                  }}
-                >
-                  <canvas
-                    ref={canvasRef}
-                    width={canvasSize}
-                    height={canvasSize}
-                    style={{ 
-                      width: canvasSize * zoom, 
-                      height: canvasSize * zoom,
-                      cursor: tool === 'select' ? 'pointer' : 'crosshair'
-                    }}
-                    className="block"
-                    onMouseDown={handleCanvasMouseDown}
-                    onMouseMove={handleCanvasMouseMove}
-                    onMouseUp={handleCanvasMouseUp}
-                  />
-                </div>
-          </div>
 
-          {/* Export Panel */}
+                <div className="flex-grow flex items-center justify-center">
+                  <div
+                    className={`border-2 border-dashed border-vibrant-purple/20 overflow-hidden ${canvasShape === 'circle' ? 'rounded-full' : 'rounded-lg'} transition-all duration-300 ease-in-out`}
+                    style={{
+                      width: canvasSize * zoom,
+                      height: canvasSize * zoom,
+                      marginTop: window.innerWidth < 1024 ? '0' : '-4rem', // No negative margin on mobile to prevent clipping
+                      backgroundImage: backgroundColor === 'transparent' ? 'linear-gradient(45deg, #374151 25%, transparent 25%), linear-gradient(-45deg, #374151 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #374151 75%), linear-gradient(-45deg, transparent 75%, #374151 75%)' : 'none',
+                      backgroundSize: '20px 20px',
+                      backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
+                    }}
+                  >
+                    <canvas
+                      ref={canvasRef}
+                      width={canvasSize}
+                      height={canvasSize}
+                      style={{
+                        width: canvasSize * zoom,
+                        height: canvasSize * zoom,
+                        cursor: tool === 'select' ? 'pointer' : 'crosshair'
+                      }}
+                      className="block"
+                      onMouseDown={handleCanvasMouseDown}
+                      onMouseMove={handleCanvasMouseMove}
+                      onMouseUp={handleCanvasMouseUp}
+                    />
+                  </div>
+                </div>
+
+                {/* Export Panel */}
                 <div className="flex-shrink-0 pt-4 flex justify-center">
                   <div className="bg-black/40 backdrop-blur-xl border border-vibrant-purple/20 rounded-xl px-6 py-3 shadow-lg flex justify-center">
                     <div className="flex items-center gap-4">
@@ -1415,19 +1534,19 @@ const LogoTokenEditor = () => {
                         <span className="text-gray-600">•</span>
                         <span>Under 2MB</span>
                       </div>
-                <Button 
-                  onClick={handleExport}
-                  className="bg-vibrant-purple hover:bg-vibrant-purple text-white font-bold py-3 px-6 rounded-xl shadow-[0_0_20px_0] shadow-vibrant-purple/40 hover:shadow-[0_0_25px_3px] hover:shadow-vibrant-purple/60 border border-t-purple-400/80 border-l-purple-400/80 border-b-purple-900/80 border-r-purple-900/80 transition-all duration-300 transform hover:scale-105"
-                >
-                  Download
-                  <Download className="w-5 h-5 ml-3" />
-                </Button>
-              </div>
+                      <Button
+                        onClick={handleExport}
+                        className="bg-vibrant-purple hover:bg-vibrant-purple/90 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 border border-vibrant-purple/50"
+                      >
+                        Download
+                        <Download className="w-5 h-5 ml-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Card>
             ) : (
-              <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-6 rounded-2xl shadow-lg h-[calc(100vh-12rem)]">
+              <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-6 rounded-2xl shadow-lg min-h-[500px] lg:h-[calc(100vh-12rem)]">
                 <ScrollArea className="h-full w-full pr-4">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-gray-200">Browse Templates</h2>
@@ -1444,1069 +1563,1068 @@ const LogoTokenEditor = () => {
                 </ScrollArea>
               </Card>
             )}
-              </div>
+          </div>
 
-          {/* Tools Panel - now center */}
-          <div className="lg:col-span-3 order-2 lg:order-2">
-            <div className="sticky top-6">
-              <Card className="glass-morphism-dark border border-vibrant-purple/20 p-4 h-[calc(100vh-12rem)] rounded-2xl shadow-lg flex flex-col">
+          {/* Tools Panel - now adaptive for mobile/desktop */}
+          <div className={`lg:col-span-3 order-2 lg:order-2 ${window.innerWidth < 1024 ? 'hidden' : 'block'}`}>
+            <div className="lg:sticky lg:top-6">
+              <Card className="glass-morphism-dark border border-vibrant-purple/20 p-4 h-[600px] lg:h-[calc(100vh-12rem)] rounded-2xl shadow-lg flex flex-col">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full">
-                    <TabsList className="grid w-full grid-cols-4 bg-enhanced-gray-dark flex-shrink-0 sticky top-0 z-10 border border-vibrant-purple/20">
-                      <TabsTrigger value="upload" className="data-[state=active]:bg-vibrant-purple/20 text-enhanced-text hover:text-white hover:bg-vibrant-purple/10"><Upload className="w-4 h-4" /></TabsTrigger>
-                      <TabsTrigger value="text" className="data-[state=active]:bg-vibrant-purple/20 text-enhanced-text hover:text-white hover:bg-vibrant-purple/10"><Type className="w-4 h-4" /></TabsTrigger>
-                      <TabsTrigger value="adjust" className="data-[state=active]:bg-vibrant-purple/20 text-enhanced-text hover:text-white hover:bg-vibrant-purple/10"><Palette className="w-4 h-4" /></TabsTrigger>
-                      <TabsTrigger value="layers" className="data-[state=active]:bg-vibrant-purple/20 text-enhanced-text hover:text-white hover:bg-vibrant-purple/10"><Layers className="w-4 h-4" /></TabsTrigger>
-                </TabsList>
-                <div className="flex-grow mt-4 overflow-hidden">
+                  <TabsList className="grid w-full grid-cols-4 bg-enhanced-gray-dark flex-shrink-0 sticky top-0 z-10 border border-vibrant-purple/20">
+                    <TabsTrigger value="upload" className="data-[state=active]:bg-vibrant-purple/20 text-enhanced-text hover:text-white hover:bg-vibrant-purple/10"><Upload className="w-4 h-4" /></TabsTrigger>
+                    <TabsTrigger value="text" className="data-[state=active]:bg-vibrant-purple/20 text-enhanced-text hover:text-white hover:bg-vibrant-purple/10"><Type className="w-4 h-4" /></TabsTrigger>
+                    <TabsTrigger value="adjust" className="data-[state=active]:bg-vibrant-purple/20 text-enhanced-text hover:text-white hover:bg-vibrant-purple/10"><Palette className="w-4 h-4" /></TabsTrigger>
+                    <TabsTrigger value="layers" className="data-[state=active]:bg-vibrant-purple/20 text-enhanced-text hover:text-white hover:bg-vibrant-purple/10"><Layers className="w-4 h-4" /></TabsTrigger>
+                  </TabsList>
+                  <div className="flex-grow mt-4 overflow-hidden">
                     <ScrollArea className="h-full w-full pr-4">
-                <TabsContent value="upload" className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-enhanced-text">Upload Image</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="image-upload"
-                        type="file"
-                            ref={fileInputRef}
-                        onChange={handleImageUpload}
-                        className="hidden"
-                            accept="image/png, image/jpeg, image/svg+xml"
-                      />
-                      <Button 
-                        onClick={() => fileInputRef.current?.click()}
-                            className="flex-1 h-12 flex items-center justify-center gap-2 rounded-lg border-2 border-green-400/50 bg-green-500/10 backdrop-blur-sm text-green-300 font-semibold transition-all duration-300 hover:bg-green-500/20 hover:border-green-400 hover:text-green-200"
-                      >
-                            <Upload className="w-5 h-5" />
-                            <span>Click to upload</span>
-                      </Button>
-                      
-                      {/* Quick adjustments icon - only show when image is uploaded */}
-                      {hasImageLayers && (
-                        <Button 
-                          onClick={() => switchToTab('adjust')}
-                          size="icon"
-                          className="h-12 w-12 flex items-center justify-center rounded-lg border-2 border-vibrant-purple/50 bg-vibrant-purple/10 backdrop-blur-sm text-vibrant-purple-300 transition-all duration-300 hover:bg-vibrant-purple/20 hover:border-vibrant-purple hover:text-vibrant-purple-200"
-                          title="Go to Image Adjustments"
-                        >
-                          <Palette className="w-5 h-5" />
-                        </Button>
-                      )}
-                        </div>
-                        
-                        {/* Image Adjustments CTA - only show when image is uploaded */}
-                        {hasImageLayers && (
-                          <Button 
-                            onClick={() => switchToTab('adjust')}
-                            className="w-full h-10 flex items-center justify-center gap-2 rounded-lg border-2 border-vibrant-purple/50 bg-vibrant-purple/10 backdrop-blur-sm text-vibrant-purple-300 font-semibold transition-all duration-300 hover:bg-vibrant-purple/20 hover:border-vibrant-purple hover:text-vibrant-purple-200"
-                          >
-                            <Palette className="w-4 h-4" />
-                            <span>Go to Image Adjustments</span>
-                          </Button>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="image-zoom" className="text-sm font-medium text-enhanced-text">Image Zoom: {Math.round(imageZoom * 100)}%</Label>
-                    <Slider
-                      value={[imageZoom]}
-                      onValueChange={(value) => {
-                        const newZoom = value[0];
-                        setImageZoom(newZoom);
-                        if (selectedLayer) {
-                          setLayers(prev => prev.map(l => {
-                            if (l.id === selectedLayer && l.type === 'image') {
-                              const baseSize = canvasSize - 100;
-                              const newWidth = baseSize * newZoom;
-                              const newHeight = baseSize * newZoom;
-                              const newX = l.x + (l.width - newWidth) / 2;
-                              const newY = l.y + (l.height - newHeight) / 2;
-                              return { ...l, width: newWidth, height: newHeight, x: newX, y: newY };
-                            }
-                            return l;
-                          }));
-                        }
-                      }}
-                      max={2}
-                      min={0.1}
-                      step={0.1}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                        <Label className="text-enhanced-text">Templates</Label>
-                    <Button 
-                          onClick={() => setMainView('templates')}
-                      variant="outline"
-                          className="w-full mt-2 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white"
-                    >
-                      <ImageIcon className="w-4 h-4 mr-2" />
-                      Browse Templates
-                    </Button>
-                  </div>
-
-                  <div>
-                        <Label className="text-enhanced-text">Canvas Shape</Label>
-                    <div className="flex gap-2 mt-2">
-                      <Button
-                        onClick={() => setCanvasShape('circle')}
-                            variant="outline"
-                        size="sm"
-                            className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${canvasShape === 'circle' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
-                      >
-                        <Circle className="w-4 h-4 mr-1" />
-                        Circle
-                      </Button>
-                      <Button
-                        onClick={() => setCanvasShape('square')}
-                            variant="outline"
-                        size="sm"
-                            className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${canvasShape === 'square' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
-                      >
-                        <Square className="w-4 h-4 mr-1" />
-                        Square
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Coin Rim section */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-semibold text-sm text-gray-200">Coin Rim</span>
-                    <button
-                      className={`relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none ${coinRimEnabled ? 'bg-vibrant-purple' : 'bg-gray-400'}`}
-                      onClick={() => setCoinRimEnabled(v => !v)}
-                      aria-pressed={coinRimEnabled}
-                      type="button"
-                    >
-                      <span className={`absolute left-1 top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 ${coinRimEnabled ? 'translate-x-5' : ''}`}></span>
-                    </button>
-                  </div>
-                  {coinRimEnabled && (
-                  <div>
-                      <Label className="text-enhanced-text">Coin Rim Width</Label>
-                        <div className="flex gap-2 mt-2 items-center">
-                        <Slider value={[canvasBorderWidth]} onValueChange={v => setCanvasBorderWidth(v[0])} max={30} min={0} step={1} />
-                        <ColorPicker color={canvasBorderColor} onChange={setCanvasBorderColor} />
-                    </div>
-                  </div>
-                  )}
-
-                  {/* Rim Shadow section */}
-                  <div className="flex items-center gap-2 mt-4 mb-2">
-                    <span className="font-semibold text-sm text-gray-200">Rim Shadow</span>
-                    <button
-                      className={`relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none ${rimShadow.enabled ? 'bg-vibrant-purple' : 'bg-gray-400'}`}
-                      onClick={() => setRimShadow(s => ({...s, enabled: !s.enabled}))}
-                      aria-pressed={rimShadow.enabled}
-                      type="button"
-                    >
-                      <span className={`absolute left-1 top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 ${rimShadow.enabled ? 'translate-x-5' : ''}`}></span>
-                    </button>
-                  </div>
-                  {rimShadow.enabled && (
-                        <div className="p-2 border border-vibrant-purple/20 rounded-md mt-2 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="rim-shadow-enable" className="text-sm text-gray-300">Enable Shadow</Label>
-                            <input
-                              type="checkbox"
-                              id="rim-shadow-enable"
-                              checked={rimShadow.enabled}
-                              onChange={(e) => setRimShadow(s => ({...s, enabled: e.target.checked}))}
-                              className="rounded"
+                      <TabsContent value="upload" className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-enhanced-text">Upload Image</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="image-upload"
+                              type="file"
+                              ref={fileInputRef}
+                              onChange={handleImageUpload}
+                              className="hidden"
+                              accept="image/png, image/jpeg, image/svg+xml"
                             />
+                            <Button
+                              onClick={() => fileInputRef.current?.click()}
+                              className="flex-1 h-12 flex items-center justify-center gap-2 rounded-lg border-2 border-vibrant-purple/50 bg-vibrant-purple/10 backdrop-blur-sm text-vibrant-purple font-semibold transition-all duration-300 hover:bg-vibrant-purple/20 hover:border-vibrant-purple"
+                            >
+                              <Upload className="w-5 h-5" />
+                              <span>Click to upload</span>
+                            </Button>
+
+                            {/* Quick adjustments icon - only show when image is uploaded */}
+                            {hasImageLayers && (
+                              <Button
+                                onClick={() => switchToTab('adjust')}
+                                size="icon"
+                                className="h-12 w-12 flex items-center justify-center rounded-lg border-2 border-vibrant-purple/50 bg-vibrant-purple/10 backdrop-blur-sm text-vibrant-purple-300 transition-all duration-300 hover:bg-vibrant-purple/20 hover:border-vibrant-purple hover:text-vibrant-purple-200"
+                                title="Go to Image Adjustments"
+                              >
+                                <Palette className="w-5 h-5" />
+                              </Button>
+                            )}
                           </div>
-                          {rimShadow.enabled && (
-                            <>
-                              <div className="flex gap-2">
-                                <Button onClick={() => setRimShadow(s => ({ ...s, type: 'outer' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.type === 'outer' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Outer</Button>
-                                <Button onClick={() => setRimShadow(s => ({ ...s, type: 'inner' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.type === 'inner' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Inner</Button>
-                                <Button onClick={() => setRimShadow(s => ({ ...s, type: 'both' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.type === 'both' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Both</Button>
-                              </div>
-                              <div className="flex gap-2 items-center">
-                                <div className='flex-1'>
-                                   <Label className="text-xs text-vibrant-purple/70">Blur: {rimShadow.blur}px</Label>
-                                   <Slider value={[rimShadow.blur]} onValueChange={v => setRimShadow(s => ({ ...s, blur: v[0] }))} max={50} min={0} step={1} />
-                                </div>
-                                <ColorPicker color={rimShadow.color} onChange={color => setRimShadow(s => ({ ...s, color }))} />
-                              </div>
-                              
-                              <div>
-                                <Label className="text-xs text-vibrant-purple/70">Shadow Style</Label>
-                                <div className="flex gap-1 mt-2">
-                                  <Button onClick={() => setRimShadow(s => ({ ...s, style: 'normal' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.style === 'normal' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Normal</Button>
-                                  <Button onClick={() => setRimShadow(s => ({ ...s, style: 'glow' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.style === 'glow' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Glow</Button>
-                                  <Button onClick={() => setRimShadow(s => ({ ...s, style: 'drop' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.style === 'drop' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Drop</Button>
-                                  <Button onClick={() => setRimShadow(s => ({ ...s, style: 'inner-glow' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.style === 'inner-glow' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Inner</Button>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <Label className="text-xs text-vibrant-purple/70">X: {rimShadow.offsetX}px</Label>
-                                  <Slider value={[rimShadow.offsetX]} onValueChange={v => setRimShadow(s => ({ ...s, offsetX: v[0] }))} max={50} min={-50} step={1} />
-                                </div>
-                                <div>
-                                  <Label className="text-xs text-vibrant-purple/70">Y: {rimShadow.offsetY}px</Label>
-                                  <Slider value={[rimShadow.offsetY]} onValueChange={v => setRimShadow(s => ({ ...s, offsetY: v[0] }))} max={50} min={-50} step={1} />
-                                </div>
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <Label className="text-xs text-vibrant-purple/70">Opacity: {Math.round(rimShadow.opacity * 100)}%</Label>
-                                  <Slider value={[rimShadow.opacity]} onValueChange={v => setRimShadow(s => ({ ...s, opacity: v[0] }))} max={1} min={0.1} step={0.1} />
-                                </div>
-                                <div>
-                                  <Label className="text-xs text-vibrant-purple/70">Intensity: {rimShadow.intensity}x</Label>
-                                  <Slider value={[rimShadow.intensity]} onValueChange={v => setRimShadow(s => ({ ...s, intensity: v[0] }))} max={3} min={0.1} step={0.1} />
-                                </div>
-                              </div>
-                              
-                              <div>
-                                <Label className="text-xs text-vibrant-purple/70">Spread: {rimShadow.spread}px</Label>
-                                <Slider value={[rimShadow.spread]} onValueChange={v => setRimShadow(s => ({ ...s, spread: v[0] }))} max={20} min={0} step={1} />
-                              </div>
-                            </>
+
+                          {/* Image Adjustments CTA - only show when image is uploaded */}
+                          {hasImageLayers && (
+                            <Button
+                              onClick={() => switchToTab('adjust')}
+                              className="w-full h-10 flex items-center justify-center gap-2 rounded-lg border-2 border-vibrant-purple/50 bg-vibrant-purple/10 backdrop-blur-sm text-vibrant-purple-300 font-semibold transition-all duration-300 hover:bg-vibrant-purple/20 hover:border-vibrant-purple hover:text-vibrant-purple-200"
+                            >
+                              <Palette className="w-4 h-4" />
+                              <span>Go to Image Adjustments</span>
+                            </Button>
                           )}
                         </div>
-                  )}
 
-                  {/* Rim Design section */}
-                  <div className="flex items-center gap-2 mt-4 mb-2">
-                    <span className="font-semibold text-sm text-gray-200">Rim Design</span>
-                    <button
-                      className={`relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none ${rimDesign.enabled ? 'bg-vibrant-purple' : 'bg-gray-400'}`}
-                      onClick={() => setRimDesign(s => ({...s, enabled: !s.enabled}))}
-                      aria-pressed={rimDesign.enabled}
-                      type="button"
-                    >
-                      <span className={`absolute left-1 top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 ${rimDesign.enabled ? 'translate-x-5' : ''}`}></span>
-                    </button>
-                  </div>
-                  {rimDesign.enabled && (
-                        <div className="p-2 border border-vibrant-purple/20 rounded-md mt-2 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="rim-design-enable" className="text-sm text-enhanced-text">Enable Design</Label>
-                            <input
-                              type="checkbox"
-                              id="rim-design-enable"
-                              checked={rimDesign.enabled}
-                              onChange={(e) => setRimDesign(s => ({...s, enabled: e.target.checked}))}
-                              className="rounded"
-                            />
-                          </div>
-                          {rimDesign.enabled && (
-                            <>
-                              <div>
-                                <Label className="text-sm text-enhanced-text">Pattern</Label>
-                                <div className="flex gap-1 mt-2">
-                                  <Button 
-                                    onClick={() => setRimDesign(s => ({ ...s, pattern: 'stripes' }))} 
-                                    variant="outline" 
-                                    size="sm" 
-                                    className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimDesign.pattern === 'stripes' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
-                                  >
-                                    Stripes
-                                  </Button>
-                                  <Button 
-                                    onClick={() => setRimDesign(s => ({ ...s, pattern: 'stars' }))} 
-                                    variant="outline" 
-                                    size="sm" 
-                                    className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimDesign.pattern === 'stars' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
-                                  >
-                                    Stars
-                                  </Button>
-                                  <Button 
-                                    onClick={() => setRimDesign(s => ({ ...s, pattern: 'dots' }))} 
-                                    variant="outline" 
-                                    size="sm" 
-                                    className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimDesign.pattern === 'dots' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
-                                  >
-                                    Dots
-                                  </Button>
-                                  <Button 
-                                    onClick={() => setRimDesign(s => ({ ...s, pattern: 'diamonds' }))} 
-                                    variant="outline" 
-                                    size="sm" 
-                                    className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimDesign.pattern === 'diamonds' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
-                                  >
-                                    Diamonds
-                                  </Button>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <Label className="text-xs text-vibrant-purple/70">Density: {rimDesign.density}</Label>
-                                  <Slider 
-                                    value={[rimDesign.density]} 
-                                    onValueChange={v => setRimDesign(s => ({ ...s, density: v[0] }))} 
-                                max={200} 
-                                    min={5} 
-                                    step={1} 
-                                  />
-                                </div>
-                                <div>
-                                  <Label className="text-xs text-vibrant-purple/70">Size: {rimDesign.size}px</Label>
-                                  <Slider 
-                                    value={[rimDesign.size]} 
-                                    onValueChange={v => setRimDesign(s => ({ ...s, size: v[0] }))} 
-                                    max={8} 
-                                    min={1} 
-                                    step={0.5} 
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex gap-2 items-center">
-                                <Label className="text-sm text-enhanced-text">Color</Label>
-                                <ColorPicker 
-                                  color={rimDesign.color} 
-                                  onChange={color => setRimDesign(s => ({ ...s, color }))} 
-                                />
-                              </div>
-                            </>
-                          )}
-                        </div>
-                  )}
-
-                  {/* Background section */}
-                  <div>
-                        <Label className="text-enhanced-text">Background</Label>
-                        <div className="flex gap-2 mt-2 items-center">
-                      <Button
-                        onClick={() => setBackgroundColor('transparent')}
-                            variant="outline"
-                        size="sm"
-                            className={`border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${backgroundColor === 'transparent' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
-                      >
-                        Transparent
-                      </Button>
-                          <ColorPicker
-                            color={backgroundColor === 'transparent' ? '#ffffff' : backgroundColor}
-                            onChange={setBackgroundColor}
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="text" className="space-y-4">
-                      {/* Add Text */}
-                      <div className="p-1">
-                        <Label className="text-enhanced-text font-semibold">Add Text</Label>
-                        <div className="flex gap-2 mt-2">
-                    <Input
-                      value={textInput}
-                      onChange={(e) => setTextInput(e.target.value)}
-                            placeholder="Enter text..."
-                            className="bg-enhanced-gray-dark border-vibrant-purple/30 rounded-md text-enhanced-text"
-                          />
-                    <Button 
-                      onClick={addTextLayer}
-                            className="bg-gradient-to-r from-vibrant-purple to-vibrant-pink hover:from-vibrant-purple/80 hover:to-vibrant-pink/80 text-white px-6"
-                    >
-                            Add
-                    </Button>
-                        </div>
-                  </div>
-
-                  {/* Edit Selected Text */}
-                  {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'text' && (
-                    <div className="border-t border-vibrant-purple/20 pt-4">
-                      <Label className="text-sm font-medium text-enhanced-text">Edit Selected Text</Label>
-                      <Input
-                        value={layers.find(l => l.id === selectedLayer)?.content || ''}
-                        onChange={(e) => updateLayerProperty(selectedLayer, 'content', e.target.value)}
-                        placeholder="Edit text..."
-                        className="mt-2 bg-enhanced-gray-dark border-vibrant-purple/30 rounded-md text-enhanced-text"
-                      />
-                    <div className="flex items-center space-x-2 mt-2">
-                      <input
-                        type="checkbox"
-                          id="convert-circular"
-                          checked={layers.find(l => l.id === selectedLayer)?.isCircularText || false}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                            updateLayerProperty(selectedLayer, 'isCircularText', checked);
-                            if (checked) {
-                              updateLayerProperty(selectedLayer, 'textRadius', textRadius);
-                              updateLayerProperty(selectedLayer, 'textKerning', textKerning);
-                              updateLayerProperty(selectedLayer, 'textStartAngle', textStartAngle);
-                          }
-                        }}
-                        className="rounded"
-                      />
-                        <Label htmlFor="convert-circular" className="text-sm text-enhanced-text">Convert to Circular Text</Label>
-                    </div>
-                    </div>
-                  )}
-
-                  {/* Font Properties */}
-                  <div className="p-1 border-t border-vibrant-purple/20 pt-4">
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                      <div className="col-span-1">
-                        <Label className="text-sm font-medium text-enhanced-text">Font Size</Label>
+                        <div className="space-y-2">
+                          <Label htmlFor="image-zoom" className="text-sm font-medium text-enhanced-text">Image Zoom: {Math.round(imageZoom * 100)}%</Label>
                           <Slider
-                          value={[fontSize]}
-                          onValueChange={(value) => {
-                            setFontSize(value[0]);
-                            if (selectedLayer) {
-                              setLayers(prev => prev.map(l =>
-                                l.id === selectedLayer && l.type === 'text'
-                                  ? { ...l, fontSize: value[0] }
-                                  : l
-                              ));
-                            }
-                          }}
-                          max={200}
-                          min={12}
-                            step={1}
-                          className="mt-2"
-                          />
-                        </div>
-                      <div className="col-span-1">
-                        <Label className="text-sm font-medium text-enhanced-text">Font Color</Label>
-                        <ColorPicker
-                          color={textColor}
-                          onChange={(color) => {
-                            setTextColor(color);
-                            if (selectedLayer) {
-                              updateLayerProperty(selectedLayer, 'fontColor', color);
-                            }
-                          }}
-                          />
-                        </div>
-                      <div className="col-span-1">
-                        <Label className="text-sm font-medium text-enhanced-text">Font Family</Label>
-                    <select
-                      value={fontFamily}
-                          onChange={(e) => {
-                            const newFontFamily = e.target.value;
-                            setFontFamily(newFontFamily);
-                            if (selectedLayer) {
-                              updateLayerProperty(selectedLayer, 'fontFamily', newFontFamily);
-                            }
-                          }}
-                          className="w-full mt-2 p-2 bg-enhanced-gray-dark border border-vibrant-purple/30 rounded-md text-enhanced-text"
-                        >
-                          {GOOGLE_FONTS.map((font) => (
-                            <option key={font} value={font}>{font}</option>
-                          ))}
-                          {FONTSOURCE_FONTS.map((font) => (
-                            <option key={font} value={font}>{font}</option>
-                          ))}
-                          {OPEN_FOUNDRY_FONTS.map((font) => (
-                            <option key={font} value={font}>{font}</option>
-                          ))}
-                    </select>
-                  </div>
-                      <div className="col-span-1">
-                        <Label className="text-sm font-medium text-enhanced-text">Stroke Color</Label>
-                        <ColorPicker
-                          color={strokeColor}
-                          onChange={(color) => {
-                            setStrokeColor(color);
-                            if (selectedLayer) {
-                              updateLayerProperty(selectedLayer, 'strokeColor', color);
-                            }
-                          }}
-                    />
-                  </div>
-                      <div className="col-span-1">
-                        <Label className="text-sm font-medium text-enhanced-text">Stroke Width</Label>
-                        <Slider
-                          value={[strokeWidth]}
-                          onValueChange={(value) => {
-                            setStrokeWidth(value[0]);
-                            if (selectedLayer) {
-                              updateLayerProperty(selectedLayer, 'strokeWidth', value[0]);
-                            }
-                          }}
-                          max={10}
-                          min={0}
-                          step={1}
-                          className="mt-2"
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <Label className="text-sm font-medium text-enhanced-text">Shadow Color</Label>
-                        <ColorPicker
-                          color={shadowColor}
-                          onChange={(color) => {
-                            setShadowColor(color);
-                            if (selectedLayer) {
-                              updateLayerProperty(selectedLayer, 'shadowColor', color);
-                            }
-                          }}
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <Label className="text-sm font-medium text-enhanced-text">Shadow Blur</Label>
-                        <Slider
-                          value={[shadowBlur]}
-                          onValueChange={(value) => {
-                            setShadowBlur(value[0]);
-                            if (selectedLayer) {
-                              updateLayerProperty(selectedLayer, 'shadowBlur', value[0]);
-                            }
-                          }}
-                          max={50}
-                          min={0}
-                          step={1}
-                          className="mt-2"
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <Label className="text-sm font-medium text-enhanced-text">Shadow Offset X</Label>
-                        <Slider
-                          value={[shadowOffsetX]}
-                          onValueChange={(value) => {
-                            setShadowOffsetX(value[0]);
-                            if (selectedLayer) {
-                              updateLayerProperty(selectedLayer, 'shadowOffsetX', value[0]);
-                            }
-                          }}
-                          max={50}
-                          min={-50}
-                          step={1}
-                          className="mt-2"
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <Label className="text-sm font-medium text-enhanced-text">Shadow Offset Y</Label>
-                        <Slider
-                          value={[shadowOffsetY]}
-                          onValueChange={(value) => {
-                            setShadowOffsetY(value[0]);
-                            if (selectedLayer) {
-                              updateLayerProperty(selectedLayer, 'shadowOffsetY', value[0]);
-                            }
-                          }}
-                          max={50}
-                          min={-50}
-                          step={1}
-                          className="mt-2"
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <Label className="text-sm font-medium text-enhanced-text">Glow Color</Label>
-                        <ColorPicker
-                          color={glowColor}
-                          onChange={(color) => {
-                            setGlowColor(color);
-                            if (selectedLayer) {
-                              updateLayerProperty(selectedLayer, 'glowColor', color);
-                            }
-                          }}
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <Label className="text-sm font-medium text-enhanced-text">Glow Blur</Label>
-                        <Slider
-                          value={[glowBlur]}
-                          onValueChange={(value) => {
-                            setGlowBlur(value[0]);
-                            if (selectedLayer) {
-                              updateLayerProperty(selectedLayer, 'glowBlur', value[0]);
-                            }
-                          }}
-                          max={50}
-                          min={0}
-                          step={1}
-                          className="mt-2"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="adjust" className="space-y-4">
-                  {selectedLayer && layers.find(l => l.id === selectedLayer && l.type === 'image') && (
-                    <div className="space-y-2 mb-4">
-                      <Label htmlFor="image-zoom" className="text-sm font-medium text-enhanced-text">Image Zoom: {Math.round(imageZoom * 100)}%</Label>
-                      <Slider
-                        value={[imageZoom]}
-                        onValueChange={(value) => {
-                          const newZoom = value[0];
-                          setImageZoom(newZoom);
-                          if (selectedLayer) {
-                            setLayers(prev => prev.map(l => {
-                              if (l.id === selectedLayer && l.type === 'image') {
-                                const baseSize = canvasSize - 100;
-                                const newWidth = baseSize * newZoom;
-                                const newHeight = baseSize * newZoom;
-                                const newX = l.x + (l.width - newWidth) / 2;
-                                const newY = l.y + (l.height - newHeight) / 2;
-                                return { ...l, width: newWidth, height: newHeight, x: newX, y: newY };
+                            value={[imageZoom]}
+                            onValueChange={(value) => {
+                              const newZoom = value[0];
+                              setImageZoom(newZoom);
+                              if (selectedLayer) {
+                                setLayers(prev => prev.map(l => {
+                                  if (l.id === selectedLayer && l.type === 'image') {
+                                    const baseSize = canvasSize - 100;
+                                    const newWidth = baseSize * newZoom;
+                                    const newHeight = baseSize * newZoom;
+                                    const newX = l.x + (l.width - newWidth) / 2;
+                                    const newY = l.y + (l.height - newHeight) / 2;
+                                    return { ...l, width: newWidth, height: newHeight, x: newX, y: newY };
+                                  }
+                                  return l;
+                                }));
                               }
-                              return l;
-                            }));
-                          }
-                        }}
-                        max={2}
-                        min={0.1}
-                        step={0.1}
-                        className="mt-2"
-                      />
-                    </div>
-                  )}
+                            }}
+                            max={2}
+                            min={0.1}
+                            step={0.1}
+                            className="mt-2"
+                          />
+                        </div>
 
-                  {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'image' ? (
-                    <>
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-sm font-medium text-enhanced-text">Image Adjustments</h3>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => {
-                            const layer = layers.find(l => l.id === selectedLayer);
-                            if (layer) {
-                              updateLayerProperty(selectedLayer, 'imageAdjustments', {
-                                brightness: 100,
-                                contrast: 100,
-                                saturation: 100,
-                                blur: 0,
-                                hue: 0,
-                                blendMode: 'normal',
-                                opacity: 100,
-                                fill: 100,
-                                sepia: 0,
-                                invert: false,
-                                grayscale: false
-                              });
-                            }
-                          }} 
-                          className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white"
-                        >
-                          Reset
-                        </Button>
-                  </div>
+                        <div>
+                          <Label className="text-enhanced-text">Templates</Label>
+                          <Button
+                            onClick={() => setMainView('templates')}
+                            variant="outline"
+                            className="w-full mt-2 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white"
+                          >
+                            <ImageIcon className="w-4 h-4 mr-2" />
+                            Browse Templates
+                          </Button>
+                        </div>
 
-                      {(() => {
-                        const layer = layers.find(l => l.id === selectedLayer);
-                        let layerAdjustments = layer?.imageAdjustments;
-                        
-                        // Initialize imageAdjustments if it doesn't exist
-                        if (!layerAdjustments && layer?.type === 'image') {
-                          layerAdjustments = {
-                            brightness: 100,
-                            contrast: 100,
-                            saturation: 100,
-                            blur: 0,
-                            hue: 0,
-                            blendMode: 'normal',
-                            opacity: 100,
-                            fill: 100,
-                            sepia: 0,
-                            invert: false,
-                            grayscale: false
-                          };
-                          // Update the layer with the initialized adjustments
-                          updateLayerProperty(selectedLayer, 'imageAdjustments', layerAdjustments);
-                        }
-                        
-                        if (!layerAdjustments) return null;
-                        
-                        return (
-                          <>
-                                              <div>
-                              <Label className="text-enhanced-text">Blend Mode</Label>
-                              <select
-                                value={layerAdjustments.blendMode}
+                        <div>
+                          <Label className="text-enhanced-text">Canvas Shape</Label>
+                          <div className="flex gap-2 mt-2">
+                            <Button
+                              onClick={() => setCanvasShape('circle')}
+                              variant="outline"
+                              size="sm"
+                              className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${canvasShape === 'circle' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                            >
+                              <Circle className="w-4 h-4 mr-1" />
+                              Circle
+                            </Button>
+                            <Button
+                              onClick={() => setCanvasShape('square')}
+                              variant="outline"
+                              size="sm"
+                              className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${canvasShape === 'square' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                            >
+                              <Square className="w-4 h-4 mr-1" />
+                              Square
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Coin Rim section */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-semibold text-sm text-gray-200">Coin Rim</span>
+                          <button
+                            className={`relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none ${coinRimEnabled ? 'bg-vibrant-purple' : 'bg-gray-400'}`}
+                            onClick={() => setCoinRimEnabled(v => !v)}
+                            aria-pressed={coinRimEnabled}
+                            type="button"
+                          >
+                            <span className={`absolute left-1 top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 ${coinRimEnabled ? 'translate-x-5' : ''}`}></span>
+                          </button>
+                        </div>
+                        {coinRimEnabled && (
+                          <div>
+                            <Label className="text-enhanced-text">Coin Rim Width</Label>
+                            <div className="flex gap-2 mt-2 items-center">
+                              <Slider value={[canvasBorderWidth]} onValueChange={v => setCanvasBorderWidth(v[0])} max={30} min={0} step={1} />
+                              <ColorPicker color={canvasBorderColor} onChange={setCanvasBorderColor} />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Rim Shadow section */}
+                        <div className="flex items-center gap-2 mt-4 mb-2">
+                          <span className="font-semibold text-sm text-gray-200">Rim Shadow</span>
+                          <button
+                            className={`relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none ${rimShadow.enabled ? 'bg-vibrant-purple' : 'bg-gray-400'}`}
+                            onClick={() => setRimShadow(s => ({ ...s, enabled: !s.enabled }))}
+                            aria-pressed={rimShadow.enabled}
+                            type="button"
+                          >
+                            <span className={`absolute left-1 top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 ${rimShadow.enabled ? 'translate-x-5' : ''}`}></span>
+                          </button>
+                        </div>
+                        {rimShadow.enabled && (
+                          <div className="p-2 border border-vibrant-purple/20 rounded-md mt-2 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="rim-shadow-enable" className="text-sm text-gray-300">Enable Shadow</Label>
+                              <input
+                                type="checkbox"
+                                id="rim-shadow-enable"
+                                checked={rimShadow.enabled}
+                                onChange={(e) => setRimShadow(s => ({ ...s, enabled: e.target.checked }))}
+                                className="rounded"
+                              />
+                            </div>
+                            {rimShadow.enabled && (
+                              <>
+                                <div className="flex gap-2">
+                                  <Button onClick={() => setRimShadow(s => ({ ...s, type: 'outer' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.type === 'outer' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Outer</Button>
+                                  <Button onClick={() => setRimShadow(s => ({ ...s, type: 'inner' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.type === 'inner' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Inner</Button>
+                                  <Button onClick={() => setRimShadow(s => ({ ...s, type: 'both' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.type === 'both' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Both</Button>
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                  <div className='flex-1'>
+                                    <Label className="text-xs text-vibrant-purple/70">Blur: {rimShadow.blur}px</Label>
+                                    <Slider value={[rimShadow.blur]} onValueChange={v => setRimShadow(s => ({ ...s, blur: v[0] }))} max={50} min={0} step={1} />
+                                  </div>
+                                  <ColorPicker color={rimShadow.color} onChange={color => setRimShadow(s => ({ ...s, color }))} />
+                                </div>
+
+                                <div>
+                                  <Label className="text-xs text-vibrant-purple/70">Shadow Style</Label>
+                                  <div className="flex gap-1 mt-2">
+                                    <Button onClick={() => setRimShadow(s => ({ ...s, style: 'normal' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.style === 'normal' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Normal</Button>
+                                    <Button onClick={() => setRimShadow(s => ({ ...s, style: 'glow' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.style === 'glow' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Glow</Button>
+                                    <Button onClick={() => setRimShadow(s => ({ ...s, style: 'drop' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.style === 'drop' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Drop</Button>
+                                    <Button onClick={() => setRimShadow(s => ({ ...s, style: 'inner-glow' }))} variant="outline" size="sm" className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${rimShadow.style === 'inner-glow' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}>Inner</Button>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <Label className="text-xs text-vibrant-purple/70">X: {rimShadow.offsetX}px</Label>
+                                    <Slider value={[rimShadow.offsetX]} onValueChange={v => setRimShadow(s => ({ ...s, offsetX: v[0] }))} max={50} min={-50} step={1} />
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs text-vibrant-purple/70">Y: {rimShadow.offsetY}px</Label>
+                                    <Slider value={[rimShadow.offsetY]} onValueChange={v => setRimShadow(s => ({ ...s, offsetY: v[0] }))} max={50} min={-50} step={1} />
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <Label className="text-xs text-vibrant-purple/70">Opacity: {Math.round(rimShadow.opacity * 100)}%</Label>
+                                    <Slider value={[rimShadow.opacity]} onValueChange={v => setRimShadow(s => ({ ...s, opacity: v[0] }))} max={1} min={0.1} step={0.1} />
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs text-vibrant-purple/70">Intensity: {rimShadow.intensity}x</Label>
+                                    <Slider value={[rimShadow.intensity]} onValueChange={v => setRimShadow(s => ({ ...s, intensity: v[0] }))} max={3} min={0.1} step={0.1} />
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <Label className="text-xs text-vibrant-purple/70">Spread: {rimShadow.spread}px</Label>
+                                  <Slider value={[rimShadow.spread]} onValueChange={v => setRimShadow(s => ({ ...s, spread: v[0] }))} max={20} min={0} step={1} />
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Rim Design section */}
+                        <div className="flex items-center gap-2 mt-4 mb-2">
+                          <span className="font-semibold text-sm text-gray-200">Rim Design</span>
+                          <button
+                            className={`relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none ${rimDesign.enabled ? 'bg-vibrant-purple' : 'bg-gray-400'}`}
+                            onClick={() => setRimDesign(s => ({ ...s, enabled: !s.enabled }))}
+                            aria-pressed={rimDesign.enabled}
+                            type="button"
+                          >
+                            <span className={`absolute left-1 top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 ${rimDesign.enabled ? 'translate-x-5' : ''}`}></span>
+                          </button>
+                        </div>
+                        {rimDesign.enabled && (
+                          <div className="p-2 border border-vibrant-purple/20 rounded-md mt-2 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="rim-design-enable" className="text-sm text-enhanced-text">Enable Design</Label>
+                              <input
+                                type="checkbox"
+                                id="rim-design-enable"
+                                checked={rimDesign.enabled}
+                                onChange={(e) => setRimDesign(s => ({ ...s, enabled: e.target.checked }))}
+                                className="rounded"
+                              />
+                            </div>
+                            {rimDesign.enabled && (
+                              <>
+                                <div>
+                                  <Label className="text-sm text-enhanced-text">Pattern</Label>
+                                  <div className="flex gap-1 mt-2">
+                                    <Button
+                                      onClick={() => setRimDesign(s => ({ ...s, pattern: 'stripes' }))}
+                                      variant="outline"
+                                      size="sm"
+                                      className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimDesign.pattern === 'stripes' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                                    >
+                                      Stripes
+                                    </Button>
+                                    <Button
+                                      onClick={() => setRimDesign(s => ({ ...s, pattern: 'stars' }))}
+                                      variant="outline"
+                                      size="sm"
+                                      className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimDesign.pattern === 'stars' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                                    >
+                                      Stars
+                                    </Button>
+                                    <Button
+                                      onClick={() => setRimDesign(s => ({ ...s, pattern: 'dots' }))}
+                                      variant="outline"
+                                      size="sm"
+                                      className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimDesign.pattern === 'dots' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                                    >
+                                      Dots
+                                    </Button>
+                                    <Button
+                                      onClick={() => setRimDesign(s => ({ ...s, pattern: 'diamonds' }))}
+                                      variant="outline"
+                                      size="sm"
+                                      className={`flex-1 border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-enhanced-text hover:text-white ${rimDesign.pattern === 'diamonds' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                                    >
+                                      Diamonds
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <Label className="text-xs text-vibrant-purple/70">Density: {rimDesign.density}</Label>
+                                    <Slider
+                                      value={[rimDesign.density]}
+                                      onValueChange={v => setRimDesign(s => ({ ...s, density: v[0] }))}
+                                      max={200}
+                                      min={5}
+                                      step={1}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs text-vibrant-purple/70">Size: {rimDesign.size}px</Label>
+                                    <Slider
+                                      value={[rimDesign.size]}
+                                      onValueChange={v => setRimDesign(s => ({ ...s, size: v[0] }))}
+                                      max={8}
+                                      min={1}
+                                      step={0.5}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                  <Label className="text-sm text-enhanced-text">Color</Label>
+                                  <ColorPicker
+                                    color={rimDesign.color}
+                                    onChange={color => setRimDesign(s => ({ ...s, color }))}
+                                  />
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Background section */}
+                        <div>
+                          <Label className="text-enhanced-text">Background</Label>
+                          <div className="flex gap-2 mt-2 items-center">
+                            <Button
+                              onClick={() => setBackgroundColor('transparent')}
+                              variant="outline"
+                              size="sm"
+                              className={`border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white ${backgroundColor === 'transparent' ? 'bg-vibrant-purple/30 border-vibrant-purple/50 text-white' : ''}`}
+                            >
+                              Transparent
+                            </Button>
+                            <ColorPicker
+                              color={backgroundColor === 'transparent' ? '#ffffff' : backgroundColor}
+                              onChange={setBackgroundColor}
+                            />
+                          </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="text" className="space-y-4">
+                        {/* Add Text */}
+                        <div className="p-1">
+                          <Label className="text-enhanced-text font-semibold">Add Text</Label>
+                          <div className="flex gap-2 mt-2">
+                            <Input
+                              value={textInput}
+                              onChange={(e) => setTextInput(e.target.value)}
+                              placeholder="Enter text..."
+                              className="bg-enhanced-gray-dark border-vibrant-purple/30 rounded-md text-enhanced-text"
+                            />
+                            <Button
+                              onClick={addTextLayer}
+                              className="bg-vibrant-purple hover:bg-vibrant-purple/80 text-white px-6"
+                            >
+                              Add
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Edit Selected Text */}
+                        {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'text' && (
+                          <div className="border-t border-vibrant-purple/20 pt-4">
+                            <Label className="text-sm font-medium text-enhanced-text">Edit Selected Text</Label>
+                            <Input
+                              value={layers.find(l => l.id === selectedLayer)?.content || ''}
+                              onChange={(e) => updateLayerProperty(selectedLayer, 'content', e.target.value)}
+                              placeholder="Edit text..."
+                              className="mt-2 bg-enhanced-gray-dark border-vibrant-purple/30 rounded-md text-enhanced-text"
+                            />
+                            <div className="flex items-center space-x-2 mt-2">
+                              <input
+                                type="checkbox"
+                                id="convert-circular"
+                                checked={layers.find(l => l.id === selectedLayer)?.isCircularText || false}
                                 onChange={(e) => {
-                                  const newBlendMode = e.target.value;
-                                  updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, blendMode: newBlendMode });
+                                  const checked = e.target.checked;
+                                  updateLayerProperty(selectedLayer, 'isCircularText', checked);
+                                  if (checked) {
+                                    updateLayerProperty(selectedLayer, 'textRadius', textRadius);
+                                    updateLayerProperty(selectedLayer, 'textKerning', textKerning);
+                                    updateLayerProperty(selectedLayer, 'textStartAngle', textStartAngle);
+                                  }
+                                }}
+                                className="rounded"
+                              />
+                              <Label htmlFor="convert-circular" className="text-sm text-enhanced-text">Convert to Circular Text</Label>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Font Properties */}
+                        <div className="p-1 border-t border-vibrant-purple/20 pt-4">
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                            <div className="col-span-1">
+                              <Label className="text-sm font-medium text-enhanced-text">Font Size</Label>
+                              <Slider
+                                value={[fontSize]}
+                                onValueChange={(value) => {
+                                  setFontSize(value[0]);
+                                  if (selectedLayer) {
+                                    setLayers(prev => prev.map(l =>
+                                      l.id === selectedLayer && l.type === 'text'
+                                        ? { ...l, fontSize: value[0] }
+                                        : l
+                                    ));
+                                  }
+                                }}
+                                max={200}
+                                min={12}
+                                step={1}
+                                className="mt-2"
+                              />
+                            </div>
+                            <div className="col-span-1">
+                              <Label className="text-sm font-medium text-enhanced-text">Font Color</Label>
+                              <ColorPicker
+                                color={textColor}
+                                onChange={(color) => {
+                                  setTextColor(color);
+                                  if (selectedLayer) {
+                                    updateLayerProperty(selectedLayer, 'fontColor', color);
+                                  }
+                                }}
+                              />
+                            </div>
+                            <div className="col-span-1">
+                              <Label className="text-sm font-medium text-enhanced-text">Font Family</Label>
+                              <select
+                                value={fontFamily}
+                                onChange={(e) => {
+                                  const newFontFamily = e.target.value;
+                                  setFontFamily(newFontFamily);
+                                  if (selectedLayer) {
+                                    updateLayerProperty(selectedLayer, 'fontFamily', newFontFamily);
+                                  }
                                 }}
                                 className="w-full mt-2 p-2 bg-enhanced-gray-dark border border-vibrant-purple/30 rounded-md text-enhanced-text"
                               >
-                                <option value="normal">Normal</option>
-                                <option value="multiply">Multiply</option>
-                                <option value="screen">Screen</option>
-                                <option value="overlay">Overlay</option>
-                                <option value="soft-light">Soft Light</option>
-                                <option value="hard-light">Hard Light</option>
-                                <option value="color-dodge">Color Dodge</option>
-                                <option value="color-burn">Color Burn</option>
-                                <option value="darken">Darken</option>
-                                <option value="lighten">Lighten</option>
-                                <option value="difference">Difference</option>
-                                <option value="exclusion">Exclusion</option>
-                                <option value="hue">Hue</option>
-                                <option value="saturation">Saturation</option>
-                                <option value="color">Color</option>
-                                <option value="luminosity">Luminosity</option>
+                                {GOOGLE_FONTS.map((font) => (
+                                  <option key={font} value={font}>{font}</option>
+                                ))}
+                                {FONTSOURCE_FONTS.map((font) => (
+                                  <option key={font} value={font}>{font}</option>
+                                ))}
+                                {OPEN_FOUNDRY_FONTS.map((font) => (
+                                  <option key={font} value={font}>{font}</option>
+                                ))}
                               </select>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <Label className="text-enhanced-text">Opacity: {layerAdjustments.opacity}%</Label>
-                    <Slider
-                                  value={[layerAdjustments.opacity]}
-                                  onValueChange={(value) => {
-                                    const newOpacity = value[0];
-                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, opacity: newOpacity });
-                                  }}
-                                  max={100}
-                                  min={0}
-                                  step={1}
-                                  className="mt-2"
-                                />
-                      </div>
-                              <div>
-                                <Label className="text-enhanced-text">Fill: {layerAdjustments.fill}%</Label>
-                                <Slider
-                                  value={[layerAdjustments.fill]}
-                                  onValueChange={(value) => {
-                                    const newFill = value[0];
-                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, fill: newFill });
-                                  }}
-                                  max={100}
-                                  min={0}
-                                  step={1}
-                                  className="mt-2"
-                                />
-                    </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                  <div>
-                                <Label className="text-enhanced-text">Blur: {layerAdjustments.blur}px</Label>
-                    <Slider
-                                  value={[layerAdjustments.blur]}
-                                  onValueChange={(value) => {
-                                    const newBlur = value[0];
-                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, blur: newBlur });
-                                  }}
-                                  max={50}
-                                  min={0}
-                                  step={1}
-                                  className="mt-2"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-enhanced-text">Hue: {layerAdjustments.hue}°</Label>
-                                <Slider
-                                  value={[layerAdjustments.hue]}
-                                  onValueChange={(value) => {
-                                    const newHue = value[0];
-                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, hue: newHue });
-                                  }}
-                                  max={360}
-                                  min={0}
-                                  step={1}
-                                  className="mt-2"
-                                />
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <Label className="text-enhanced-text">Brightness: {layerAdjustments.brightness}%</Label>
-                              <Slider
-                                value={[layerAdjustments.brightness]}
-                                onValueChange={(value) => {
-                                  const newBrightness = value[0];
-                                  updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, brightness: newBrightness });
+                            <div className="col-span-1">
+                              <Label className="text-sm font-medium text-enhanced-text">Stroke Color</Label>
+                              <ColorPicker
+                                color={strokeColor}
+                                onChange={(color) => {
+                                  setStrokeColor(color);
+                                  if (selectedLayer) {
+                                    updateLayerProperty(selectedLayer, 'strokeColor', color);
+                                  }
                                 }}
-                      max={200}
-                      min={0}
-                      step={1}
-                      className="mt-2"
-                    />
-                  </div>
-                  
-                  <div>
-                              <Label className="text-enhanced-text">Contrast: {layerAdjustments.contrast}%</Label>
-                    <Slider
-                                value={[layerAdjustments.contrast]}
-                                onValueChange={(value) => {
-                                  const newContrast = value[0];
-                                  updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, contrast: newContrast });
-                                }}
-                      max={200}
-                      min={0}
-                      step={1}
-                      className="mt-2"
-                    />
-                  </div>
-                  
-                  <div>
-                              <Label className="text-enhanced-text">Saturation: {layerAdjustments.saturation}%</Label>
-                    <Slider
-                                value={[layerAdjustments.saturation]}
-                                onValueChange={(value) => {
-                                  const newSaturation = value[0];
-                                  updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, saturation: newSaturation });
-                                }}
-                      max={200}
-                      min={0}
-                      step={1}
-                      className="mt-2"
-                    />
-                  </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <Label className="text-enhanced-text">Sepia: {layerAdjustments.sepia}%</Label>
-                                <Slider
-                                  value={[layerAdjustments.sepia]}
-                                  onValueChange={(value) => {
-                                    const newSepia = value[0];
-                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, sepia: newSepia });
-                                  }}
-                                  max={100}
-                                  min={0}
-                                  step={1}
-                                  className="mt-2"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
-                                  id="invert"
-                                  checked={layerAdjustments.invert}
-                                  onChange={(e) => {
-                                    const newInvert = e.target.checked;
-                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, invert: newInvert });
-                                  }}
-                                  className="rounded"
-                                />
-                                <Label htmlFor="invert" className="text-sm text-enhanced-text">Invert Colors</Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
-                                  id="grayscale"
-                                  checked={layerAdjustments.grayscale}
-                                  onChange={(e) => {
-                                    const newGrayscale = e.target.checked;
-                                    updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, grayscale: newGrayscale });
-                                  }}
-                                  className="rounded"
-                                />
-                                <Label htmlFor="grayscale" className="text-sm text-enhanced-text">Grayscale</Label>
-                              </div>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </>
-                  ) : (
-                    <div className="text-center text-gray-400 py-8">
-                      <Palette className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Select an image layer to adjust its properties</p>
-                    </div>
-                  )}
-                  {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'image' && (
-                    <div className="mt-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Label className="text-sm font-medium text-enhanced-text">Chroma Key Remove</Label>
-                        <button
-                          className={`relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none ${chromaKeyEnabled ? 'bg-vibrant-purple' : 'bg-gray-400'}`}
-                          onClick={() => setChromaKeyEnabled(v => !v)}
-                          aria-pressed={chromaKeyEnabled}
-                          type="button"
-                        >
-                          <span className={`absolute left-1 top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 ${chromaKeyEnabled ? 'translate-x-5' : ''}`}></span>
-                        </button>
-                      </div>
-                      {chromaKeyEnabled && (
-                        <div>
-                          <div className="flex items-center gap-2 mt-2">
-                            <ColorPicker color={chromaKeyColor} onChange={setChromaKeyColor} />
-                            <Button onClick={handleChromaKeyRemove} className="bg-vibrant-purple text-white px-4 py-2 rounded">Remove Background</Button>
-                          </div>
-                          <p className="text-xs text-gray-400 mt-1">Pick a color to remove from the image background.</p>
-                          {originalImages[selectedLayer] && (
-                            <div className="mt-2">
-                              <Button 
-                                onClick={restoreOriginalImage} 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white"
-                              >
-                                Restore Original Image
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="layers" className="space-y-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-medium text-gray-300">Layers</h3>
-                    <span className="text-xs text-gray-400">{layers.length} layers</span>
-                  </div>
-                  
-                  {layers.length === 0 ? (
-                    <div className="text-center py-8 text-gray-400">
-                      <Layers className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No layers yet</p>
-                      <p className="text-xs">Upload an image or add text to get started</p>
-                    </div>
-                  ) : (
-                  <div className="space-y-2">
-                      {[...layers].sort((a, b) => b.zIndex - a.zIndex).map((layer, index) => (
-                      <div 
-                        key={layer.id}
-                          className={`p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
-                          selectedLayer === layer.id 
-                              ? 'border-vibrant-purple/60 bg-vibrant-purple/10'
-                              : 'border-vibrant-purple/20 bg-black/20 hover:border-vibrant-purple/40'
-                        }`}
-                        onClick={() => setSelectedLayer(layer.id)}
-                      >
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <div className="w-6 h-6 rounded bg-vibrant-purple/20 flex items-center justify-center flex-shrink-0">
-                                {layer.type === 'image' ? (
-                                  <ImageIcon className="w-3 h-3 text-vibrant-purple" />
-                                ) : layer.type === 'text' ? (
-                                  <Type className="w-3 h-3 text-vibrant-purple" />
-                                ) : (
-                                  <Square className="w-3 h-3 text-vibrant-purple" />
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-200 truncate">
-                                  {layer.type === 'text' ? layer.content || 'Text' : `${layer.type.charAt(0).toUpperCase() + layer.type.slice(1)} ${layer.id.slice(-4)}`}
-                                </p>
-                                <p className="text-xs text-gray-400">
-                                  {layer.type === 'text' ? `${layer.fontSize || 24}px ${layer.fontFamily || 'Arial'}` : `${Math.round(layer.width)}×${Math.round(layer.height)}`}
-                                </p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-1">
-                              {/* Visibility toggle */}
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                  updateLayerProperty(layer.id, 'visible', !layer.visible);
-                                }}
-                                className="w-6 h-6 hover:bg-vibrant-purple/20"
-                              >
-                                {layer.visible ? (
-                                  <Eye className="w-3 h-3 text-gray-300" />
-                                ) : (
-                                  <EyeOff className="w-3 h-3 text-gray-500" />
-                                )}
-                            </Button>
-                              
-                              {/* Lock toggle */}
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                  toggleLayerLock(layer.id);
-                                }}
-                                className="w-6 h-6 hover:bg-vibrant-purple/20"
-                              >
-                                {layer.locked ? (
-                                  <Lock className="w-3 h-3 text-vibrant-purple" />
-                                ) : (
-                                  <Unlock className="w-3 h-3 text-gray-300" />
-                                )}
-                            </Button>
-                              
-                              {/* Move up */}
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                  moveLayerUp(layer.id);
-                              }}
-                                className="w-6 h-6 hover:bg-vibrant-purple/20"
-                                disabled={index === 0}
-                            >
-                                <ChevronUp className="w-3 h-3 text-gray-300" />
-                            </Button>
-                              
-                              {/* Move down */}
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  moveLayerDown(layer.id);
-                                }}
-                                className="w-6 h-6 hover:bg-vibrant-purple/20"
-                                disabled={index === layers.length - 1}
-                              >
-                                <ChevronDown className="w-3 h-3 text-gray-300" />
-                              </Button>
-                              
-                              {/* Delete */}
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteLayer(layer.id);
-                              }}
-                                className="w-6 h-6 hover:bg-red-500/20 hover:text-red-400"
-                            >
-                                <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                          {/* Layer opacity slider */}
-                          <div className="mt-2">
-                            <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
-                              <span>Opacity</span>
-                              <span>{Math.round(layer.opacity * 100)}%</span>
-                            </div>
-                              <Slider
-                                value={[layer.opacity]}
-                                onValueChange={(value) => updateLayerProperty(layer.id, 'opacity', value[0])}
-                                max={1}
-                                min={0}
-                                step={0.01}
-                              className="w-full"
                               />
                             </div>
-                      </div>
-                    ))}
-                  </div>
-                  )}
-                </TabsContent>
+                            <div className="col-span-1">
+                              <Label className="text-sm font-medium text-enhanced-text">Stroke Width</Label>
+                              <Slider
+                                value={[strokeWidth]}
+                                onValueChange={(value) => {
+                                  setStrokeWidth(value[0]);
+                                  if (selectedLayer) {
+                                    updateLayerProperty(selectedLayer, 'strokeWidth', value[0]);
+                                  }
+                                }}
+                                max={10}
+                                min={0}
+                                step={1}
+                                className="mt-2"
+                              />
+                            </div>
+                            <div className="col-span-1">
+                              <Label className="text-sm font-medium text-enhanced-text">Shadow Color</Label>
+                              <ColorPicker
+                                color={shadowColor}
+                                onChange={(color) => {
+                                  setShadowColor(color);
+                                  if (selectedLayer) {
+                                    updateLayerProperty(selectedLayer, 'shadowColor', color);
+                                  }
+                                }}
+                              />
+                            </div>
+                            <div className="col-span-1">
+                              <Label className="text-sm font-medium text-enhanced-text">Shadow Blur</Label>
+                              <Slider
+                                value={[shadowBlur]}
+                                onValueChange={(value) => {
+                                  setShadowBlur(value[0]);
+                                  if (selectedLayer) {
+                                    updateLayerProperty(selectedLayer, 'shadowBlur', value[0]);
+                                  }
+                                }}
+                                max={50}
+                                min={0}
+                                step={1}
+                                className="mt-2"
+                              />
+                            </div>
+                            <div className="col-span-1">
+                              <Label className="text-sm font-medium text-enhanced-text">Shadow Offset X</Label>
+                              <Slider
+                                value={[shadowOffsetX]}
+                                onValueChange={(value) => {
+                                  setShadowOffsetX(value[0]);
+                                  if (selectedLayer) {
+                                    updateLayerProperty(selectedLayer, 'shadowOffsetX', value[0]);
+                                  }
+                                }}
+                                max={50}
+                                min={-50}
+                                step={1}
+                                className="mt-2"
+                              />
+                            </div>
+                            <div className="col-span-1">
+                              <Label className="text-sm font-medium text-enhanced-text">Shadow Offset Y</Label>
+                              <Slider
+                                value={[shadowOffsetY]}
+                                onValueChange={(value) => {
+                                  setShadowOffsetY(value[0]);
+                                  if (selectedLayer) {
+                                    updateLayerProperty(selectedLayer, 'shadowOffsetY', value[0]);
+                                  }
+                                }}
+                                max={50}
+                                min={-50}
+                                step={1}
+                                className="mt-2"
+                              />
+                            </div>
+                            <div className="col-span-1">
+                              <Label className="text-sm font-medium text-enhanced-text">Glow Color</Label>
+                              <ColorPicker
+                                color={glowColor}
+                                onChange={(color) => {
+                                  setGlowColor(color);
+                                  if (selectedLayer) {
+                                    updateLayerProperty(selectedLayer, 'glowColor', color);
+                                  }
+                                }}
+                              />
+                            </div>
+                            <div className="col-span-1">
+                              <Label className="text-sm font-medium text-enhanced-text">Glow Blur</Label>
+                              <Slider
+                                value={[glowBlur]}
+                                onValueChange={(value) => {
+                                  setGlowBlur(value[0]);
+                                  if (selectedLayer) {
+                                    updateLayerProperty(selectedLayer, 'glowBlur', value[0]);
+                                  }
+                                }}
+                                max={50}
+                                min={0}
+                                step={1}
+                                className="mt-2"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="adjust" className="space-y-4">
+                        {selectedLayer && layers.find(l => l.id === selectedLayer && l.type === 'image') && (
+                          <div className="space-y-2 mb-4">
+                            <Label htmlFor="image-zoom" className="text-sm font-medium text-enhanced-text">Image Zoom: {Math.round(imageZoom * 100)}%</Label>
+                            <Slider
+                              value={[imageZoom]}
+                              onValueChange={(value) => {
+                                const newZoom = value[0];
+                                setImageZoom(newZoom);
+                                if (selectedLayer) {
+                                  setLayers(prev => prev.map(l => {
+                                    if (l.id === selectedLayer && l.type === 'image') {
+                                      const baseSize = canvasSize - 100;
+                                      const newWidth = baseSize * newZoom;
+                                      const newHeight = baseSize * newZoom;
+                                      const newX = l.x + (l.width - newWidth) / 2;
+                                      const newY = l.y + (l.height - newHeight) / 2;
+                                      return { ...l, width: newWidth, height: newHeight, x: newX, y: newY };
+                                    }
+                                    return l;
+                                  }));
+                                }
+                              }}
+                              max={2}
+                              min={0.1}
+                              step={0.1}
+                              className="mt-2"
+                            />
+                          </div>
+                        )}
+
+                        {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'image' ? (
+                          <>
+                            <div className="flex justify-between items-center mb-4">
+                              <h3 className="text-sm font-medium text-enhanced-text">Image Adjustments</h3>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const layer = layers.find(l => l.id === selectedLayer);
+                                  if (layer) {
+                                    updateLayerProperty(selectedLayer, 'imageAdjustments', {
+                                      brightness: 100,
+                                      contrast: 100,
+                                      saturation: 100,
+                                      blur: 0,
+                                      hue: 0,
+                                      blendMode: 'normal',
+                                      opacity: 100,
+                                      fill: 100,
+                                      sepia: 0,
+                                      invert: false,
+                                      grayscale: false
+                                    });
+                                  }
+                                }}
+                                className="border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white"
+                              >
+                                Reset
+                              </Button>
+                            </div>
+
+                            {(() => {
+                              const layer = layers.find(l => l.id === selectedLayer);
+                              let layerAdjustments = layer?.imageAdjustments;
+
+                              // Initialize imageAdjustments if it doesn't exist
+                              if (!layerAdjustments && layer?.type === 'image') {
+                                layerAdjustments = {
+                                  brightness: 100,
+                                  contrast: 100,
+                                  saturation: 100,
+                                  blur: 0,
+                                  hue: 0,
+                                  blendMode: 'normal',
+                                  opacity: 100,
+                                  fill: 100,
+                                  sepia: 0,
+                                  invert: false,
+                                  grayscale: false
+                                };
+                                // Update the layer with the initialized adjustments
+                                updateLayerProperty(selectedLayer, 'imageAdjustments', layerAdjustments);
+                              }
+
+                              if (!layerAdjustments) return null;
+
+                              return (
+                                <>
+                                  <div>
+                                    <Label className="text-enhanced-text">Blend Mode</Label>
+                                    <select
+                                      value={layerAdjustments.blendMode}
+                                      onChange={(e) => {
+                                        const newBlendMode = e.target.value;
+                                        updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, blendMode: newBlendMode });
+                                      }}
+                                      className="w-full mt-2 p-2 bg-enhanced-gray-dark border border-vibrant-purple/30 rounded-md text-enhanced-text"
+                                    >
+                                      <option value="normal">Normal</option>
+                                      <option value="multiply">Multiply</option>
+                                      <option value="screen">Screen</option>
+                                      <option value="overlay">Overlay</option>
+                                      <option value="soft-light">Soft Light</option>
+                                      <option value="hard-light">Hard Light</option>
+                                      <option value="color-dodge">Color Dodge</option>
+                                      <option value="color-burn">Color Burn</option>
+                                      <option value="darken">Darken</option>
+                                      <option value="lighten">Lighten</option>
+                                      <option value="difference">Difference</option>
+                                      <option value="exclusion">Exclusion</option>
+                                      <option value="hue">Hue</option>
+                                      <option value="saturation">Saturation</option>
+                                      <option value="color">Color</option>
+                                      <option value="luminosity">Luminosity</option>
+                                    </select>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label className="text-enhanced-text">Opacity: {layerAdjustments.opacity}%</Label>
+                                      <Slider
+                                        value={[layerAdjustments.opacity]}
+                                        onValueChange={(value) => {
+                                          const newOpacity = value[0];
+                                          updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, opacity: newOpacity });
+                                        }}
+                                        max={100}
+                                        min={0}
+                                        step={1}
+                                        className="mt-2"
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label className="text-enhanced-text">Fill: {layerAdjustments.fill}%</Label>
+                                      <Slider
+                                        value={[layerAdjustments.fill]}
+                                        onValueChange={(value) => {
+                                          const newFill = value[0];
+                                          updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, fill: newFill });
+                                        }}
+                                        max={100}
+                                        min={0}
+                                        step={1}
+                                        className="mt-2"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label className="text-enhanced-text">Blur: {layerAdjustments.blur}px</Label>
+                                      <Slider
+                                        value={[layerAdjustments.blur]}
+                                        onValueChange={(value) => {
+                                          const newBlur = value[0];
+                                          updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, blur: newBlur });
+                                        }}
+                                        max={50}
+                                        min={0}
+                                        step={1}
+                                        className="mt-2"
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label className="text-enhanced-text">Hue: {layerAdjustments.hue}°</Label>
+                                      <Slider
+                                        value={[layerAdjustments.hue]}
+                                        onValueChange={(value) => {
+                                          const newHue = value[0];
+                                          updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, hue: newHue });
+                                        }}
+                                        max={360}
+                                        min={0}
+                                        step={1}
+                                        className="mt-2"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <Label className="text-enhanced-text">Brightness: {layerAdjustments.brightness}%</Label>
+                                    <Slider
+                                      value={[layerAdjustments.brightness]}
+                                      onValueChange={(value) => {
+                                        const newBrightness = value[0];
+                                        updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, brightness: newBrightness });
+                                      }}
+                                      max={200}
+                                      min={0}
+                                      step={1}
+                                      className="mt-2"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label className="text-enhanced-text">Contrast: {layerAdjustments.contrast}%</Label>
+                                    <Slider
+                                      value={[layerAdjustments.contrast]}
+                                      onValueChange={(value) => {
+                                        const newContrast = value[0];
+                                        updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, contrast: newContrast });
+                                      }}
+                                      max={200}
+                                      min={0}
+                                      step={1}
+                                      className="mt-2"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label className="text-enhanced-text">Saturation: {layerAdjustments.saturation}%</Label>
+                                    <Slider
+                                      value={[layerAdjustments.saturation]}
+                                      onValueChange={(value) => {
+                                        const newSaturation = value[0];
+                                        updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, saturation: newSaturation });
+                                      }}
+                                      max={200}
+                                      min={0}
+                                      step={1}
+                                      className="mt-2"
+                                    />
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label className="text-enhanced-text">Sepia: {layerAdjustments.sepia}%</Label>
+                                      <Slider
+                                        value={[layerAdjustments.sepia]}
+                                        onValueChange={(value) => {
+                                          const newSepia = value[0];
+                                          updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, sepia: newSepia });
+                                        }}
+                                        max={100}
+                                        min={0}
+                                        step={1}
+                                        className="mt-2"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex items-center space-x-2">
+                                      <input
+                                        type="checkbox"
+                                        id="invert"
+                                        checked={layerAdjustments.invert}
+                                        onChange={(e) => {
+                                          const newInvert = e.target.checked;
+                                          updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, invert: newInvert });
+                                        }}
+                                        className="rounded"
+                                      />
+                                      <Label htmlFor="invert" className="text-sm text-enhanced-text">Invert Colors</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <input
+                                        type="checkbox"
+                                        id="grayscale"
+                                        checked={layerAdjustments.grayscale}
+                                        onChange={(e) => {
+                                          const newGrayscale = e.target.checked;
+                                          updateLayerProperty(selectedLayer, 'imageAdjustments', { ...layerAdjustments, grayscale: newGrayscale });
+                                        }}
+                                        className="rounded"
+                                      />
+                                      <Label htmlFor="grayscale" className="text-sm text-enhanced-text">Grayscale</Label>
+                                    </div>
+                                  </div>
+                                </>
+                              );
+                            })()}
+                          </>
+                        ) : (
+                          <div className="text-center text-gray-400 py-8">
+                            <Palette className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                            <p>Select an image layer to adjust its properties</p>
+                          </div>
+                        )}
+                        {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'image' && (
+                          <div className="mt-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Label className="text-sm font-medium text-enhanced-text">Chroma Key Remove</Label>
+                              <button
+                                className={`relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none ${chromaKeyEnabled ? 'bg-vibrant-purple' : 'bg-gray-400'}`}
+                                onClick={() => setChromaKeyEnabled(v => !v)}
+                                aria-pressed={chromaKeyEnabled}
+                                type="button"
+                              >
+                                <span className={`absolute left-1 top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 ${chromaKeyEnabled ? 'translate-x-5' : ''}`}></span>
+                              </button>
+                            </div>
+                            {chromaKeyEnabled && (
+                              <div>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <ColorPicker color={chromaKeyColor} onChange={setChromaKeyColor} />
+                                  <Button onClick={handleChromaKeyRemove} className="bg-vibrant-purple text-white px-4 py-2 rounded">Remove Background</Button>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-1">Pick a color to remove from the image background.</p>
+                                {originalImages[selectedLayer] && (
+                                  <div className="mt-2">
+                                    <Button
+                                      onClick={restoreOriginalImage}
+                                      variant="outline"
+                                      size="sm"
+                                      className="w-full border-vibrant-purple/30 hover:bg-vibrant-purple/20 text-gray-200 hover:text-white"
+                                    >
+                                      Restore Original Image
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </TabsContent>
+
+                      <TabsContent value="layers" className="space-y-4">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-sm font-medium text-gray-300">Layers</h3>
+                          <span className="text-xs text-gray-400">{layers.length} layers</span>
+                        </div>
+
+                        {layers.length === 0 ? (
+                          <div className="text-center py-8 text-gray-400">
+                            <Layers className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No layers yet</p>
+                            <p className="text-xs">Upload an image or add text to get started</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {[...layers].sort((a, b) => b.zIndex - a.zIndex).map((layer, index) => (
+                              <div
+                                key={layer.id}
+                                className={`p-3 rounded-lg border transition-all duration-200 cursor-pointer ${selectedLayer === layer.id
+                                  ? 'border-vibrant-purple/60 bg-vibrant-purple/10'
+                                  : 'border-vibrant-purple/20 bg-black/20 hover:border-vibrant-purple/40'
+                                  }`}
+                                onClick={() => setSelectedLayer(layer.id)}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <div className="w-6 h-6 rounded bg-vibrant-purple/20 flex items-center justify-center flex-shrink-0">
+                                      {layer.type === 'image' ? (
+                                        <ImageIcon className="w-3 h-3 text-vibrant-purple" />
+                                      ) : layer.type === 'text' ? (
+                                        <Type className="w-3 h-3 text-vibrant-purple" />
+                                      ) : (
+                                        <Square className="w-3 h-3 text-vibrant-purple" />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-200 truncate">
+                                        {layer.type === 'text' ? layer.content || 'Text' : `${layer.type.charAt(0).toUpperCase() + layer.type.slice(1)} ${layer.id.slice(-4)}`}
+                                      </p>
+                                      <p className="text-xs text-gray-400">
+                                        {layer.type === 'text' ? `${layer.fontSize || 24}px ${layer.fontFamily || 'Arial'}` : `${Math.round(layer.width)}×${Math.round(layer.height)}`}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-1">
+                                    {/* Visibility toggle */}
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateLayerProperty(layer.id, 'visible', !layer.visible);
+                                      }}
+                                      className="w-6 h-6 hover:bg-vibrant-purple/20"
+                                    >
+                                      {layer.visible ? (
+                                        <Eye className="w-3 h-3 text-gray-300" />
+                                      ) : (
+                                        <EyeOff className="w-3 h-3 text-gray-500" />
+                                      )}
+                                    </Button>
+
+                                    {/* Lock toggle */}
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleLayerLock(layer.id);
+                                      }}
+                                      className="w-6 h-6 hover:bg-vibrant-purple/20"
+                                    >
+                                      {layer.locked ? (
+                                        <Lock className="w-3 h-3 text-vibrant-purple" />
+                                      ) : (
+                                        <Unlock className="w-3 h-3 text-gray-300" />
+                                      )}
+                                    </Button>
+
+                                    {/* Move up */}
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        moveLayerUp(layer.id);
+                                      }}
+                                      className="w-6 h-6 hover:bg-vibrant-purple/20"
+                                      disabled={index === 0}
+                                    >
+                                      <ChevronUp className="w-3 h-3 text-gray-300" />
+                                    </Button>
+
+                                    {/* Move down */}
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        moveLayerDown(layer.id);
+                                      }}
+                                      className="w-6 h-6 hover:bg-vibrant-purple/20"
+                                      disabled={index === layers.length - 1}
+                                    >
+                                      <ChevronDown className="w-3 h-3 text-gray-300" />
+                                    </Button>
+
+                                    {/* Delete */}
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteLayer(layer.id);
+                                      }}
+                                      className="w-6 h-6 hover:bg-red-500/20 hover:text-red-400"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {/* Layer opacity slider */}
+                                <div className="mt-2">
+                                  <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+                                    <span>Opacity</span>
+                                    <span>{Math.round(layer.opacity * 100)}%</span>
+                                  </div>
+                                  <Slider
+                                    value={[layer.opacity]}
+                                    onValueChange={(value) => updateLayerProperty(layer.id, 'opacity', value[0])}
+                                    max={1}
+                                    min={0}
+                                    step={0.01}
+                                    className="w-full"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </TabsContent>
                     </ScrollArea>
-                </div>
-              </Tabs>
-            </Card>
+                  </div>
+                </Tabs>
+              </Card>
             </div>
           </div>
 
-          {/* Right Panel - donations, promoted channels, etc. */}
-          <div className="lg:col-span-3 order-3 lg:order-3">
-            <div className="sticky top-6 h-[calc(100vh-12rem)]">
+          {/* Right Panel - donations, promoted channels, etc. - Hidden on mobile, or moved to bottom if needed. For now keeping desktop consistent */}
+          <div className="lg:col-span-3 order-3 lg:order-3 hidden lg:block">
+            <div className="lg:sticky lg:top-6 lg:h-[calc(100vh-12rem)] h-auto">
               <ScrollArea className="h-full w-full pr-4">
                 <div className="flex flex-col h-full">
                   <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 rounded-2xl shadow-lg flex-1 flex flex-col justify-center items-center relative overflow-hidden group shimmer-effect">
                     {/* Subtle animated glow effect */}
                     <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                         style={{
-                           background: 'radial-gradient(circle at center, rgba(138, 43, 226, 0.1) 0%, transparent 70%)',
-                           boxShadow: '0 0 30px rgba(138, 43, 226, 0.2)',
-                         }}
-                    />
-                    
-                    {/* Enhanced border glow */}
-                    <div className="absolute inset-0 rounded-2xl opacity-30 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none"
-                         style={{
-                           border: '1px solid rgba(138, 43, 226, 0.3)',
-                           boxShadow: 'inset 0 0 20px rgba(138, 43, 226, 0.1), 0 0 20px rgba(138, 43, 226, 0.1)',
-                         }}
+                      style={{
+                        background: 'radial-gradient(circle at center, rgba(138, 43, 226, 0.1) 0%, transparent 70%)',
+                        boxShadow: '0 0 30px rgba(138, 43, 226, 0.2)',
+                      }}
                     />
 
-              {/* Donation Section */}
+                    {/* Enhanced border glow */}
+                    <div className="absolute inset-0 rounded-2xl opacity-30 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none"
+                      style={{
+                        border: '1px solid rgba(138, 43, 226, 0.3)',
+                        boxShadow: 'inset 0 0 20px rgba(138, 43, 226, 0.1), 0 0 20px rgba(138, 43, 226, 0.1)',
+                      }}
+                    />
+
+                    {/* Donation Section */}
                     <p className="text-xs text-center text-vibrant-purple/70 mt-4 mb-1 w-full relative z-10">
                       Made with <span role="img" aria-label="love">❤️</span> by <a href="https://xeenon.xyz/f7ash" target="_blank" rel="noopener noreferrer" className="text-vibrant-purple hover:text-vibrant-pink transition-colors">f7ash</a>
                     </p>
@@ -2522,30 +2640,30 @@ const LogoTokenEditor = () => {
                     <div className="flex flex-col sm:flex-row gap-3 w-full items-center justify-center mb-2 mt-4">
                       {/* Solana address copy box */}
                       <div className="flex-1 min-w-0 h-12 flex items-center gap-3 px-4 bg-transparent rounded-lg border border-vibrant-purple/30">
-                      <a href={`https://solana.fm/address/${solanaAddress}/transactions?cluster=mainnet-alpha`} target="_blank" rel="noopener noreferrer" aria-label="View address on Solana Explorer">
+                        <a href={`https://solana.fm/address/${solanaAddress}/transactions?cluster=mainnet-alpha`} target="_blank" rel="noopener noreferrer" aria-label="View address on Solana Explorer">
                           <div className="w-8 h-8 rounded-full bg-vibrant-purple/20 flex items-center justify-center">
-                          <svg width="16" height="16" viewBox="0 0 397.7 311.7" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <linearGradient id="logosGradient" x1="360.8793" y1="351.4553" x2="141.213" y2="-69.2936" gradientUnits="userSpaceOnUse">
-                        <stop offset="0" stopColor="#00FFA3"/>
-                        <stop offset="1" stopColor="#DC1FFF"/>
-                      </linearGradient>
-                      <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 237.9z" fill="url(#logosGradient)"/>
-                      <path d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#logosGradient)"/>
-                      <path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#logosGradient)"/>
-                    </svg>
-                  </div>
-                      </a>
+                            <svg width="16" height="16" viewBox="0 0 397.7 311.7" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <linearGradient id="logosGradient" x1="360.8793" y1="351.4553" x2="141.213" y2="-69.2936" gradientUnits="userSpaceOnUse">
+                                <stop offset="0" stopColor="#00FFA3" />
+                                <stop offset="1" stopColor="#DC1FFF" />
+                              </linearGradient>
+                              <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 237.9z" fill="url(#logosGradient)" />
+                              <path d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#logosGradient)" />
+                              <path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#logosGradient)" />
+                            </svg>
+                          </div>
+                        </a>
                         <span className="text-sm font-mono flex-1 text-center text-gray-300">
-                    {formatAddress(solanaAddress)}
-                  </span>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => copyToClipboard(solanaAddress)}
-                        className="hover:bg-vibrant-purple/20 text-gray-200 hover:text-white transition-all duration-300 hover:scale-110"
-                      >
-                        <Copy className="w-5 h-5" />
-                      </Button>
+                          {formatAddress(solanaAddress)}
+                        </span>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => copyToClipboard(solanaAddress)}
+                          className="hover:bg-vibrant-purple/20 text-gray-200 hover:text-white transition-all duration-300 hover:scale-110"
+                        >
+                          <Copy className="w-5 h-5" />
+                        </Button>
                       </div>
                       {/* Buy $FLASH button */}
                       <button
@@ -2556,8 +2674,8 @@ const LogoTokenEditor = () => {
                         <img src="/FlashToken.png" alt="$FLASH" className="h-6 w-6" />
                         Buy $FLASH
                       </button>
-              </div>
-            </Card>
+                    </div>
+                  </Card>
 
                   <Card className="bg-black/30 backdrop-blur-xl border border-vibrant-purple/20 p-4 rounded-2xl shadow-lg mt-6 animate-subtle-glow">
                     <h3 className="text-lg font-semibold mb-4 text-gray-200">Promoted Channels</h3>
@@ -2567,27 +2685,19 @@ const LogoTokenEditor = () => {
                         href={promotedChannels[0].url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group relative flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ease-out hover:scale-[1.02]"
-                        style={{
-                          background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.2) 0%, rgba(59, 7, 100, 0.1) 100%)',
-                          backdropFilter: 'blur(20px)',
-                          border: '1px solid rgba(59, 7, 100, 0.4)',
-                          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(59, 7, 100, 0.2)',
-                        }}
+                        className="group relative flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ease-out hover:scale-[1.02] bg-vibrant-purple/10 backdrop-blur-md border border-vibrant-purple/40 shadow-lg shadow-black/30"
                       >
                         {/* Animated gradient border */}
                         <div
-                          className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-vibrant-purple via-vibrant-pink to-vibrant-teal p-[1px] pointer-events-none"
                           style={{
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
-                            padding: '1px',
                             mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                             maskComposite: 'exclude',
                           }}
                         />
 
                         {/* Logo container with glassmorphism */}
-                        <div className="relative w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-[#F53566]">
+                        <div className="relative w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-vibrant-purple/20 border border-vibrant-purple/50">
                           {promotedChannels[0].logo ? (
                             <img
                               src={promotedChannels[0].logo}
@@ -2597,7 +2707,7 @@ const LogoTokenEditor = () => {
                           ) : (
                             <User className="w-5 h-5 text-gray-400" />
                           )}
-            </div>
+                        </div>
 
                         {/* Channel name with enhanced styling */}
                         <span className="text-sm font-semibold flex-1 text-gray-200 group-hover:text-white transition-colors duration-300">
@@ -2612,14 +2722,14 @@ const LogoTokenEditor = () => {
                               filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.3))',
                             }}
                           />
-          </div>
+                        </div>
 
                         {/* Hover glow effect */}
                         <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                             style={{
-                               background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
-                               boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
-                             }}
+                          style={{
+                            background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
+                            boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
+                          }}
                         />
                       </a>
 
@@ -2631,97 +2741,19 @@ const LogoTokenEditor = () => {
                             href={channel.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group relative flex items-center gap-2 p-3 rounded-xl transition-all duration-300 ease-out hover:scale-[1.02]"
-                            style={{
-                              background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.2) 0%, rgba(59, 7, 100, 0.1) 100%)',
-                              backdropFilter: 'blur(20px)',
-                              border: '1px solid rgba(59, 7, 100, 0.4)',
-                              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(59, 7, 100, 0.2)',
-                            }}
+                            className="group relative flex items-center gap-2 p-3 rounded-xl transition-all duration-300 ease-out hover:scale-[1.02] bg-vibrant-purple/10 backdrop-blur-md border border-vibrant-purple/30 shadow-md shadow-black/20"
                           >
                             <div
                               className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                               style={{
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
+                                background: 'linear-gradient(135deg, hsl(var(--vibrant-purple)) 0%, hsl(var(--vibrant-pink)) 100%)',
                                 padding: '1px',
                                 mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                                 maskComposite: 'exclude',
                               }}
                             />
                             {/* Logo container */}
-                            <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-                                 style={{
-                                   background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.3) 0%, rgba(59, 7, 100, 0.2) 100%)',
-                                   backdropFilter: 'blur(10px)',
-                                   border: '1px solid rgba(59, 7, 100, 0.5)',
-                                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(59, 7, 100, 0.3)',
-                                 }}>
-                              {channel.logo ? (
-                                <img
-                                  src={channel.logo}
-                                  alt={`${channel.name} logo`}
-                                  className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
-                                />
-                              ) : (
-                                <User className="w-4 h-4 text-gray-400" />
-                              )}
-        </div>
-
-                            {/* Channel name */}
-                            <span className="text-xs font-semibold flex-1 text-gray-200 group-hover:text-white transition-colors duration-300 truncate">
-                              {channel.name}
-                            </span>
-
-                            {/* External link icon */}
-                            <ExternalLink
-                              className="w-3 h-3 text-gray-400 group-hover:text-white transition-all duration-300 group-hover:scale-110"
-                              style={{
-                                filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.3))',
-                              }}
-                            />
-                            <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                                 style={{
-                                   background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
-                                   boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
-                                 }}
-                            />
-                          </a>
-                        ))}
-      </div>
-
-                      {/* Second row of side by side channels */}
-                      <div className="grid grid-cols-2 gap-3">
-                        {promotedChannels.slice(3, 5).map((channel) => (
-                          <a
-                            key={channel.name}
-                            href={channel.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group relative flex items-center gap-2 p-3 rounded-xl transition-all duration-300 ease-out hover:scale-[1.02]"
-                            style={{
-                              background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.2) 0%, rgba(59, 7, 100, 0.1) 100%)',
-                              backdropFilter: 'blur(20px)',
-                              border: '1px solid rgba(59, 7, 100, 0.4)',
-                              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(59, 7, 100, 0.2)',
-                            }}
-                          >
-                            <div
-                              className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                              style={{
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
-                                padding: '1px',
-                                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                                maskComposite: 'exclude',
-                              }}
-                            />
-                            {/* Logo container */}
-                            <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-                                 style={{
-                                   background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.3) 0%, rgba(59, 7, 100, 0.2) 100%)',
-                                   backdropFilter: 'blur(10px)',
-                                   border: '1px solid rgba(59, 7, 100, 0.5)',
-                                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(59, 7, 100, 0.3)',
-                                 }}>
+                            <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-vibrant-purple/20 backdrop-blur-sm border border-vibrant-purple/40">
                               {channel.logo ? (
                                 <img
                                   src={channel.logo}
@@ -2746,10 +2778,70 @@ const LogoTokenEditor = () => {
                               }}
                             />
                             <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                                 style={{
-                                   background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
-                                   boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
-                                 }}
+                              style={{
+                                background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
+                                boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
+                              }}
+                            />
+                          </a>
+                        ))}
+                      </div>
+
+                      {/* Second row of side by side channels */}
+                      <div className="grid grid-cols-2 gap-3">
+                        {promotedChannels.slice(3, 5).map((channel) => (
+                          <a
+                            key={channel.name}
+                            href={channel.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group relative flex items-center gap-2 p-3 rounded-xl transition-all duration-300 ease-out hover:scale-[1.02] bg-vibrant-purple/10 backdrop-blur-md border border-vibrant-purple/30 shadow-md shadow-black/20"
+                          >
+                            <div
+                              className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                              style={{
+                                background: 'linear-gradient(135deg, hsl(var(--vibrant-purple)) 0%, hsl(var(--vibrant-pink)) 100%)',
+                                padding: '1px',
+                                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                                maskComposite: 'exclude',
+                              }}
+                            />
+                            {/* Logo container */}
+                            <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+                              style={{
+                                background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.3) 0%, rgba(59, 7, 100, 0.2) 100%)',
+                                backdropFilter: 'blur(10px)',
+                                border: '1px solid rgba(59, 7, 100, 0.5)',
+                                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(59, 7, 100, 0.3)',
+                              }}>
+                              {channel.logo ? (
+                                <img
+                                  src={channel.logo}
+                                  alt={`${channel.name} logo`}
+                                  className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
+                                />
+                              ) : (
+                                <User className="w-4 h-4 text-gray-400" />
+                              )}
+                            </div>
+
+                            {/* Channel name */}
+                            <span className="text-xs font-semibold flex-1 text-gray-200 group-hover:text-white transition-colors duration-300 truncate">
+                              {channel.name}
+                            </span>
+
+                            {/* External link icon */}
+                            <ExternalLink
+                              className="w-3 h-3 text-gray-400 group-hover:text-white transition-all duration-300 group-hover:scale-110"
+                              style={{
+                                filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.3))',
+                              }}
+                            />
+                            <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                              style={{
+                                background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
+                                boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
+                              }}
                             />
                           </a>
                         ))}
@@ -2760,33 +2852,19 @@ const LogoTokenEditor = () => {
                         {/* Last channel */}
                         <a
                           href={promotedChannels[5].url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group relative flex items-center gap-2 p-3 rounded-xl transition-all duration-300 ease-out hover:scale-[1.02]"
-                          style={{
-                            background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.2) 0%, rgba(59, 7, 100, 0.1) 100%)',
-                            backdropFilter: 'blur(20px)',
-                            border: '1px solid rgba(59, 7, 100, 0.4)',
-                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(59, 7, 100, 0.2)',
-                          }}
+                          className="group relative flex items-center gap-2 p-3 rounded-xl transition-all duration-300 ease-out hover:scale-[1.02] bg-vibrant-purple/10 backdrop-blur-md border border-vibrant-purple/30 shadow-md shadow-black/20"
                         >
                           <div
                             className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                             style={{
-                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
+                              background: 'linear-gradient(135deg, hsl(var(--vibrant-purple)) 0%, hsl(var(--vibrant-pink)) 100%)',
                               padding: '1px',
                               mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                               maskComposite: 'exclude',
                             }}
                           />
                           {/* Logo container */}
-                          <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-                               style={{
-                                 background: 'linear-gradient(135deg, rgba(59, 7, 100, 0.3) 0%, rgba(59, 7, 100, 0.2) 100%)',
-                                 backdropFilter: 'blur(10px)',
-                                 border: '1px solid rgba(59, 7, 100, 0.5)',
-                                 boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(59, 7, 100, 0.3)',
-                               }}>
+                          <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-vibrant-purple/20 backdrop-blur-sm border border-vibrant-purple/40">
                             {promotedChannels[5].logo ? (
                               <img
                                 src={promotedChannels[5].logo}
@@ -2811,10 +2889,10 @@ const LogoTokenEditor = () => {
                             }}
                           />
                           <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                               style={{
-                                 background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
-                                 boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
-                               }}
+                            style={{
+                              background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
+                              boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
+                            }}
                           />
                         </a>
 
@@ -2865,13 +2943,283 @@ const LogoTokenEditor = () => {
                       </div>
                     </div>
                   </Card>
-      </div>
+                </div>
               </ScrollArea>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+
+        {/* Mobile Bottom Navigation & Sheet */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-black/80 backdrop-blur-xl border-t border-vibrant-purple/20 pb-safe">
+          {/* Active Tab Content Area - slides up when a tab is selected */}
+          {activeTab && (
+            <div className="bg-black/90 backdrop-blur-xl border-t border-vibrant-purple/20 rounded-t-2xl p-4 max-h-[50vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+              <div className="flex justify-between items-center mb-4 sticky top-0 bg-transparent z-10 w-full">
+                <span className="text-sm font-bold text-vibrant-purple capitalize">{activeTab} Tools</span>
+                <Button variant="ghost" size="sm" onClick={() => setActiveTab('')} className="h-8 w-8 p-0 rounded-full hover:bg-white/10">
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Render Content based on activeTab state - reusing the logic from the desktop tabs manually or refactoring component to be reusable */}
+              {activeTab === 'upload' && (
+                <div className="space-y-4 pb-16">
+                  {/* Duplicate Upload Content for Mobile */}
+                  <Label className="text-sm font-medium text-enhanced-text">Upload Image</Label>
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full h-12 flex items-center justify-center gap-2 rounded-lg border-2 border-vibrant-purple/50 bg-vibrant-purple/10 text-vibrant-purple"
+                  >
+                    <Upload className="w-5 h-5" />
+                    <span>Click to upload</span>
+                  </Button>
+
+                  <div className="space-y-2">
+                    <Label className="text-enhanced-text">Templates</Label>
+                    <Button onClick={() => setMainView('templates')} variant="outline" className="w-full border-vibrant-purple/30">
+                      Browse Templates
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button className="flex-1" variant="outline" onClick={() => setCanvasShape('circle')}><Circle className="w-4 h-4 mr-2" /> Circle</Button>
+                    <Button className="flex-1" variant="outline" onClick={() => setCanvasShape('square')}><Square className="w-4 h-4 mr-2" /> Square</Button>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'text' && (
+                <div className="space-y-4 pb-16">
+                  <div className="flex gap-2">
+                    <Input value={textInput} onChange={(e) => setTextInput(e.target.value)} placeholder="Text..." className="bg-enhanced-gray-dark border-vibrant-purple/30" />
+                    <Button onClick={addTextLayer} disabled={!textInput.trim()} className="bg-vibrant-purple">Add</Button>
+                  </div>
+                  {selectedLayer && layers.find(l => l.id === selectedLayer)?.type === 'text' && (
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Font Size</Label>
+                        <Slider value={[fontSize]} onValueChange={v => { setFontSize(v[0]); updateLayerProperty(selectedLayer, 'fontSize', v[0]); }} max={200} min={10} step={1} />
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <Label>Color</Label>
+                        <ColorPicker color={textColor} onChange={c => { setTextColor(c); updateLayerProperty(selectedLayer, 'fontColor', c); }} />
+                      </div>
+
+                      {/* Font Family Selector */}
+                      <div>
+                        <Label>Font Family</Label>
+                        <select
+                          value={layers.find(l => l.id === selectedLayer)?.fontFamily || fontFamily}
+                          onChange={(e) => {
+                            const newFont = e.target.value;
+                            setFontFamily(newFont);
+                            updateLayerProperty(selectedLayer, 'fontFamily', newFont);
+                          }}
+                          className="w-full mt-1 p-2 bg-black/50 border border-vibrant-purple/30 rounded text-sm text-white"
+                        >
+                          {GOOGLE_FONTS.map(f => <option key={f} value={f}>{f}</option>)}
+                          <optgroup label="Fontsource">
+                            {FONTSOURCE_FONTS.map(f => <option key={f} value={f}>{f}</option>)}
+                          </optgroup>
+                        </select>
+                      </div>
+
+                      {/* Move Controls */}
+                      <div>
+                        <Label>Move</Label>
+                        <div className="grid grid-cols-3 gap-1 w-32 mx-auto mt-2">
+                          <div />
+                          <Button size="sm" variant="outline" onClick={() => {
+                            const l = layers.find(lay => lay.id === selectedLayer);
+                            if (l) updateLayerProperty(selectedLayer, 'y', l.y - 5);
+                          }}><ChevronUp className="w-4 h-4" /></Button>
+                          <div />
+                          <Button size="sm" variant="outline" onClick={() => {
+                            const l = layers.find(lay => lay.id === selectedLayer);
+                            if (l) updateLayerProperty(selectedLayer, 'x', l.x - 5);
+                          }}><ChevronLeft className="w-4 h-4" /></Button>
+                          <div className="flex items-center justify-center"><Move className="w-4 h-4 text-gray-500" /></div>
+                          <Button size="sm" variant="outline" onClick={() => {
+                            const l = layers.find(lay => lay.id === selectedLayer);
+                            if (l) updateLayerProperty(selectedLayer, 'x', l.x + 5);
+                          }}><ChevronRight className="w-4 h-4" /></Button>
+                          <div />
+                          <Button size="sm" variant="outline" onClick={() => {
+                            const l = layers.find(lay => lay.id === selectedLayer);
+                            if (l) updateLayerProperty(selectedLayer, 'y', l.y + 5);
+                          }}><ChevronDown className="w-4 h-4" /></Button>
+                          <div />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 justify-between border p-2 rounded border-vibrant-purple/20">
+                        <Label>Curved Text</Label>
+                        <input type="checkbox" checked={isCircularText} onChange={e => { setIsCircularText(e.target.checked); updateLayerProperty(selectedLayer, 'isCircularText', e.target.checked); }} />
+                      </div>
+                      {isCircularText && (
+                        <div>
+                          <Label>Radius</Label>
+                          <Slider value={[textRadius]} onValueChange={v => { setTextRadius(v[0]); updateLayerProperty(selectedLayer, 'textRadius', v[0]); }} max={400} min={50} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'adjust' && (
+                <div className="space-y-4 pb-16">
+                  <div>
+                    <Label>Image Zoom: {Math.round(imageZoom * 100)}%</Label>
+                    <Slider
+                      value={[imageZoom]}
+                      onValueChange={(value) => {
+                        const newZoom = value[0];
+                        setImageZoom(newZoom);
+                        if (selectedLayer) {
+                          setLayers(prev => prev.map(l => {
+                            if (l.id === selectedLayer && l.type === 'image') {
+                              const baseSize = canvasSize - 100;
+                              const newWidth = baseSize * newZoom;
+                              const newHeight = baseSize * newZoom;
+                              const newX = l.x + (l.width - newWidth) / 2;
+                              const newY = l.y + (l.height - newHeight) / 2;
+                              return { ...l, width: newWidth, height: newHeight, x: newX, y: newY };
+                            }
+                            return l;
+                          }));
+                        }
+                      }}
+                      max={2}
+                      min={0.1}
+                      step={0.1}
+                    />
+                  </div>
+                  <div>
+                    <Label>Background</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Button size="sm" variant="outline" onClick={() => setBackgroundColor('transparent')}>Transp.</Button>
+                      <ColorPicker color={backgroundColor} onChange={setBackgroundColor} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'rim' && (
+                <div className="space-y-4 pb-16">
+                  {/* Rim Width & Color */}
+                  <div>
+                    <Label>Rim Width: {canvasBorderWidth}px</Label>
+                    <div className="flex gap-2 items-center mt-1">
+                      <Slider value={[canvasBorderWidth]} onValueChange={v => setCanvasBorderWidth(v[0])} max={30} min={0} step={1} className="flex-1" />
+                      <ColorPicker color={canvasBorderColor} onChange={setCanvasBorderColor} />
+                    </div>
+                  </div>
+
+                  {/* Rim Shadow */}
+                  <div className="border border-vibrant-purple/20 rounded p-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <Label>Rim Shadow</Label>
+                      <input type="checkbox" checked={rimShadow.enabled} onChange={e => setRimShadow(s => ({ ...s, enabled: e.target.checked }))} className="rounded" />
+                    </div>
+                    {rimShadow.enabled && (
+                      <div className="space-y-3">
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => setRimShadow(s => ({ ...s, type: 'outer' }))} className={rimShadow.type === 'outer' ? 'bg-vibrant-purple/30' : ''}>Outer</Button>
+                          <Button size="sm" variant="outline" onClick={() => setRimShadow(s => ({ ...s, type: 'inner' }))} className={rimShadow.type === 'inner' ? 'bg-vibrant-purple/30' : ''}>Inner</Button>
+                          <Button size="sm" variant="outline" onClick={() => setRimShadow(s => ({ ...s, type: 'both' }))} className={rimShadow.type === 'both' ? 'bg-vibrant-purple/30' : ''}>Both</Button>
+                        </div>
+                        <div className="flex gap-2 items-center">
+                          <div className="flex-1">
+                            <Label className="text-xs">Blur: {rimShadow.blur}</Label>
+                            <Slider value={[rimShadow.blur]} onValueChange={v => setRimShadow(s => ({ ...s, blur: v[0] }))} max={50} />
+                          </div>
+                          <ColorPicker color={rimShadow.color} onChange={c => setRimShadow(s => ({ ...s, color: c }))} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Rim Design */}
+                  <div className="border border-vibrant-purple/20 rounded p-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <Label>Rim Design</Label>
+                      <input type="checkbox" checked={rimDesign.enabled} onChange={e => setRimDesign(s => ({ ...s, enabled: e.target.checked }))} className="rounded" />
+                    </div>
+                    {rimDesign.enabled && (
+                      <div className="space-y-3">
+                        <div className="flex gap-1 overflow-x-auto pb-2">
+                          {(['stripes', 'stars', 'dots', 'diamonds'] as const).map(pat => (
+                            <Button key={pat} size="sm" variant="outline" onClick={() => setRimDesign(s => ({ ...s, pattern: pat }))} className={rimDesign.pattern === pat ? 'bg-vibrant-purple/30' : ''}>
+                              {pat}
+                            </Button>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs">Density: {rimDesign.density}</Label>
+                            <Slider value={[rimDesign.density]} onValueChange={v => setRimDesign(s => ({ ...s, density: v[0] }))} max={200} min={5} />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Size: {rimDesign.size}</Label>
+                            <Slider value={[rimDesign.size]} onValueChange={v => setRimDesign(s => ({ ...s, size: v[0] }))} max={8} min={1} step={0.5} />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label>Color</Label>
+                          <ColorPicker color={rimDesign.color} onChange={c => setRimDesign(s => ({ ...s, color: c }))} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'layers' && (
+                <div className="space-y-2 pb-16">
+                  {[...layers].sort((a, b) => b.zIndex - a.zIndex).map((layer) => (
+                    <div key={layer.id} onClick={() => setSelectedLayer(layer.id)} className={`p-2 rounded border flex justify-between items-center ${selectedLayer === layer.id ? 'border-vibrant-purple bg-vibrant-purple/10' : 'border-gray-700'}`}>
+                      <span className="text-sm truncate w-32">{layer.type}</span>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); updateLayerProperty(layer.id, 'visible', !layer.visible); }}><Eye className="w-3 h-3" /></Button>
+                        <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); deleteLayer(layer.id); }} className="text-red-400"><Trash2 className="w-3 h-3" /></Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Navigation Bar */}
+          <div className="flex justify-around items-center p-2">
+            {[
+              { id: 'upload', icon: Upload, label: 'Add' },
+              { id: 'text', icon: Type, label: 'Text' },
+              { id: 'adjust', icon: Palette, label: 'Adjust' },
+              { id: 'rim', icon: Circle, label: 'Rim' },
+              { id: 'layers', icon: Layers, label: 'Layers' },
+            ].map(item => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(activeTab === item.id ? '' : item.id)}
+                className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${activeTab === item.id ? 'text-vibrant-purple bg-white/10' : 'text-gray-400'}`}
+              >
+                <item.icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium">{item.label}</span>
+              </button>
+            ))}
+            <button
+              onClick={handleExport}
+              className="flex flex-col items-center gap-1 p-2 text-vibrant-purple font-bold"
+            >
+              <Download className="w-5 h-5" />
+              <span className="text-[10px]">Save</span>
+            </button>
+          </div>
+        </div>
+
+      </div >
+    </div >
   );
 };
 
